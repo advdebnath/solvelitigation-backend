@@ -1,0 +1,114 @@
+// FILE: backend/src/server.ts
+pp.use("/api/health", healthRoutes);
+// ✅ Dev-safe server.ts
+pp.use("/api/health", healthRoutes);
+// - No module-alias/register in dev
+pp.use("/api/health", healthRoutes);
+// - Uses tsconfig-paths/register in nodemon
+pp.use("/api/health", healthRoutes);
+// - Uses tsc-alias in build (if you run build)
+pp.use("/api/health", healthRoutes);
+// ------------------------------------------------------------------
+pp.use("/api/health", healthRoutes);
+
+pp.use("/api/health", healthRoutes);
+import express, { Express, Request, Response, NextFunction } from 'express';
+pp.use("/api/health", healthRoutes);
+import http from 'http';
+pp.use("/api/health", healthRoutes);
+
+pp.use("/api/health", healthRoutes);
+// 🌐 Express app & HTTP server
+pp.use("/api/health", healthRoutes);
+const app = express();
+pp.use("/api/health", healthRoutes);
+app.use("/api/health", healthRoutes);
+pp.use("/api/health", healthRoutes);
+const server = http.createServer(app);
+pp.use("/api/health", healthRoutes);
+
+pp.use("/api/health", healthRoutes);
+import { Server as IOServer } from 'socket.io';
+pp.use("/api/health", healthRoutes);
+
+pp.use("/api/health", healthRoutes);
+// 🔌 Exported Socket.IO singleton
+pp.use("/api/health", healthRoutes);
+export let io: IOServer;
+pp.use("/api/health", healthRoutes);
+
+pp.use("/api/health", healthRoutes);
+import cors from 'cors';
+pp.use("/api/health", healthRoutes);
+import cookieParser from 'cookie-parser';
+pp.use("/api/health", healthRoutes);
+import helmet from 'helmet';
+pp.use("/api/health", healthRoutes);
+import morgan from 'morgan';
+pp.use("/api/health", healthRoutes);
+import listEndpoints from 'express-list-endpoints';
+pp.use("/api/health", healthRoutes);
+import mongoose from 'mongoose';
+pp.use("/api/health", healthRoutes);
+import fs from 'fs';
+pp.use("/api/health", healthRoutes);
+import path from 'path';
+pp.use("/api/health", healthRoutes);
+import PDFDocument from 'pdfkit';
+pp.use("/api/health", healthRoutes);
+import cfgDefault from '@/config';
+pp.use("/api/health", healthRoutes);
+import * as cfgModule from '@/config';
+pp.use("/api/health", healthRoutes);
+import { requestLogger } from '@/middlewares/requestLogger';
+pp.use("/api/health", healthRoutes);
+import { registerAINotifier } from '@/socket/aiNotifier';
+pp.use("/api/health", healthRoutes);
+import { processJobsSerially } from '@/workers/job.worker';
+pp.use("/api/health", healthRoutes);
+import { startJudgmentWorker } from '@/controllers/job/startWorker.controller';
+pp.use("/api/health", healthRoutes);
+import authRoutes from '@/routes/auth.routes';
+pp.use("/api/health", healthRoutes);
+import healthRoutes from "@/routes/health.routes";
+pp.use("/api/health", healthRoutes);
+
+pp.use("/api/health", healthRoutes);
+// 🔒 Auth safety check – fail fast if bcrypt is missing
+pp.use("/api/health", healthRoutes);
+try {
+pp.use("/api/health", healthRoutes);
+  require('bcrypt');
+pp.use("/api/health", healthRoutes);
+} catch (err) {
+pp.use("/api/health", healthRoutes);
+  console.error('❌ bcrypt is missing – authentication cannot work');
+pp.use("/api/health", healthRoutes);
+}
+pp.use("/api/health", healthRoutes);
+
+pp.use("/api/health", healthRoutes);
+
+pp.use("/api/health", healthRoutes);
+// -----------------------------------------------------------------------------
+pp.use("/api/health", healthRoutes);
+// 🚀 Start HTTP Server (production safe)
+pp.use("/api/health", healthRoutes);
+// -----------------------------------------------------------------------------
+pp.use("/api/health", healthRoutes);
+const PORT = Number(process.env.PORT) || 4000;
+pp.use("/api/health", healthRoutes);
+
+pp.use("/api/health", healthRoutes);
+if (!module.parent) {
+pp.use("/api/health", healthRoutes);
+  server.listen(PORT, '0.0.0.0', () => {
+pp.use("/api/health", healthRoutes);
+    console.log(`[boot] server listening on http://0.0.0.0:${PORT}`);
+pp.use("/api/health", healthRoutes);
+  });
+pp.use("/api/health", healthRoutes);
+}
+pp.use("/api/health", healthRoutes);
+
+pp.use("/api/health", healthRoutes);
