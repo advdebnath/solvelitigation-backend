@@ -1,193 +1,68 @@
-import config from "../config";
-import type { Request, Response, NextFunction } from "express";
-import * as jwt from "jsonwebtoken";
-import { verifyToken } from "../utils/jwt";
-import type { Role, RequestWithUser } from "../types/custom";
+import { Request, Response, NextFunction } from "express";
+import jwt from "jsonwebtoken";
+import cfg from "@/config";
 
-const COOKIE_NAME: string = process.env.AUTH_COOKIE_NAME || "sl_auth";
+interface AuthPayload {
+  userId: string;
+  role: string;
+}
 
-const JWT_SECRET: string =
-  config.jwtSecret ||
-  config?.jwtSecret ||
-  process.env.JWT_SECRET ||
-  "supersecret";
-
-/* -------------------------------------------------------------------------- */
-/* 🔒 Primary Authentication Middleware (Bearer preferred, Cookie fallback)   */
-/* -------------------------------------------------------------------------- */
-export const authenticateJWT = (
-  req: RequestWithUser,
+export function authenticateJWT(
+  req: Request,
   res: Response,
-  next: NextFunction,
-) => {
+  next: NextFunction
+) {
   try {
-    let token: string | undefined;
-    const authHeader = req.headers.authorization;
-
-    if (authHeader?.startsWith("Bearer ")) token = authHeader.split(" ")[1];
-    if (!token && req.cookies?.[COOKIE_NAME]) token = req.cookies[COOKIE_NAME];
+    const token = req.cookies?.sl_auth;
 
     if (!token) {
-      return res.status(401).json({ success: false, message: "Unauthorized" });
+      return res.status(401).json({
+        success: false,
+        message: "Authentication required",
+      });
     }
 
-    let payload: any;
-    try {
-      payload = verifyToken(token, JWT_SECRET) as any;
-    } catch {
-      payload = jwt.verify(token, JWT_SECRET) as any;
-    }
+    const decoded = jwt.verify(token, cfg.jwtSecret) as AuthPayload;
 
-    const userId = payload.sub || payload._id || payload.id;
-    if (!userId) {
-      return res
-        .status(401)
-        .json({ success: false, message: "Invalid token payload" });
+    if (!decoded?.userId || !decoded?.role) {
+      return res.status(401).json({
+        success: false,
+        message: "Invalid token payload",
+      });
     }
 
     req.user = {
-      id: String(userId),
-      email: payload.email ?? "",
-      role: (payload.role as Role) ?? "user",
+      userId: decoded.userId,
+      role: decoded.role,
     };
 
-    (req as any).auth = payload;
     next();
-  } catch (err) {
-    console.error("[auth.middleware] Invalid JWT:", err);
-    return res
-      .status(401)
-      .json({ success: false, message: "Invalid or expired token" });
-  }
-};
-
-export const optionalAuth = (
-  req: RequestWithUser,
-  _res: Response,
-  next: NextFunction,
-) => {
-  let token: string | undefined;
-  const authHeader = req.headers.authorization;
-
-  if (authHeader?.startsWith("Bearer ")) token = authHeader.split(" ")[1];
-  if (!token && req.cookies?.[COOKIE_NAME]) token = req.cookies[COOKIE_NAME];
-
-  if (token) {
-    try {
-      let payload: any;
-      try {
-        payload = verifyToken(token, JWT_SECRET) as any;
-      } catch {
-        payload = jwt.verify(token, JWT_SECRET) as any;
-      }
-
-      const userId = payload.sub || payload._id || payload.id;
-      if (userId) {
-        req.user = {
-          id: String(userId),
-          email: payload.email ?? "",
-          role: (payload.role as Role) ?? "user",
-        };
-        (req as any).auth = payload;
-      }
-    } catch {
-      console.warn("[auth.middleware] Optional auth ignored");
-    }
-  }
-
-  next();
-};
-
-export const authenticateJWTOptional = optionalAuth;
-
-/* -------------------------------------------------------------------------- */
-/* 🔐 Role-Based Access Control                                               */
-/* -------------------------------------------------------------------------- */
-export const requireRole = (role: Role) => {
-  return (req: RequestWithUser, res: Response, next: NextFunction) => {
-    if (!req.user || req.user.role !== role) {
-      return res.status(403).json({
-        success: false,
-        message: `Forbidden: ${role} role required`,
-      });
-    }
-    next();
-  };
-};
-
-export const authorizeRoles = (...roles: Role[]) => {
-  return (req: RequestWithUser, res: Response, next: NextFunction) => {
-    if (!req.user) {
-      return res
-        .status(401)
-        .json({ success: false, message: "Unauthorized: No user found" });
-    }
-
-    if (!roles.includes(req.user.role)) {
-      return res.status(403).json({
-        success: false,
-        message: `Forbidden: requires one of the following roles: ${roles.join(
-          ", ",
-        )}`,
-      });
-    }
-
-    next();
-  };
-};
-
-export const requireAdmin = (
-  req: RequestWithUser,
-  res: Response,
-  next: NextFunction,
-) => {
-  if (!req.user) {
-    return res
-      .status(401)
-      .json({ success: false, message: "Unauthorized: missing user" });
-  }
-
-  if (req.user.role !== "admin" && req.user.role !== "superadmin") {
-    return res.status(403).json({
+  } catch {
+    return res.status(401).json({
       success: false,
-      message: "Forbidden: Only Admins or Superadmin are authorized",
+      message: "Invalid or expired token",
     });
   }
+}
 
-  next();
-};
-
-export const requireSuperAdmin = requireRole("superadmin");
-
-export default {
-  authenticateJWT,
-  authenticateJWTOptional,
-  optionalAuth,
-  requireRole,
-  authorizeRoles,
-  requireAdmin,
-  requireSuperAdmin,
-};
-
-// ✅ Allow only Admin or Superadmin to proceed
-export function requireAdminOrSuperAdmin(
+export function authenticateJWTOptional(
   req: Request,
-  res: Response,
-  next: NextFunction,
+  _res: Response,
+  next: NextFunction
 ) {
-  const user: any = (req as any).user;
+  try {
+    const token = req.cookies?.sl_auth;
+    if (!token) return next();
 
-  if (!user) {
-    return res
-      .status(401)
-      .json({ success: false, message: "Not authenticated" });
+    const decoded = jwt.verify(token, cfg.jwtSecret) as AuthPayload;
+    if (decoded?.userId && decoded?.role) {
+      req.user = {
+        userId: decoded.userId,
+        role: decoded.role,
+      };
+    }
+  } catch {
+    // ignore optional auth errors
   }
-
-  if (user.role !== "superadmin" && user.role !== "admin") {
-    return res
-      .status(403)
-      .json({ success: false, message: "Admin or Superadmin required" });
-  }
-
   next();
 }

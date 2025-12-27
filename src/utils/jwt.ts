@@ -1,14 +1,23 @@
-import * as jwt from "jsonwebtoken";
-import type { SignOptions } from "jsonwebtoken";
+import jwt, { SignOptions } from "jsonwebtoken";
+import cfg from "@/config";
 
-export function signToken(
-  payload: object,
-  secret: string,
-  expiresIn: SignOptions["expiresIn"] = "7d",
-): string {
-  return jwt.sign(payload, secret, { expiresIn });
+export interface JwtPayload {
+  userId: string;
+  role: string;
 }
 
-export function verifyToken(token: string, secret: string): any {
-  return jwt.verify(token, secret);
+export function signToken(
+  payload: JwtPayload,
+  secret: string = cfg.jwtSecret,
+  expiresIn: SignOptions["expiresIn"] = "7d"
+): string {
+  const options: SignOptions = { expiresIn };
+  return jwt.sign(payload, secret, options);
+}
+
+export function verifyToken(
+  token: string,
+  secret: string = cfg.jwtSecret
+): JwtPayload {
+  return jwt.verify(token, secret) as JwtPayload;
 }

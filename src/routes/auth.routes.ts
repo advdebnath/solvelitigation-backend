@@ -1,11 +1,14 @@
 import express from "express";
 import rateLimit from "express-rate-limit";
 
-import { login } from "@/controllers/auth/login.controller";
-import getMe from "@/controllers/auth/me.controller";
-import logout from "@/controllers/auth/logout.controller";
+import { login } from "../controllers/auth/login.controller";
+import getMe from "../controllers/auth/me.controller";
+import logout from "../controllers/auth/logout.controller";
 
-import { authenticateJWT, authenticateJWTOptional } from "@/middlewares/auth.middleware";
+import {
+  authenticateJWT,
+  authenticateJWTOptional,
+} from "../middlewares/auth.middleware";
 
 const router = express.Router();
 
