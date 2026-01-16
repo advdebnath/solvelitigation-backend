@@ -35,12 +35,109 @@ var __importStar = (this && this.__importStar) || (function () {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.User = void 0;
 const mongoose_1 = __importStar(require("mongoose"));
+/**
+ * =========================
+ * USER SCHEMA
+ * =========================
+ */
 const UserSchema = new mongoose_1.Schema({
-    name: String,
-    email: { type: String, unique: true },
-    password: String,
-    role: { type: String, default: "user" },
-    isVerified: { type: Boolean, default: false },
-}, { timestamps: true });
+    name: {
+        type: String,
+        required: true,
+        trim: true,
+    },
+    email: {
+        type: String,
+        required: true,
+        unique: true,
+        lowercase: true,
+        trim: true,
+        index: true,
+    },
+    password: {
+        type: String,
+        required: true,
+        select: false, // 🔒 never exposed
+    },
+    phone: {
+        type: String,
+        trim: true,
+        sparse: true,
+    },
+    state: {
+        type: String,
+        trim: true,
+    },
+    district: {
+        type: String,
+        trim: true,
+    },
+    role: {
+        type: String,
+        enum: ["user", "admin", "superadmin"],
+        default: "user",
+        index: true,
+    },
+    plan: {
+        type: String,
+        enum: ["free", "simple", "premium", "enterprise"],
+        default: "free",
+        required: true,
+    },
+    planStatus: {
+        type: String,
+        enum: ["active", "inactive", "expired"],
+        default: "active",
+    },
+    planExpiresAt: {
+        type: Date,
+        default: null,
+    },
+    usage: {
+        downloads: { type: Number, default: 0 },
+        aiRequests: { type: Number, default: 0 },
+        judgmentsViewed: { type: Number, default: 0 },
+    },
+    grace: {
+        downloads: { type: Number, default: 0 },
+        aiRequests: { type: Number, default: 0 },
+        judgmentsViewed: { type: Number, default: 0 },
+    },
+    /**
+     * EMAIL VERIFICATION
+     */
+    isVerified: {
+        type: Boolean,
+        default: false,
+        index: true,
+    },
+    /**
+     * SOFT DELETE
+     */
+    isDeleted: {
+        type: Boolean,
+        default: false,
+    },
+    deletedAt: {
+        type: Date,
+        default: null,
+    },
+    /**
+     * AUTO-EXPIRE UNVERIFIED USERS (TTL)
+     * MongoDB will delete the document automatically
+     */
+    verificationExpiresAt: {
+        type: Date,
+        default: () => new Date(Date.now() + 7 * 24 * 60 * 60 * 1000), // 7 days
+        index: { expires: 0 },
+    },
+}, {
+    timestamps: true,
+    versionKey: false,
+});
+/**
+ * =========================
+ * MODEL EXPORT
+ * =========================
+ */
 exports.User = mongoose_1.default.models.User || mongoose_1.default.model("User", UserSchema);
-exports.default = exports.User;

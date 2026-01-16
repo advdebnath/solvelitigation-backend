@@ -1,3 +1,4 @@
+import "dotenv/config";
 import express from "express";
 import http from "http";
 import cors from "cors";
@@ -6,54 +7,134 @@ import helmet from "helmet";
 import morgan from "morgan";
 import mongoose from "mongoose";
 
-// ROUTES (RELATIVE IMPORTS ONLY)
+
+import cfg from "@/config";
+
+import { startCleanupUnverifiedUsersJob } from "@/jobs/cleanupUnverifiedUsers.job";
+
+// ROUTES
 import authRoutes from "./routes/auth.routes";
 import healthRoutes from "./routes/health.routes";
 import judgmentRoutes from "./routes/judgments/judgments.routes";
 import actRoutes from "./routes/acts.routes";
-import superadminJudgmentUploadRoutes from "./routes/superadmin/judgment.upload.routes";
 import superadminRoutes from "./routes/superadmin";
+import superadminUsersRoutes from "@/routes/superadmin/users.routes";
 import jobRoutes from "./routes/job.routes";
+import pricingRoutes from "./routes/pricing.routes";
+import locationRoutes from "./routes/location.routes";
+import nlpRoutes from "./routes/nlp.routes";
+import { planExpiryJob } from "@/jobs/planExpiry.job";
 
-import { processJobsSerially } from "@/workers/job.worker";
-// -------------------- APP --------------------
+// JOB WORKER
+import { processJobsSerially } from "./workers/job.worker";
+
 const app = express();
 app.set("trust proxy", 1);
+
 const server = http.createServer(app);
-// -------------------- MIDDLEWARES --------------------
-app.use(cors());
-app.use(express.json({ limit: "20mb" }));  // JSON payloads only
-app.use(express.urlencoded({ extended: true, limit: "20mb" }));
-// IMPORTANT: allow large multipart uploads (handled by multer)
-app.set("maxFileSize", 900 * 1024 * 1024); // 900MB
+
+/* --------------------------------------------------
+   MIDDLEWARES
+-------------------------------------------------- */
+
+// CORS — MUST be before routes
+app.use(
+  cors({
+    origin: [
+      "https://solvelitigation.com",
+      "https://www.solvelitigation.com",
+    ],
+    credentials: true, // ✅ REQUIRED for HttpOnly auth cookies
+  })
+);
+
+app.use(express.json({ limit: "900mb" }));
+app.use(express.urlencoded({ extended: true, limit: "900mb" }));
+app.set("maxFileSize", 900 * 1024 * 1024);
+
 app.use(cookieParser());
 app.use(helmet());
 app.use(morgan("dev"));
-// -------------------- DATABASE --------------------
+
+
+/* --------------------------------------------------
+   DATABASE
+-------------------------------------------------- */
 const MONGO_URI =
   process.env.MONGO_URI || "mongodb://127.0.0.1:27017/solvelitigation";
+
+
 mongoose
   .connect(MONGO_URI)
-  .then(() => console.log("✅ MongoDB connected"))
-  .catch((err) =>
-    console.error("❌ MongoDB connection error:", err)
-  );
-// -------------------- ROUTES --------------------
+  .then(() => {
+    console.log("✅ MongoDB connected");
+planExpiryJob();
 
-// 🔁 Background job worker (Phase 2)
+
+
+
+
+// ✅ Start cron job ONCE
+    startCleanupUnverifiedUsersJob();
+  })
+
+  .catch((err) => {
+    console.error("❌ MongoDB connection failed", err);
+  });
+
+
+
+/* --------------------------------------------------
+   BACKGROUND JOB WORKER
+-------------------------------------------------- */
+
 setInterval(() => {
-  processJobsSerially().catch(err => console.error("[JOB_WORKER]", err));
+  processJobsSerially().catch((err) =>
+    console.error("[JOB_WORKER]", err)
+  );
 }, 1000);
+
+/* --------------------------------------------------
+   ROUTES
+-------------------------------------------------- */
 
 app.use("/api/health", healthRoutes);
 app.use("/api/auth", authRoutes);
 app.use("/api/judgments", judgmentRoutes);
+app.use("/api/nlp", nlpRoutes);
 app.use("/api/acts", actRoutes);
-app.use("/api/superadmin/judgments", superadminJudgmentUploadRoutes);
 app.use("/api/superadmin", superadminRoutes);
+app.use("/api/superadmin", superadminUsersRoutes);
 app.use("/api/jobs", jobRoutes);
-// -------------------- START SERVER --------------------
+app.use("/api/pricing", pricingRoutes);
+app.use("/api/location", locationRoutes);
+
+
+/* --------------------------------------------------
+   START SERVER
+-------------------------------------------------- */
+
 const PORT = Number(process.env.PORT) || 4000;
-server.listen(PORT, "0.0.0.0", () => {
-  console.log(`[boot] server listening on http://0.0.0.0:${PORT}`);
-});
+
+(async () => {
+  try {
+
+
+    console.log("✅ MongoDB connected");
+
+    // 🔁 Start cron jobs AFTER DB is ready
+    startCleanupUnverifiedUsersJob();
+
+    app.listen(PORT, () => {
+      console.log(`🚀 Server running on port ${PORT}`);
+    });
+  } catch (err) {
+    console.error("❌ Server startup failed:", err);
+    process.exit(1);
+  }
+})();
+
+
+
+
+

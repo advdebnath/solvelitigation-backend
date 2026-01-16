@@ -1,41 +1,50 @@
 "use strict";
-var __importDefault = (this && this.__importDefault) || function (mod) {
-    return (mod && mod.__esModule) ? mod : { "default": mod };
-};
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.default = getMe;
-const user_model_1 = __importDefault(require("../../models/user.model"));
+exports.getMe = getMe;
+const user_model_1 = require("../../models/user.model");
+const planLimits_1 = require("../../config/planLimits");
+/**
+ * GET /api/auth/me
+ * Authoritative user session endpoint
+ */
 async function getMe(req, res) {
-    try {
-        if (!req.user?.userId) {
-            return res.status(401).json({
-                success: false,
-                message: "Not authenticated",
-            });
-        }
-        const user = (await user_model_1.default.findById(req.user.userId)
-            .select("_id name email role")
-            .lean());
-        if (!user) {
-            return res.status(404).json({
-                success: false,
-                message: "User not found",
-            });
-        }
-        return res.json({
-            success: true,
-            user: {
-                id: user._id,
-                name: user.name,
-                email: user.email,
-                role: user.role,
-            },
-        });
-    }
-    catch (err) {
-        return res.status(500).json({
+    const authUser = req.currentUser;
+    if (!authUser) {
+        return res.status(401).json({
             success: false,
-            message: "Failed to fetch user",
+            message: "Unauthorized",
         });
     }
+    // ✅ Strongly typed DB fetch
+    const user = (await user_model_1.User.findById(authUser._id)
+        .select("name email role plan planStatus planExpiresAt usage grace isVerified")
+        .lean());
+    if (!user) {
+        return res.status(401).json({
+            success: false,
+            message: "User not found",
+        });
+    }
+    const plan = user.plan;
+    const limits = planLimits_1.PLAN_LIMITS[plan];
+    return res.json({
+        success: true,
+        user: {
+            id: user._id.toString(),
+            name: user.name,
+            email: user.email,
+            role: user.role,
+            plan: user.plan,
+            planStatus: user.planStatus,
+            planExpiresAt: user.planExpiresAt ?? null,
+            isVerified: user.isVerified,
+            usage: {
+                downloads: user.usage?.downloads ?? 0,
+                aiRequests: user.usage?.aiRequests ?? 0,
+                judgmentsViewed: user.usage?.judgmentsViewed ?? 0,
+            },
+            grace: user.grace ?? null,
+            limits,
+        },
+    });
 }

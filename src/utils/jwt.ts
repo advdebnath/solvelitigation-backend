@@ -1,23 +1,22 @@
-import jwt, { SignOptions } from "jsonwebtoken";
-import cfg from "@/config";
+import jwt from "jsonwebtoken";
+
+const JWT_SECRET = process.env.JWT_SECRET as string;
+
+if (!JWT_SECRET) {
+  throw new Error("JWT_SECRET not defined");
+}
 
 export interface JwtPayload {
   userId: string;
   role: string;
 }
 
-export function signToken(
-  payload: JwtPayload,
-  secret: string = cfg.jwtSecret,
-  expiresIn: SignOptions["expiresIn"] = "7d"
-): string {
-  const options: SignOptions = { expiresIn };
-  return jwt.sign(payload, secret, options);
+export function signToken(payload: JwtPayload): string {
+  return jwt.sign(payload, JWT_SECRET, {
+    expiresIn: "7d",
+  });
 }
 
-export function verifyToken(
-  token: string,
-  secret: string = cfg.jwtSecret
-): JwtPayload {
-  return jwt.verify(token, secret) as JwtPayload;
+export function verifyToken(token: string): JwtPayload {
+  return jwt.verify(token, JWT_SECRET) as JwtPayload;
 }

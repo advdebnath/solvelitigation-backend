@@ -1,5 +1,9 @@
 import { Request, Response } from "express";
+import cfg from "@/config";
 
-export default function logout(_req: Request, res: Response) {
-  res.json({ message: "logout ok" });
-}
+const logout = (req: Request, res: Response) => {
+  res.clearCookie(cfg.AUTH_COOKIE_NAME);
+  return res.json({ success: true, message: "Logged out" });
+};
+
+export default logout;

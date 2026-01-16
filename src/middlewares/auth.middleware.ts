@@ -1,68 +1,92 @@
 import { Request, Response, NextFunction } from "express";
 import jwt from "jsonwebtoken";
-import cfg from "@/config";
+import mongoose from "mongoose";
 
-interface AuthPayload {
-  userId: string;
-  role: string;
-}
+import { User } from "@/models/user.model";
+import { IUser } from "@/models/user.types";
+import config from "@/config";
+import { PlanType } from "@/types/plan.types";
 
-export function authenticateJWT(
+/**
+ * Core auth middleware
+ */
+export async function authenticateJWT(
   req: Request,
   res: Response,
   next: NextFunction
 ) {
   try {
-    const token = req.cookies?.sl_auth;
+    const token =
+      req.cookies?.[config.AUTH_COOKIE_NAME] ||
+      req.headers.authorization?.replace("Bearer ", "");
 
     if (!token) {
-      return res.status(401).json({
-        success: false,
-        message: "Authentication required",
-      });
+      return res.status(401).json({ message: "Unauthorized" });
     }
 
-    const decoded = jwt.verify(token, cfg.jwtSecret) as AuthPayload;
-
-    if (!decoded?.userId || !decoded?.role) {
-      return res.status(401).json({
-        success: false,
-        message: "Invalid token payload",
-      });
-    }
-
-    req.user = {
-      userId: decoded.userId,
-      role: decoded.role,
+    const decoded = jwt.verify(token, config.jwtSecret) as {
+      userId: string;
     };
+
+    if (!mongoose.Types.ObjectId.isValid(decoded.userId)) {
+      return res.status(401).json({ message: "Invalid token" });
+    }
+
+    const user = (await User.findOne({
+      _id: decoded.userId,
+      isDeleted: false,
+    }).lean()) as IUser | null;
+
+    if (!user) {
+      return res.status(401).json({ message: "User not found" });
+    }
+
+    const normalizedUser = {
+      _id: user._id.toString(),
+      name: user.name,
+      email: user.email,
+      role: user.role,
+
+      plan: user.plan as PlanType,
+      planStatus: user.planStatus,
+      planExpiresAt: user.planExpiresAt ?? null,
+
+      usage: user.usage ?? {
+        downloads: 0,
+        aiRequests: 0,
+        judgmentsViewed: 0,
+      },
+
+      grace: user.grace ?? null,
+      isVerified: user.isVerified,
+    };
+
+    // ✅ Backward compatibility
+    req.user = normalizedUser;
+    req.currentUser = normalizedUser;
 
     next();
   } catch {
-    return res.status(401).json({
-      success: false,
-      message: "Invalid or expired token",
-    });
+    return res.status(401).json({ message: "Authentication failed" });
   }
 }
 
-export function authenticateJWTOptional(
+/**
+ * Superadmin guard
+ */
+export function requireSuperAdmin(
   req: Request,
-  _res: Response,
+  res: Response,
   next: NextFunction
 ) {
-  try {
-    const token = req.cookies?.sl_auth;
-    if (!token) return next();
+  const user = req.user || req.currentUser;
 
-    const decoded = jwt.verify(token, cfg.jwtSecret) as AuthPayload;
-    if (decoded?.userId && decoded?.role) {
-      req.user = {
-        userId: decoded.userId,
-        role: decoded.role,
-      };
-    }
-  } catch {
-    // ignore optional auth errors
+  if (!user || user.role !== "superadmin") {
+    return res.status(403).json({
+      success: false,
+      message: "Superadmin access required",
+    });
   }
+
   next();
 }

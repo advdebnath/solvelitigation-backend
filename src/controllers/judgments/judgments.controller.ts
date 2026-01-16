@@ -1,11 +1,17 @@
 import { Request, Response } from "express";
+import { incrementUsage } from "@/utils/incrementUsage";
 
 /**
  * GET /api/judgments
- * Public (paid users)
+ * Paid users – counts toward plan usage
  */
 export async function listJudgments(req: Request, res: Response) {
   try {
+    // Safety check (should already be ensured by authenticateJWT)
+    if (!req.currentUser) {
+      return res.status(401).json({ success: false });
+    }
+
     // TEMP: replace with DB query later
     const data = [
       {
@@ -28,8 +34,18 @@ export async function listJudgments(req: Request, res: Response) {
       },
     ];
 
-    res.json({ success: true, data });
-  } catch (err) {
-    res.status(500).json({ success: false });
+    // ✅ Increment usage ONCE per successful request
+    await incrementUsage(req.currentUser._id, "judgmentsViewed");
+
+    return res.json({
+      success: true,
+      data,
+    });
+  } catch (error) {
+    console.error("[LIST JUDGMENTS]", error);
+    return res.status(500).json({
+      success: false,
+      message: "Failed to fetch judgments",
+    });
   }
 }

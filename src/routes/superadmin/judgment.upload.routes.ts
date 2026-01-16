@@ -1,46 +1,20 @@
-import { Router } from "express";
-import { authenticateJWT } from "@/middlewares/auth.middleware";
-import { uploadJudgments } from "@/controllers/superadmin/judgment.upload.controller";
-import { requireSuperAdmin } from "@/middlewares/requireSuperAdmin";
-import { uploadFolder } from "@/middlewares/uploadFolder.middleware";
+import express from 'express';
+import { uploadJudgments } from '@/controllers/superadmin/judgment.upload.controller';
+import { uploadMiddleware } from '@/config/multer';
 
-const router = Router();
+const router = express.Router();
 
 /**
- * PRIMARY upload endpoint
+ * POST /api/superadmin/judgments/upload
+ * Upload a judgment document (Supreme Court, High Court, or Tribunal)
+ *
+ * Form Data:
+ * - file: PDF/DOC file
+ * - courtType: 'supreme' | 'high' | 'tribunal'
  */
 router.post(
-  "/upload",
-  authenticateJWT,
-  requireSuperAdmin,
-  uploadFolder,
-  uploadJudgments
-);
-
-/**
- * BACKWARD-COMPATIBILITY ALIASES
- */
-router.post(
-  "/supreme/upload-folder",
-  authenticateJWT,
-  requireSuperAdmin,
-  uploadFolder,
-  uploadJudgments
-);
-
-router.post(
-  "/high/upload-folder",
-  authenticateJWT,
-  requireSuperAdmin,
-  uploadFolder,
-  uploadJudgments
-);
-
-router.post(
-  "/tribunal/upload-folder",
-  authenticateJWT,
-  requireSuperAdmin,
-  uploadFolder,
+  '/upload',
+  uploadMiddleware.single('file'),
   uploadJudgments
 );
 

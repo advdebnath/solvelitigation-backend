@@ -1,7 +1,7 @@
 import { Router } from "express";
 import { listUploadAudits } from "@/controllers/superadmin/uploadAudit.list.controller";
 import { authenticateJWT } from "@/middlewares/auth.middleware";
-import { requireSuperAdmin } from "@/middlewares/requireSuperAdmin";
+import { requireSuperadmin } from "@/middlewares/requireSuperadmin";
 
 const router = Router();
 
@@ -11,7 +11,7 @@ const router = Router();
 router.get(
   "/uploads",
   authenticateJWT,
-  requireSuperAdmin,
+  requireSuperadmin,
   listUploadAudits
 );
 

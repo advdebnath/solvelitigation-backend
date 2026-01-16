@@ -1,13 +1,11 @@
 import { Request, Response, NextFunction } from "express";
 
-export function requireSuperAdmin(
+export function requireSuperadmin(
   req: Request,
   res: Response,
   next: NextFunction
 ) {
-  const user = (req as any).user;
-
-  if (!user || user.role !== "superadmin") {
+  if (res.locals.role !== "superadmin") {
     return res.status(403).json({
       success: false,
       message: "Superadmin access required",
