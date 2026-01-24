@@ -20,11 +20,14 @@ export interface IUser extends Document {
   planStatus: "active" | "inactive" | "expired";
   planExpiresAt?: Date | null;
 
-  usage: {
-    downloads: number;
-    aiRequests: number;
-    judgmentsViewed: number;
-  };
+
+usage: {
+  downloads: { type: Number, default: 0 },
+  aiRequests: { type: Number, default: 0 },
+  judgmentsViewed: { type: Number, default: 0 },
+  lastViewedAt: { type: Date },
+},
+
 
   grace: {
     downloads: number;
@@ -125,16 +128,6 @@ required: true,
       aiRequests: { type: Number, default: 0 },
       judgmentsViewed: { type: Number, default: 0 },
     },
-
-usageMeta: {
-  judgmentsViewedAt: {
-    type: Date,
-    default: null,
-  },
-},
-
-
-
 
 
     /**

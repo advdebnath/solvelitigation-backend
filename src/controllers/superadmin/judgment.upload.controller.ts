@@ -1,12 +1,18 @@
 import { Request, Response } from "express";
+import fs from "fs";
+import crypto from "crypto";
+
 import { enqueueNlpJob } from "@/utils/nlpEnqueue";
 import { Judgment } from "@/models/judgment.model";
 
+/**
+ * POST /api/superadmin/judgments/upload
+ * Single source of truth for judgment uploads
+ */
 export const uploadJudgments = async (req: Request, res: Response) => {
   try {
-    // -------------------------
-    // Validate upload
-    // -------------------------
+    /* ===================== VALIDATION ===================== */
+
     if (!req.file) {
       return res.status(400).json({
         success: false,
@@ -23,37 +29,59 @@ export const uploadJudgments = async (req: Request, res: Response) => {
       });
     }
 
-    // -------------------------
-    // File metadata
-    // -------------------------
-    const fileName = req.file.filename;
-    const originalName = req.file.originalname;
-    const fileSize = req.file.size;
-    const fileSizeMB = (fileSize / (1024 * 1024)).toFixed(2);
-    const pdfPath = req.file.path;
+    /* ===================== FILE METADATA ===================== */
 
-    const uploadedBy = (req as any).user?.userId || null;
+    const {
+      filename: fileName,
+      originalname: originalName,
+      size: fileSize,
+      path: pdfPath,
+    } = req.file;
 
-    // -------------------------
-    // PERMANENT: Save Judgment
-    // -------------------------
+    const fileSizeMB = +(fileSize / (1024 * 1024)).toFixed(2);
+    const uploadedBy = (req as any).user?.userId ?? null;
+
+    /* ===================== SHA-256 HASH ===================== */
+
+    const fileBuffer = fs.readFileSync(pdfPath);
+    const fileHash = crypto
+      .createHash("sha256")
+      .update(fileBuffer)
+      .digest("hex");
+
+    /* ===================== DUPLICATE CHECK ===================== */
+
+    const existing = await Judgment.findOne({ fileHash }).select("_id");
+
+    if (existing) {
+      // Remove duplicate file immediately
+      fs.unlinkSync(pdfPath);
+
+      return res.status(409).json({
+        success: false,
+        message: "Duplicate judgment detected. This file already exists.",
+      });
+    }
+
+    /* ===================== SAVE JUDGMENT ===================== */
+
     const judgment = await Judgment.create({
       courtType,
       pdfPath,
       originalName,
       fileName,
       fileSize,
+      fileHash,
       uploadedBy,
       uploadedAt: new Date(),
       nlpStatus: "PENDING",
     });
 
-    // -------------------------
-    // PERMANENT NLP ENQUEUE
-    // -------------------------
+    /* ===================== NLP QUEUE ===================== */
+
     await enqueueNlpJob({
       judgmentId: judgment._id.toString(),
-      pdfPath: judgment.pdfPath,
+      pdfPath,
       options: {
         cleanup: true,
         headnotes: true,
@@ -61,14 +89,11 @@ export const uploadJudgments = async (req: Request, res: Response) => {
       },
     });
 
-    // -------------------------
-    // Response
-    // -------------------------
-    return res.json({
+    /* ===================== RESPONSE ===================== */
+
+    return res.status(201).json({
       success: true,
-      message: `${
-        courtType.charAt(0).toUpperCase() + courtType.slice(1)
-      } Court judgment (${fileSizeMB}MB) uploaded successfully`,
+      message: `${courtType.toUpperCase()} Court judgment (${fileSizeMB} MB) uploaded successfully`,
       data: {
         judgmentId: judgment._id,
         fileName,
@@ -80,7 +105,7 @@ export const uploadJudgments = async (req: Request, res: Response) => {
       },
     });
   } catch (error) {
-    console.error("❌ Upload error:", error);
+    console.error("❌ Judgment upload failed:", error);
 
     return res.status(500).json({
       success: false,

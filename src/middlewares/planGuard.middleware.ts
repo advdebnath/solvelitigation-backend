@@ -1,5 +1,6 @@
 import { Request, Response, NextFunction } from "express";
-import { User, IUser } from "@/models/user.model";
+import { User } from "@/models/user.model";
+import type { IUser } from "@/models/user.types";
 
 /**
  * Guards feature usage based on plan
@@ -28,12 +29,22 @@ export const planGuard =
         });
       }
 
-      const plan = user.plan || "free";
-      const usage = user.usage || {};
-      const grace = user.grace || {};
+      const plan = user.plan ?? "free";
+
+      const usage = user.usage ?? {
+        downloads: 0,
+        aiRequests: 0,
+        judgmentsViewed: 0,
+      };
+
+      const grace = user.grace ?? {
+        downloads: 0,
+        aiRequests: 0,
+        judgmentsViewed: 0,
+      };
 
       const LIMITS: Record<
-        string,
+        "free" | "simple" | "premium" | "enterprise",
         { download: number; ai: number; view: number }
       > = {
         free: { download: 0, ai: 0, view: 5 },
@@ -50,27 +61,29 @@ export const planGuard =
         },
       };
 
-      const used =
+      const used = Number(
         feature === "download"
-          ? usage.downloads ?? 0
+          ? usage.downloads
           : feature === "ai"
-          ? usage.aiRequests ?? 0
-          : usage.judgmentsViewed ?? 0;
+          ? usage.aiRequests
+          : usage.judgmentsViewed
+      );
 
-      const limit = LIMITS[plan]?.[feature] ?? 0;
+      const limit = Number(LIMITS[plan]?.[feature] ?? 0);
 
       // Allowed within plan
       if (used < limit) {
         return next();
       }
 
-      // Grace allowance (5 max)
-      const graceUsed =
+      // Grace allowance (max 5)
+      const graceUsed = Number(
         feature === "download"
-          ? grace.downloads ?? 0
+          ? grace.downloads
           : feature === "ai"
-          ? grace.aiRequests ?? 0
-          : grace.judgmentsViewed ?? 0;
+          ? grace.aiRequests
+          : grace.judgmentsViewed
+      );
 
       if (graceUsed < 5) {
         return next();

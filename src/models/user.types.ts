@@ -11,11 +11,13 @@ export interface IUser {
   planStatus: PlanStatus;
   planExpiresAt: Date | null;
 
-  usage: {
-    downloads: number;
-    aiRequests: number;
-    judgmentsViewed: number;
-  };
+usage: {
+  downloads: number;
+  aiRequests: number;
+  judgmentsViewed: number;
+  lastViewedAt?: Date;
+};
+
 
   grace: {
     downloads: number;
