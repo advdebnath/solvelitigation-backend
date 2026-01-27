@@ -1,44 +1,57 @@
 import express from "express";
-import cors from "cors";
-import morgan from "morgan";
+import dotenv from "dotenv";
 import cookieParser from "cookie-parser";
+import morgan from "morgan";
+import mongoose from "mongoose";
 
-import authRoutes from "@/routes/auth.routes";
-import judgmentRoutes from "@/routes/judgments/judgments.routes";
-import nlpRoutes from "@/routes/nlp.routes";
+import authRoutes from "./routes/auth.routes";
+import judgmentRoutes from "./routes/judgment.routes";
+import nlpRoutes from "./routes/nlp.routes";
+import locationRoutes from "./routes/location.routes";
+import pricingRoutes from "./routes/pricing.routes";
+import superadminRoutes from "./routes/superadmin";
 
-const PORT = process.env.PORT || 4000;
+import { connectDB } from "./config/db";
 
-function createServer() {
-  const app = express();
+// 🔴 THIS LINE IS NON-NEGOTIABLE
+dotenv.config({
+  path:
+    process.env.NODE_ENV === "production"
+      ? ".env.production"
+      : ".env",
+});
 
-  // Middleware
-  app.use(cors({ origin: true, credentials: true }));
-  app.use(express.json({ limit: "50mb" }));
-  app.use(express.urlencoded({ extended: true }));
-  app.use(cookieParser());
-  app.use(morgan("dev"));
+async function startServer() {
+  try {
+    console.log("⏳ Connecting to MongoDB...");
+    await connectDB();
 
-  // Routes
-  app.use("/api/auth", authRoutes);
-  app.use("/api/judgments", judgmentRoutes);
-  app.use("/api/nlp", nlpRoutes);
+    const app = express();
 
-  // Health check
-  app.get("/health", (_req, res) => {
-    res.status(200).json({ status: "ok" });
-  });
+    app.use(express.json({ limit: "1gb" }));
+    app.use(express.urlencoded({ extended: true, limit: "1gb" }));
+    app.use(cookieParser());
+    app.use(morgan("dev"));
 
-  // Fallback
-  app.use((_req, res) => {
-    res.status(404).json({ error: "Not Found" });
-  });
+    app.use("/api/auth", authRoutes);
+    app.use("/api/judgments", judgmentRoutes);
+    app.use("/api/nlp", nlpRoutes);
+    app.use("/api/location", locationRoutes);
+    app.use("/api/pricing", pricingRoutes);
+    app.use("/api/superadmin", superadminRoutes);
 
-  return app;
+    app.get("/health", (_req, res) => {
+      res.json({ status: "OK" });
+    });
+
+    const PORT = process.env.PORT || 4000;
+    app.listen(PORT, () => {
+      console.log(`🚀 Server running on port ${PORT}`);
+    });
+  } catch (err) {
+    console.error("❌ Server failed to start", err);
+    process.exit(1);
+  }
 }
 
-const app = createServer();
-
-app.listen(PORT, () => {
-  console.log(`🚀 Backend running on port ${PORT}`);
-});
+startServer();

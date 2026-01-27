@@ -24,5 +24,4 @@ router.patch("/:id/unblock", unblockUser);
 router.patch("/:id/verify", verifyUser);
 router.patch("/:id/role", updateUserRole);
 
-// ✅ THIS LINE IS CRITICAL
 export default router;

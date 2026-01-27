@@ -1,6 +1,8 @@
 import { Request, Response, NextFunction } from "express";
-import { User } from "@/models/user.model";
-import type { IUser } from "@/models/user.types";
+import { User } from "../models/user.model";
+import type { IUser } from "../models/user.types";
+
+
 
 /**
  * Guards feature usage based on plan

@@ -1,7 +1,7 @@
 import { Request, Response, NextFunction } from "express";
 import { PLAN_LIMITS } from "@/config/planLimits";
 import { PlanType, UsageKey } from "@/types/plan.types";
-import { User } from "@/models/user.model";
+import { User } from "../models/user.model";
 
 /**
  * Enforce plan usage limits with grace support

@@ -1,27 +1,20 @@
 import { Router } from "express";
-import { authenticateJWT } from "@/middlewares/auth.middleware";
-import { requireRole } from "@/middlewares/role.middleware";
-import uploadAuditRoutes from "./uploadAudit.routes";
+import { authenticateJWT } from "../../middlewares/auth.middleware";
+import { requireRole } from "../../middlewares/requireRole.middleware";
+
+import usersRoutes from "./users.routes";
+import uploadRoutes from "./upload.routes";
 import judgmentUploadRoutes from "./judgment.upload.routes";
+import uploadAuditRoutes from "./uploadAudit.routes";
 
 const router = Router();
 
-/**
- * 🔐 GLOBAL PROTECTION
- * Applies to ALL /api/superadmin/* routes
- */
-router.use(authenticateJWT, requireRole(["superadmin"]));
+router.use(authenticateJWT);
+router.use(requireRole("superadmin"));
 
-/**
- * /api/superadmin/judgments/upload
- * Mount judgment upload routes
- */
-router.use("/judgments", judgmentUploadRoutes);
-
-/**
- * /api/superadmin/audits
- * Mount audit routes
- */
-router.use("/audits", uploadAuditRoutes);
+router.use("/users", usersRoutes);
+router.use("/uploads", uploadRoutes);
+router.use("/judgments/upload", judgmentUploadRoutes);
+router.use("/uploads/audit", uploadAuditRoutes);
 
 export default router;

@@ -1,16 +1,21 @@
 import { Request, Response } from "express";
 import mongoose from "mongoose";
 import bcrypt from "bcryptjs";
-import { User } from "@/models/user.model";
-import { signToken } from "@/utils/jwt";
-import { setAuthCookie } from "@/utils/authCookie";
 
+import { setAuthCookie } from "../../utils/authCookie";
+import { signToken } from "../../utils/jwt";
+import { User } from "../../models/user.model";
+
+/**
+ * POST /api/auth/login
+ */
 export const login = async (req: Request, res: Response) => {
   try {
+    // ⛔ HARD BLOCK if DB not ready
     if (mongoose.connection.readyState !== 1) {
       return res.status(503).json({
         success: false,
-        message: "Database not ready",
+        message: "Database not ready, please retry",
       });
     }
 
@@ -28,33 +33,25 @@ export const login = async (req: Request, res: Response) => {
 
     const normalizedEmail = email.toLowerCase().trim();
 
+    const user = await User.findOne({ email: normalizedEmail }).select("+password");
 
-const user = await User.findOne({ email: normalizedEmail }).select("+password");
+    if (!user) {
+      return res.status(401).json({
+        success: false,
+        message: "Invalid credentials",
+      });
+    }
 
-if (!user || user.isDeleted) {
-  return res.status(401).json({
-    success: false,
-    message: "Invalid email or password",
-  });
-}
+    const isMatch = await bcrypt.compare(password, user.password);
 
-if (!user.isVerified) {
-  return res.status(403).json({
-    success: false,
-    code: "EMAIL_NOT_VERIFIED",
-    message: "Please verify your email before logging in",
-  });
-}
+    if (!isMatch) {
+      return res.status(401).json({
+        success: false,
+        message: "Invalid credentials",
+      });
+    }
 
-const isMatch = await bcrypt.compare(password, user.password);
-
-if (!isMatch) {
-  return res.status(401).json({
-    success: false,
-    message: "Invalid email or password",
-  });
-}
-
+    // ✅ JWT + cookie
     const token = signToken({
       userId: user._id.toString(),
       role: user.role,
@@ -62,18 +59,16 @@ if (!isMatch) {
 
     setAuthCookie(res, token);
 
-    return res.status(200).json({
+    return res.json({
       success: true,
       user: {
         id: user._id,
-        name: user.name,
         email: user.email,
         role: user.role,
-        plan: user.plan,
       },
     });
-  } catch (err) {
-    console.error("[LOGIN ERROR]", err);
+  } catch (error) {
+    console.error("LOGIN ERROR:", error);
     return res.status(500).json({
       success: false,
       message: "Login failed",

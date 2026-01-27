@@ -15,7 +15,8 @@ export async function incrementUsage(
 
   // Handle judgmentsViewed cooldown
   if (key === "judgmentsViewed") {
-    const lastViewed = user.usageMeta?.judgmentsViewedAt;
+    const u = user as any;
+  const lastViewed = u.usageMeta?.judgmentsViewedAt;
 
     if (lastViewed) {
       const diffMinutes =
@@ -26,7 +27,8 @@ export async function incrementUsage(
       }
     }
 
-    user.usageMeta.judgmentsViewedAt = now;
+    u.usageMeta ??= {};
+    u.usageMeta.judgmentsViewedAt = now;
   }
 
   // Increment usage safely

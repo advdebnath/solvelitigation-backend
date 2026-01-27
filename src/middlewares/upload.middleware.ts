@@ -2,15 +2,15 @@ import multer from "multer";
 
 const storage = multer.diskStorage({
   destination: (_req, _file, cb) => {
-    cb(null, "/tmp"); // temporary; later we move to storage/NLP
+    cb(null, "/tmp"); // temp storage (ideal for large PDFs)
   },
   filename: (_req, file, cb) => {
     const unique = Date.now() + "-" + Math.round(Math.random() * 1e9);
-    cb(null, unique + "-" + file.originalname);
+    cb(null, `${unique}-${file.originalname}`);
   },
 });
 
-export const upload900MB = multer({
+const upload900MB = multer({
   storage,
   limits: {
     fileSize: 900 * 1024 * 1024, // 900 MB
@@ -23,3 +23,15 @@ export const upload900MB = multer({
     }
   },
 });
+
+/**
+ * ✅ Single judgment upload (used by route)
+ */
+export const uploadSingleJudgmentPDF = upload900MB.single("file");
+
+/**
+ * (Optional future use)
+ * export const uploadMultipleJudgments = upload900MB.array("files", 50);
+ */
+
+export { upload900MB };

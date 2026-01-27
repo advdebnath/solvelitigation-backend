@@ -2,8 +2,8 @@ import { Request, Response, NextFunction } from "express";
 import jwt from "jsonwebtoken";
 import mongoose from "mongoose";
 
-import { User } from "@/models/user.model";
-import { IUser } from "@/models/user.types";
+import { User } from "../models/user.model";
+import { IUser } from "../models/user.types";
 import config from "@/config";
 import { PlanType } from "@/types/plan.types";
 
@@ -17,7 +17,7 @@ export async function authenticateJWT(
 ) {
   try {
     const token =
-      req.cookies?.[config.AUTH_COOKIE_NAME] ||
+      req.cookies?.sl_auth ||
       req.headers.authorization?.replace("Bearer ", "");
 
     if (!token) {

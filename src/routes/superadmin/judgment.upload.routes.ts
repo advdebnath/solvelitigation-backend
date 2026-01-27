@@ -1,21 +1,19 @@
-import express from 'express';
-import { uploadJudgments } from '@/controllers/superadmin/judgment.upload.controller';
-import { uploadMiddleware } from '@/config/multer';
+import { Router } from "express";
+import multer from "multer";
+import { uploadJudgment } from "../../controllers/superadmin/judgment.upload.controller";
 
-const router = express.Router();
+const router = Router();
 
 /**
- * POST /api/superadmin/judgments/upload
- * Upload a judgment document (Supreme Court, High Court, or Tribunal)
- *
- * Form Data:
- * - file: PDF/DOC file
- * - courtType: 'supreme' | 'high' | 'tribunal'
+ * GridFS MUST use memoryStorage
  */
-router.post(
-  '/upload',
-  uploadMiddleware.single('file'),
-  uploadJudgments
-);
+const upload = multer({
+  storage: multer.memoryStorage(),
+  limits: {
+    fileSize: 1024 * 1024 * 1024, // 1 GB
+  },
+});
+
+router.post("/", upload.single("file"), uploadJudgment);
 
 export default router;

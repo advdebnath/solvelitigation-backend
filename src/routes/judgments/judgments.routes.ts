@@ -7,8 +7,11 @@ import {
   getUploadStats,
 } from "@/controllers/judgments/upload.controller";
 
-import { authenticateJWT } from "@/middlewares/auth.middleware";
+import { uploadJudgment } from "@/controllers/superadmin/judgment.upload.controller";
+
+import { authenticateJWT, requireSuperAdmin } from "@/middlewares/auth.middleware";
 import { enforcePlanLimit } from "@/middlewares/planLimit.middleware";
+import { uploadPdf } from "@/middlewares/uploadPdf.middleware";
 
 const router = Router();
 
@@ -16,7 +19,7 @@ const router = Router();
  * ⚠️ IMPORTANT
  * Legacy judgment upload routes are DISABLED.
  * All uploads MUST go through:
- * POST /api/superadmin/judgments/upload
+ * POST /api/judgments/upload (superadmin only)
  */
 
 /* ===================== LIST (PLAN LIMITED) ===================== */
@@ -52,6 +55,16 @@ router.get(
   "/stats/all",
   authenticateJWT,
   getUploadStats
+);
+
+/* ===================== UPLOAD (SUPERADMIN ONLY) ===================== */
+
+router.post(
+  "/upload",
+  authenticateJWT,
+  requireSuperAdmin,
+  uploadPdf,
+  uploadJudgment
 );
 
 export default router;

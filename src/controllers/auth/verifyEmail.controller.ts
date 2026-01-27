@@ -30,8 +30,8 @@ export const verifyEmail = async (req: Request, res: Response) => {
 
     // ✅ Verify user
     user.isVerified = true;
-    user.verificationToken = undefined;
-    user.verificationTokenExpires = undefined;
+    
+    user.verificationExpiresAt = null;
 
     await user.save();
 

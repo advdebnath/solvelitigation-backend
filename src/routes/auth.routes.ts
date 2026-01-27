@@ -1,23 +1,17 @@
 import { Router } from "express";
-import { authenticateJWT } from "@/middlewares/auth.middleware";
 
-import { login } from "@/controllers/auth/login.controller";
-import { register } from "@/controllers/auth/register.controller";
-import { getMe } from "@/controllers/auth/me.controller";
-import { logout } from "@/controllers/auth/logout.controller";
+import { login } from "../controllers/auth/login.controller";
+import { logout } from "../controllers/auth/logout.controller";
+import { me } from "../controllers/auth/me.controller";
+
+import { authenticateJWT } from "@/middlewares";
 
 const router = Router();
 
-/**
- * Public routes
- */
 router.post("/login", login);
-router.post("/register", register);
+router.post("/logout", logout);
 
-/**
- * Protected routes
- */
-router.get("/me", authenticateJWT, getMe);
-router.post("/logout", authenticateJWT, logout);
+// 🔐 protected route
+router.get("/me", authenticateJWT, me);
 
 export default router;

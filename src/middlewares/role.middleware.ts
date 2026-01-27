@@ -1,16 +1,18 @@
 import { Request, Response, NextFunction } from "express";
 
-export function requireRole(roles: Array<"user" | "admin" | "superadmin">) {
-  return (req: Request, res: Response, next: NextFunction) => {
-    const role = res.locals.role;
+type Role = "user" | "admin" | "superadmin";
 
-    if (!role || !roles.includes(role)) {
+export const requireRole =
+  (...roles: Role[]) =>
+  (req: Request, res: Response, next: NextFunction) => {
+    const user = req.user || req.currentUser;
+
+    if (!user || !roles.includes(user.role)) {
       return res.status(403).json({
         success: false,
-        message: "Access denied",
+        message: "Insufficient role permissions",
       });
     }
 
     next();
   };
-}

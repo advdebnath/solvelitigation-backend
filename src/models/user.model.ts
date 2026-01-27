@@ -20,14 +20,12 @@ export interface IUser extends Document {
   planStatus: "active" | "inactive" | "expired";
   planExpiresAt?: Date | null;
 
-
-usage: {
-  downloads: { type: Number, default: 0 },
-  aiRequests: { type: Number, default: 0 },
-  judgmentsViewed: { type: Number, default: 0 },
-  lastViewedAt: { type: Date },
-},
-
+  usage: {
+    downloads: number;
+    aiRequests: number;
+    judgmentsViewed: number;
+    lastViewedAt?: Date;
+  };
 
   grace: {
     downloads: number;
@@ -70,27 +68,16 @@ const UserSchema = new Schema<IUser>(
       index: true,
     },
 
+    /** 🔥 CRITICAL FIX */
     password: {
       type: String,
       required: true,
-      select: false, // 🔒 never exposed
+      select: false, // 👈 THIS FIXES LOGIN
     },
 
-    phone: {
-      type: String,
-      trim: true,
-      sparse: true,
-    },
-
-    state: {
-      type: String,
-      trim: true,
-    },
-
-    district: {
-      type: String,
-      trim: true,
-    },
+    phone: String,
+    state: String,
+    district: String,
 
     role: {
       type: String,
@@ -103,13 +90,12 @@ const UserSchema = new Schema<IUser>(
       type: String,
       enum: ["free", "simple", "premium", "enterprise"],
       default: "free",
-required: true,
     },
 
     planStatus: {
       type: String,
       enum: ["active", "inactive", "expired"],
-      default: "active",
+      default: "inactive",
     },
 
     planExpiresAt: {
@@ -117,10 +103,12 @@ required: true,
       default: null,
     },
 
+    /** ✅ FIXED: schema now matches interface */
     usage: {
       downloads: { type: Number, default: 0 },
       aiRequests: { type: Number, default: 0 },
       judgmentsViewed: { type: Number, default: 0 },
+      lastViewedAt: { type: Date },
     },
 
     grace: {
@@ -129,22 +117,15 @@ required: true,
       judgmentsViewed: { type: Number, default: 0 },
     },
 
-
-    /**
-     * EMAIL VERIFICATION
-     */
     isVerified: {
       type: Boolean,
       default: false,
-      index: true,
     },
 
-    /**
-     * SOFT DELETE
-     */
     isDeleted: {
       type: Boolean,
       default: false,
+      index: true,
     },
 
     deletedAt: {
@@ -152,27 +133,15 @@ required: true,
       default: null,
     },
 
-    /**
-     * AUTO-EXPIRE UNVERIFIED USERS (TTL)
-     * MongoDB will delete the document automatically
-     */
     verificationExpiresAt: {
       type: Date,
-      default: () =>
-        new Date(Date.now() + 7 * 24 * 60 * 60 * 1000), // 7 days
-      index: { expires: 0 },
+      default: null,
+      index: { expireAfterSeconds: 0 },
     },
   },
   {
     timestamps: true,
-    versionKey: false,
   }
 );
 
-/**
- * =========================
- * MODEL EXPORT
- * =========================
- */
-export const User =
-  mongoose.models.User || mongoose.model<IUser>("User", UserSchema);
+export const User = mongoose.model<IUser>("User", UserSchema);
