@@ -1,15 +1,38 @@
-# node
-node_modules
-dist
-.next
+# node / ts
+node_modules/
+dist/
 .env
 .env.*
 *.log
 
 # python
 __pycache__/
-.venv/
 *.pyc
+.venv/
+venv/
 
-# system
-.DS_Store
+# builds
+.next/
+build/
+
+# local / dev folders
+backend-dev/
+frontend-dev/
+nlp_service-dev/
+frontend/
+
+# backups & archives
+*.tar.gz
+*.zip
+_backup_*/
+backup_*/
+
+# deploy & ops scripts
+*-deploy.sh
+deploy.sh
+setup.sh
+tools/
+
+# misc
+cookies.txt
+test.pdf
