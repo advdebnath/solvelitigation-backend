@@ -55,16 +55,21 @@ export const uploadSingleJudgment = async (
       },
     });
 
-    // 7️⃣ ENQUEUE NLP PROCESS (NON-BLOCKING)
-    try {
-      await axios.post("http://127.0.0.1:8000/enqueue", {
-        jobId: judgment._id.toString(),
-        pdfPath: req.file.path,
-      });
-    } catch (nlpErr) {
-      console.error("⚠️ NLP enqueue failed:", nlpErr);
-      // Upload must NOT fail if NLP is down
-    }
+// 7️⃣ AUTO NLP ENQUEUE (NON-BLOCKING)
+try {
+  const NLP_URL =
+    process.env.NLP_SERVICE_URL || "http://127.0.0.1:8000";
+
+  await axios.post(`${NLP_URL}/enqueue`, {
+    judgmentId: judgment._id.toString(),
+    pdfPath: req.file.path,
+  });
+
+  console.log("🧠 NLP auto-enqueued:", judgment._id);
+} catch (nlpErr: any) {
+  console.error("⚠️ NLP enqueue failed (ignored):", nlpErr.message);
+}
+
 
     // 8️⃣ RESPONSE
     return res.json({

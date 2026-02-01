@@ -1,11 +1,21 @@
 import mongoose, { Schema, Document } from "mongoose";
 
-export type NLPStatus = "PENDING" | "PROCESSING" | "COMPLETED" | "FAILED";
+/**
+ * TypeScript-only NLP status type
+ */
+export type NLPStatus =
+  | "PENDING"
+  | "RUNNING"
+  | "COMPLETED"
+  | "FAILED";
 
 export interface IJudgmentNLP {
   status: NLPStatus;
-  pointsOfLaw: string[];
-  acts: string[];
+  startedAt?: Date;
+  completedAt?: Date;
+  retryCount?: number;
+  lastError?: string;
+  lockId?: string;
 }
 
 export interface IJudgment extends Document {
@@ -20,7 +30,6 @@ export interface IJudgment extends Document {
   nlp: IJudgmentNLP;
 
   gridfsFileId: mongoose.Types.ObjectId;
-
   uploadedAt: Date;
 }
 
@@ -47,15 +56,21 @@ const JudgmentSchema = new Schema<IJudgment>({
     default: null,
   },
 
+  /**
+   * NLP lifecycle state
+   */
   nlp: {
     status: {
       type: String,
-      enum: ["PENDING", "PROCESSING", "COMPLETED", "FAILED"],
+      enum: ["PENDING", "RUNNING", "COMPLETED", "FAILED"],
       default: "PENDING",
       index: true,
     },
-    pointsOfLaw: { type: [String], default: [] },
-    acts: { type: [String], default: [] },
+    startedAt: { type: Date },
+    completedAt: { type: Date },
+    retryCount: { type: Number, default: 0 },
+    lastError: { type: String },
+    lockId: { type: String },
   },
 
   gridfsFileId: {
@@ -63,7 +78,11 @@ const JudgmentSchema = new Schema<IJudgment>({
     required: true,
   },
 
-  uploadedAt: { type: Date, default: Date.now, index: true },
+  uploadedAt: {
+    type: Date,
+    default: Date.now,
+    index: true,
+  },
 });
 
 export const Judgment =

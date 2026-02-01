@@ -1,0 +1,34 @@
+import { Request, Response } from "express";
+import Judgment from "../models/Judgment";
+
+export const nlpCallback = async (req: Request, res: Response) => {
+  try {
+    const {
+      judgmentId,
+      summary,
+      category,
+      subCategory,
+      pointsOfLaw,
+      confidence,
+    } = req.body;
+
+    if (!judgmentId) {
+      return res.status(400).json({ message: "judgmentId missing" });
+    }
+
+    await Judgment.findByIdAndUpdate(judgmentId, {
+      summary,
+      category,
+      subCategory,
+      pointsOfLaw,
+      confidence,
+      nlpStatus: "completed",
+      nlpProcessedAt: new Date(),
+    });
+
+    return res.json({ status: "saved" });
+  } catch (err: any) {
+    console.error("NLP callback failed:", err.message);
+    return res.status(500).json({ message: "NLP callback failed" });
+  }
+};

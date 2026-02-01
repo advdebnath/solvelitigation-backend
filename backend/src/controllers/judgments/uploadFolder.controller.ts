@@ -1,10 +1,14 @@
+import crypto from "crypto";
 import fs from "fs";
 import path from "path";
 import { Request, Response } from "express";
 import { Judgment } from "../../models/judgment.model";
 import { enqueueNlpJob } from "../../utils/nlpEnqueue";
 
-export const uploadJudgmentFolder = async (req: Request, res: Response) => {
+export const uploadJudgmentFolder = async (
+  req: Request,
+  res: Response
+) => {
   try {
     const { uploadPath, courtType } = req.body;
 
@@ -37,8 +41,10 @@ export const uploadJudgmentFolder = async (req: Request, res: Response) => {
     let queued = 0;
 
     for (const file of pdfFiles) {
-      const match = file.match(/(\d{4})(\d{2})(\d{2})/);
+      // 🔑 UNIQUE lockId PER judgment (CRITICAL)
+      const lockId = `NLP-${crypto.randomUUID()}`;
 
+      const match = file.match(/(\d{4})(\d{2})(\d{2})/);
       if (!match) {
         console.warn(`Skipping file (date not found): ${file}`);
         continue;
@@ -50,6 +56,7 @@ export const uploadJudgmentFolder = async (req: Request, res: Response) => {
 
       const fullPath = path.join(uploadPath, file);
 
+      // 1️⃣ Create Judgment FIRST (store lockId)
       const judgment = await Judgment.create({
         courtType,
         category: "UNCLASSIFIED",
@@ -60,18 +67,18 @@ export const uploadJudgmentFolder = async (req: Request, res: Response) => {
         filePath: fullPath,
         uploadedBy: req.currentUser?._id,
         status: "UPLOADED",
-        nlpStatus: "QUEUED",
+        nlp: {
+          status: "PENDING",
+          lockId,
+          retryCount: 0,
+        },
       });
 
-      // ✅ CORRECT enqueue call (OBJECT, NOT 2 ARGS)
+      // 2️⃣ Enqueue NLP using SAME lockId
       await enqueueNlpJob({
+        lockId,
         judgmentId: judgment._id.toString(),
         pdfPath: fullPath,
-        options: {
-          cleanup: true,
-          headnotes: true,
-          pointsOfLaw: true,
-        },
       });
 
       queued++;
