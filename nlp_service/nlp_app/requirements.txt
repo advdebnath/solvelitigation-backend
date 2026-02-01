@@ -1,0 +1,9 @@
+﻿fastapi==0.115.0
+uvicorn==0.30.6
+gunicorn==22.0.0
+pydantic==2.8.2
+numpy
+redis
+celery==5.4.0
+python-dotenv
+
