@@ -1,45 +1,35 @@
-import fs from "fs";
 import path from "path";
+import fs from "fs";
 import mongoose from "mongoose";
-import { getGridFSBucket } from "../utils/gridfs";
-import { Judgment } from "../models/judgment.model";
+import { uploadToGridFS } from "../utils/gridfs";
 
-export async function storeJudgmentToGridFS({
-  filePath,
-  originalName,
-  court,
-  year,
-  userId,
-}: {
-  filePath: string;
+/**
+ * ✅ Upload a judgment PDF into GridFS
+ * - Handles large files (900MB)
+ * - Returns GridFS ObjectId
+ */
+export async function uploadJudgmentFile(params: {
+  localFilePath: string;
   originalName: string;
-  court: string;
-  year: number;
-  userId: string;
-}) {
-  const bucket = getGridFSBucket();
+  metadata?: Record<string, any>;
+}): Promise<mongoose.Types.ObjectId> {
+  const { localFilePath, originalName, metadata = {} } = params;
 
-  const uploadStream = bucket.openUploadStream(originalName, {
-    metadata: { court, year },
-  });
+  if (!fs.existsSync(localFilePath)) {
+    throw new Error(`File not found: ${localFilePath}`);
+  }
 
-  await new Promise<void>((resolve, reject) => {
-    fs.createReadStream(filePath)
-      .pipe(uploadStream)
-      .on("error", reject)
-      .on("finish", resolve);
-  });
+  const fileExt = path.extname(originalName).toLowerCase();
+  if (fileExt !== ".pdf") {
+    throw new Error("Only PDF files are allowed");
+  }
 
-  const judgment = await Judgment.create({
-    title: path.basename(originalName, ".pdf"),
-    court,
-    year,
-    gridfsFileId: uploadStream.id,
-    originalFileName: originalName,
-    uploadedBy: new mongoose.Types.ObjectId(userId),
-  });
+  // ✅ Upload via canonical GridFS helper
+  const gridFsId = await uploadToGridFS(
+    localFilePath,
+    originalName,
+    metadata
+  );
 
-  fs.unlinkSync(filePath); // 🔥 cleanup
-
-  return judgment;
+  return gridFsId;
 }
