@@ -1,22 +1,61 @@
+import {
+  enqueueIngestion,
+  retryIngestion,
+} from "../controllers/ingestion/ingestionControl.controller";
+
 import { Router } from "express";
 import auth from "../middleware/auth.middleware";
 import { requireRole } from "../middleware/requireRole";
+import { uploadMiddleware } from "../config/multer";
+import { requireFolderUpload } from "../middlewares/requireFolderUpload";
+
 import { uploadJudgmentFolder } from "../controllers/judgmentFolderUpload.controller";
-import { uploadFolder } from "../middleware/uploadFolder.middleware"; // ✅ REQUIRED
+import { getIngestionProgress } from "../controllers/ingestion/ingestionProgress.controller";
 
 const router = Router();
 
 /**
- * 📁 REAL judgment folder upload (INGESTION ONLY)
- * Expected folder structure:
- * YEAR / MONTH / DATE / *.pdf
+ * Folder upload (superadmin only)
  */
 router.post(
   "/upload-folder",
   auth,
   requireRole(["superadmin"]),
-  uploadFolder,               // 🔥 THIS WAS MISSING
+  uploadMiddleware.array("files"),
+  requireFolderUpload,
   uploadJudgmentFolder
 );
+
+/**
+ * Ingestion progress (superadmin)
+ */
+router.get(
+  "/progress",
+  auth,
+  requireRole(["superadmin"]),
+  getIngestionProgress
+);
+
+/**
+ * Manual enqueue (superadmin)
+ */
+router.post(
+  "/:id/enqueue",
+  auth,
+  requireRole(["superadmin"]),
+  enqueueIngestion
+);
+
+/**
+ * Retry failed ingestion (superadmin)
+ */
+router.post(
+  "/:id/retry",
+  auth,
+  requireRole(["superadmin"]),
+  retryIngestion
+);
+
+
 
 export default router;
