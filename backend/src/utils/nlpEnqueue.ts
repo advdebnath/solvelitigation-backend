@@ -1,26 +1,18 @@
 import axios from "axios";
 
-const NLP_BASE_URL =
-  process.env.NLP_BASE_URL || "http://127.0.0.1:8000";
-
-export interface EnqueueNlpJobPayload {
-  jobId?: string;        // backward compatibility
-  judgmentId?: string;  // preferred
-  lockId?: string;      // 🔐 required for callback lock
+interface EnqueuePayload {
+  ingestionId: string;
   pdfPath: string;
-  meta?: any;
 }
 
-export async function enqueueNlpJob(
-  payload: EnqueueNlpJobPayload
-) {
-  const res = await axios.post(
-    `${NLP_BASE_URL}/enqueue`,
-    payload,
-    {
-      timeout: 30000,
-    }
-  );
+export async function enqueueNlpJob(payload: EnqueuePayload) {
+  const NLP_URL = process.env.NLP_SERVICE_URL;
 
-  return res.data;
+  if (!NLP_URL) {
+    throw new Error("NLP_SERVICE_URL not configured");
+  }
+
+  await axios.post(`${NLP_URL}/enqueue`, payload, {
+    timeout: 10_000,
+  });
 }
