@@ -3,10 +3,10 @@ dotenv.config({ path: "/var/www/solvelitigation/backend/.env.production" });
 
 import mongoose from "mongoose";
 import axios from "axios";
-import { Judgment } from "../models/judgment.model";
+import { Judgment } from "../models";
 
 const MONGO_URI =
-  process.env.MONGODB_URI || process.env.MONGO_URI || "";
+  process.env.MONGODB_URI || "";
 
 const NLP_URL =
   process.env.NLP_SERVICE_URL || "http://127.0.0.1:8000";
@@ -26,7 +26,7 @@ async function retryNlp() {
   await connectDB();
 
   const pending = await Judgment.find({
-    "nlp.status": "PENDING",
+    "nlpStatus": "PENDING",
   }).limit(20);
 
   if (pending.length === 0) {

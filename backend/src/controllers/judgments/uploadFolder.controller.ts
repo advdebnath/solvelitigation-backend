@@ -1,98 +1,65 @@
-import crypto from "crypto";
-import fs from "fs";
-import path from "path";
 import { Request, Response } from "express";
-import { Judgment } from "../../models/judgment.model";
-import { enqueueNlpJob } from "../../utils/nlpEnqueue";
+import axios from "axios";
+import { Judgment } from "../../models";
 
-export const uploadJudgmentFolder = async (
-  req: Request,
-  res: Response
-) => {
+/**
+ * POST /api/judgments/upload-folder
+ * ADMIN / SUPERADMIN
+ * Upload multiple PDFs → auto NLP enqueue
+ */
+export const uploadFolder = async (req: Request, res: Response) => {
   try {
-    const { uploadPath, courtType } = req.body;
+    const user = req.currentUser || req.user;
 
-    if (!uploadPath || !courtType) {
-      return res.status(400).json({
-        success: false,
-        message: "uploadPath and courtType are required",
-      });
+    if (!user) {
+      return res.status(401).json({ message: "Not authenticated" });
     }
 
-    if (!fs.existsSync(uploadPath)) {
-      return res.status(400).json({
-        success: false,
-        message: "Upload path does not exist on server",
-      });
+    const files = req.files as Express.Multer.File[];
+
+    if (!files || files.length === 0) {
+      return res.status(400).json({ message: "No files uploaded" });
     }
 
-    const files = fs.readdirSync(uploadPath);
-    const pdfFiles = files.filter((f) =>
-      f.toLowerCase().endsWith(".pdf")
-    );
+    const created: any[] = [];
 
-    if (pdfFiles.length === 0) {
-      return res.status(400).json({
-        success: false,
-        message: "No PDF files found in folder",
-      });
-    }
-
-    let queued = 0;
-
-    for (const file of pdfFiles) {
-      // 🔑 UNIQUE lockId PER judgment (CRITICAL)
-      const lockId = `NLP-${crypto.randomUUID()}`;
-
-      const match = file.match(/(\d{4})(\d{2})(\d{2})/);
-      if (!match) {
-        console.warn(`Skipping file (date not found): ${file}`);
-        continue;
-      }
-
-      const year = Number(match[1]);
-      const month = Number(match[2]);
-      const date = Number(match[3]);
-
-      const fullPath = path.join(uploadPath, file);
-
-      // 1️⃣ Create Judgment FIRST (store lockId)
+    for (const file of files) {
       const judgment = await Judgment.create({
-        courtType,
+        title: file.originalname.replace(/\.pdf$/i, ""),
+        year: new Date().getFullYear(),
+        courtType: "UNKNOWN",
         category: "UNCLASSIFIED",
-        year,
-        month,
-        date,
-        originalFileName: file,
-        filePath: fullPath,
-        uploadedBy: req.currentUser?._id,
-        status: "UPLOADED",
-        nlp: {
-          status: "PENDING",
-          lockId,
-          retryCount: 0,
+        uploadedBy: user._id.toString(),
+        uploadedAt: new Date(),
+        nlpStatus: "PENDING",
+        nlp: { status: "PENDING" },
+        file: {
+          originalname: file.originalname,
+          filename: file.filename,
+          path: file.path,
+          size: file.size,
+          mimetype: file.mimetype,
         },
       });
 
-      // 2️⃣ Enqueue NLP using SAME lockId
-      await enqueueNlpJob({
-        lockId,
-        judgmentId: judgment._id.toString(),
-        pdfPath: fullPath,
-      });
+      // enqueue NLP (non-blocking)
+      axios
+        .post("http://127.0.0.1:4000/api/nlp/enqueue", {
+          judgmentId: judgment._id.toString(),
+        })
+        .catch(() => {});
 
-      queued++;
+      created.push(judgment._id);
     }
 
-    return res.json({
+    return res.status(201).json({
       success: true,
-      message: "Folder upload started",
-      filesQueued: queued,
+      count: created.length,
+      judgmentIds: created,
     });
   } catch (error) {
-    console.error("UPLOAD FOLDER ERROR:", error);
+    console.error("❌ uploadFolder failed:", error);
     return res.status(500).json({
-      success: false,
       message: "Folder upload failed",
     });
   }

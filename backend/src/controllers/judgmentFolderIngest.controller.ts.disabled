@@ -1,0 +1,72 @@
+import fs from "fs";
+import path from "path";
+import { Request, Response } from "express";
+
+import Judgment from "../models/models";
+import { saveFileToGridFS } from "../utils/saveToGridFS";
+import { extractDateFromFilename } from "../utils/extractDateFromFilename";
+
+/**
+ * Ingest PDFs from a folder path provided in body
+ * { folderPath: "/data/judgments/inbox/2026/01/28" }
+ */
+export async function ingestFolder(req: Request, res: Response) {
+  const { folderPath, courtType = "SUPREME_COURT", category = "CRIMINAL" } = req.body;
+
+  if (!folderPath || !fs.existsSync(folderPath)) {
+    return res.status(400).json({ message: "Invalid folderPath" });
+  }
+
+  const files = fs
+    .readdirSync(folderPath)
+    .filter(f => f.toLowerCase().endsWith(".pdf"));
+
+  const results: any[] = [];
+
+  for (const file of files) {
+    const filePath = path.join(folderPath, file);
+
+    try {
+      const fileDate = extractDateFromFilename(file);
+      const now = new Date();
+
+      const year = fileDate?.year ?? now.getFullYear();
+      const month = fileDate?.month ?? now.getMonth() + 1;
+      const date = fileDate?.date ?? now.getDate();
+
+      const stream = fs.createReadStream(filePath);
+      await saveFileToGridFS(stream, file);
+
+      const judgment = await Judgment.create({
+        title: file.replace(/\.pdf$/i, ""),
+        year,
+        month,
+        date,
+        courtType,
+        category,
+        uploadedBy: req.currentUser?._id || req.user?._id,
+        uploadedAt: new Date(),
+        nlpStatus: "PENDING",
+        nlp: { status: "PENDING" },
+        file: {
+          originalname: file,
+          path: filePath,
+        },
+      });
+
+      results.push({ file, success: true, judgmentId: judgment._id });
+    } catch (err: any) {
+      results.push({
+        file,
+        success: false,
+        error: err?.message || "Unknown error",
+      });
+    }
+  }
+
+  return res.json({
+    success: true,
+    count: results.length,
+    results,
+  });
+}

@@ -1,5 +1,4 @@
 import { Router, Request, Response } from "express";
-import { upload900MB } from "../../middlewares/upload.middleware";
 
 const router = Router();
 
@@ -9,7 +8,6 @@ const router = Router();
  */
 router.post(
   "/judgments/upload",
-  upload900MB.single("file"),
   async (req: Request, res: Response) => {
     try {
       if (!req.currentUser) {

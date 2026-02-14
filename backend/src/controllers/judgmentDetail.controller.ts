@@ -1,6 +1,6 @@
 import { Request, Response } from "express";
 import mongoose from "mongoose";
-import { Judgment } from "../models/judgment.model";
+import { Judgment } from "../models";
 
 export const getJudgmentById = async (req: Request, res: Response) => {
   try {

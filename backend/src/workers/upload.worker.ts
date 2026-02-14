@@ -1,37 +1,25 @@
-import { Job } from "@/models/job.model";
-import { UploadAudit } from "@/models/uploadAudit.model";
+import JudgmentIngestion from "../models/JudgmentIngestion";
+import { enqueueNlpForIngestion } from "../services/ingestionAutoEnqueue.service";
 
-export const processUploadJob = async (jobId: string) => {
-  const job = await Job.findById(jobId);
+export async function runUploadWorker() {
+  // 🔍 Find ingestions that should be enqueued
+  const ingestions = await JudgmentIngestion.find({
+    status: "UPLOADED",
+  }).select("_id");
 
-  if (!job) {
-    throw new Error("Job not found");
+  if (ingestions.length === 0) {
+    return;
   }
 
-  await Job.findByIdAndUpdate(jobId, {
-    status: "PROCESSING",
-    progress: 0,
-  });
-
-  const audit = await UploadAudit.findOne({ jobId });
-
-  if (!audit) {
-    throw new Error("Upload audit not found");
+  for (const ingestion of ingestions) {
+    try {
+      await enqueueNlpForIngestion(ingestion._id.toString());
+    } catch (err) {
+      console.error(
+        "❌ Failed to auto-enqueue ingestion:",
+        ingestion._id.toString(),
+        err
+      );
+    }
   }
-
-  // Each UploadAudit = one file
-  const total = 1;
-
-  await Job.findByIdAndUpdate(jobId, {
-    totalTasks: total,
-    completedTasks: 0,
-  });
-
-  await new Promise((r) => setTimeout(r, 300));
-
-  await Job.findByIdAndUpdate(jobId, {
-    completedTasks: 1,
-    progress: 100,
-    status: "COMPLETED",
-  });
-};
+}

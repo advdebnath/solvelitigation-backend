@@ -10,20 +10,23 @@ export interface ParsedJudgmentPath {
 export function validateJudgmentPath(filePath: string): ParsedJudgmentPath | null {
   const parts = path.normalize(filePath).split(path.sep);
 
-  // expect: /data/judgments/inbox/<court>/<year>/<month>/<date>/<file>.pdf
-  const len = parts.length;
-  if (len < 6) return null;
+  if (parts.length < 5) return null;
 
-  const court = parts[len - 5];
-  const year = Number(parts[len - 4]);
-  const month = Number(parts[len - 3]);
-  const date = Number(parts[len - 2]);
+  // Always read from end
+  const fileName = parts[parts.length - 1];
+  const dateStr = parts[parts.length - 2];
+  const monthStr = parts[parts.length - 3];
+  const yearStr = parts[parts.length - 4];
+  const court = parts[parts.length - 5];
+
+  const year = Number(yearStr);
+  const month = Number(monthStr);
+  const date = Number(dateStr);
 
   if (!court) return null;
-  if (year < 1900 || year > 2100) return null;
-  if (month < 1 || month > 12) return null;
-  if (date < 1 || date > 31) return null;
+  if (isNaN(year) || year < 1900 || year > 2100) return null;
+  if (isNaN(month) || month < 1 || month > 12) return null;
+  if (isNaN(date) || date < 1 || date > 31) return null;
 
   return { court, year, month, date };
 }
-

@@ -1,30 +1,43 @@
-import { PlanType } from "@/types/plan.types";
+import "express";
 
 declare global {
   namespace Express {
-    interface Request {
-      user?: AuthUser;
-      currentUser?: AuthUser;
-    }
-
-    interface AuthUser {
+    interface User {
       _id: string;
-      name: string;
-      email: string;
+      id?: string;
+      name?: string;
+      email?: string;
       role: "user" | "admin" | "superadmin";
 
-      plan: PlanType;
-      planStatus: "active" | "inactive" | "expired";
-      planExpiresAt: Date | null;
+      isVerified?: boolean;
 
-      usage: {
+      plan?: string;
+      planStatus?: "active" | "inactive" | "expired" | "grace";
+      planExpiresAt?: Date | null;
+
+      usage?: {
+        downloads: number;
+        aiRequests: number;
+        judgmentsViewed: number;
+        lastViewedAt?: Date;
+      };
+
+      grace?: {
         downloads: number;
         aiRequests: number;
         judgmentsViewed: number;
       };
+    }
 
-      grace: any;
-      isVerified: boolean;
+    interface Request {
+      user?: User;
+      currentUser?: User;
+    }
+
+    namespace Multer {
+      interface File {
+        webkitRelativePath?: string;
+      }
     }
   }
 }

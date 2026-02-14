@@ -1,5 +1,5 @@
 import { Request, Response } from "express";
-import { Judgment } from "../models/judgment.model";
+import { Judgment } from "../models";
 
 export const listJudgments = async (req: Request, res: Response) => {
   try {
@@ -7,28 +7,14 @@ export const listJudgments = async (req: Request, res: Response) => {
     const limit = Math.min(parseInt(req.query.limit as string) || 20, 100);
     const skip = (page - 1) * limit;
 
-    // 🔍 Build dynamic filter
     const filter: any = {};
 
-    if (req.query.year) {
-      filter.year = Number(req.query.year);
-    }
-
-    if (req.query.status) {
-      filter.status = String(req.query.status).toUpperCase();
-    }
-
-    if (req.query.nlpStatus) {
+    if (req.query.year) filter.year = Number(req.query.year);
+    if (req.query.status) filter.status = String(req.query.status).toUpperCase();
+    if (req.query.nlpStatus)
       filter["nlp.status"] = String(req.query.nlpStatus).toUpperCase();
-    }
-
-    if (req.query.category) {
-      filter.category = req.query.category;
-    }
-
-    if (req.query.subCategory) {
-      filter.subCategory = req.query.subCategory;
-    }
+    if (req.query.category) filter.category = req.query.category;
+    if (req.query.subCategory) filter.subCategory = req.query.subCategory;
 
     const [items, total] = await Promise.all([
       Judgment.find(filter)
@@ -41,11 +27,11 @@ export const listJudgments = async (req: Request, res: Response) => {
           status: 1,
           category: 1,
           subCategory: 1,
-          "nlp.status": 1,
+          nlpStatus: 1,
+          nlp: 1,
           uploadedAt: 1,
         })
         .lean(),
-
       Judgment.countDocuments(filter),
     ]);
 

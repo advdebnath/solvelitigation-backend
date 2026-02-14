@@ -1,7 +1,7 @@
 import mongoose from "mongoose";
 import { User } from "@/models/user.model";
 
-const MONGO_URI = process.env.MONGO_URI;
+const MONGO_URI = process.env.MONGODB_URI;
 
 async function resetDailyUsage() {
   if (!MONGO_URI) {

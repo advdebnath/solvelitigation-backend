@@ -1,32 +1,32 @@
-import mongoose, { Schema, Document, Types } from "mongoose";
+import mongoose, { Schema, Document, Model } from "mongoose";
 
 export interface IUploadAudit extends Document {
-  jobId?: Types.ObjectId;
-  judgmentId?: Types.ObjectId;
-
+  action: "UPLOAD" | "BULK_UPLOAD" | "DELETE" | "REPROCESS";
+  status: "SUCCESS" | "FAILED" | "DRY_RUN";
   fileName: string;
-  action: "UPLOAD_SINGLE" | "UPLOAD_BULK";
-
-  filesCount: number;
-
-  uploadedBy: Types.ObjectId;
+  filePath?: string;
+  courtType?: string;
+  year?: string;
+  error?: string;
+  uploadedBy: mongoose.Types.ObjectId;
   ip?: string;
   userAgent?: string;
-
   createdAt: Date;
 }
 
 const UploadAuditSchema = new Schema<IUploadAudit>(
   {
-    jobId: {
-      type: Schema.Types.ObjectId,
-      ref: "Job",
+    action: {
+      type: String,
+      enum: ["UPLOAD", "BULK_UPLOAD", "DELETE", "REPROCESS"],
+      required: true,
       index: true,
     },
 
-    judgmentId: {
-      type: Schema.Types.ObjectId,
-      ref: "Judgment",
+    status: {
+      type: String,
+      enum: ["SUCCESS", "FAILED", "DRY_RUN"],
+      required: true,
       index: true,
     },
 
@@ -35,15 +35,22 @@ const UploadAuditSchema = new Schema<IUploadAudit>(
       required: true,
     },
 
-    action: {
+    filePath: {
       type: String,
-      enum: ["UPLOAD_SINGLE", "UPLOAD_BULK"],
-      required: true,
     },
 
-    filesCount: {
-      type: Number,
-      default: 1,
+    courtType: {
+      type: String,
+      index: true,
+    },
+
+    year: {
+      type: String,
+      index: true,
+    },
+
+    error: {
+      type: String,
     },
 
     uploadedBy: {
@@ -53,15 +60,19 @@ const UploadAuditSchema = new Schema<IUploadAudit>(
       index: true,
     },
 
-    ip: String,
-    userAgent: String,
+    ip: {
+      type: String,
+    },
+
+    userAgent: {
+      type: String,
+    },
   },
   {
     timestamps: { createdAt: true, updatedAt: false },
   }
 );
 
-export const UploadAudit = mongoose.model<IUploadAudit>(
-  "UploadAudit",
-  UploadAuditSchema
-);
+export const UploadAudit: Model<IUploadAudit> =
+  mongoose.models.UploadAudit ||
+  mongoose.model<IUploadAudit>("UploadAudit", UploadAuditSchema);

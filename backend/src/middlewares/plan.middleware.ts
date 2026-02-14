@@ -9,7 +9,7 @@ export const requirePlan =
   (req: Request, res: Response, next: NextFunction) => {
     const user = req.user || req.currentUser;
 
-    if (!user || !plans.includes(user.plan)) {
+    if (!user || !plans.includes((user.plan ?? "free") as PlanType)) {
       return res.status(403).json({
         success: false,
         message: "Your subscription plan does not allow this action",

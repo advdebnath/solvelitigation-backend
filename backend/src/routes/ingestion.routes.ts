@@ -7,7 +7,6 @@ import { Router } from "express";
 import auth from "../middleware/auth.middleware";
 import { requireRole } from "../middleware/requireRole";
 import { uploadMiddleware } from "../config/multer";
-import { requireFolderUpload } from "../middlewares/requireFolderUpload";
 
 import { uploadJudgmentFolder } from "../controllers/judgmentFolderUpload.controller";
 import { getIngestionProgress } from "../controllers/ingestion/ingestionProgress.controller";
@@ -22,7 +21,6 @@ router.post(
   auth,
   requireRole(["superadmin"]),
   uploadMiddleware.array("files"),
-  requireFolderUpload,
   uploadJudgmentFolder
 );
 
@@ -55,7 +53,5 @@ router.post(
   requireRole(["superadmin"]),
   retryIngestion
 );
-
-
 
 export default router;

@@ -1,0 +1,92 @@
+import { Request, Response } from "express";
+import mongoose from "mongoose";
+import JudgmentIngestion from "../models/JudgmentIngestion";
+import Judgment from "../models/models";
+// import GridFS / upload helpers as you already have
+
+export const uploadJudgment = async (req: Request, res: Response) => {
+  const session = await mongoose.startSession();
+  session.startTransaction();
+
+  try {
+    const userId = req.user!._id; // superadmin (already RBAC protected)
+    const file = req.file;        // multer / upload middleware
+
+    if (!file) {
+      return res.status(400).json({ message: "No file uploaded" });
+    }
+
+    /* -------------------------------------------------
+       1️⃣ CREATE INGESTION RECORD (FIRST WRITE)
+    --------------------------------------------------*/
+    const ingestion = await JudgmentIngestion.create(
+      [
+        {
+          source: "superadmin-dashboard",
+          uploadType: "single",
+          file: {
+            originalName: file.originalname,
+            size: file.size,
+            sha256: req.body.sha256, // or computed hash
+            mimeType: file.mimetype
+          },
+          status: "UPLOADED",
+          createdBy: userId
+        }
+      ],
+      { session }
+    );
+
+    const ingestionId = ingestion[0]._id;
+
+    /* -------------------------------------------------
+       2️⃣ STORE FILE (GridFS / uploads)
+       (you already have this logic)
+    --------------------------------------------------*/
+    // const fileId = await saveToGridFS(file);
+
+    /* -------------------------------------------------
+       3️⃣ CREATE JUDGMENT (LINK INGESTION)
+    --------------------------------------------------*/
+    const judgment = await Judgment.create(
+      [
+        {
+          ingestionId,
+          title: file.originalname,
+          category: "UNCLASSIFIED",
+          nlpStatus: "PENDING",
+          createdBy: userId
+        }
+      ],
+      { session }
+    );
+
+    /* -------------------------------------------------
+       4️⃣ UPDATE INGESTION → REGISTERED
+    --------------------------------------------------*/
+    await JudgmentIngestion.findByIdAndUpdate(
+      ingestionId,
+      { status: "REGISTERED" },
+      { session }
+    );
+
+    await session.commitTransaction();
+    session.endSession();
+
+    return res.status(201).json({
+      success: true,
+      ingestionId,
+      judgmentId: judgment[0]._id
+    });
+
+  } catch (err: any) {
+    await session.abortTransaction();
+    session.endSession();
+
+    return res.status(500).json({
+      success: false,
+      message: "Upload failed",
+      error: err.message
+    });
+  }
+};

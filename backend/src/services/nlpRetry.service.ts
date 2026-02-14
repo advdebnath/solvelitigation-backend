@@ -1,9 +1,9 @@
 import axios from "axios";
-import { Judgment } from "../models/judgment.model";
+import { Judgment } from "../models";
 
 export const retryPendingNLPJobs = async () => {
   const pending = await Judgment.find({
-    "nlp.status": "PENDING",
+    nlpStatus: "PENDING",
   }).limit(10); // safety limit
 
   for (const judgment of pending) {
@@ -12,7 +12,7 @@ export const retryPendingNLPJobs = async () => {
         jobId: judgment._id.toString(),
       });
 
-      judgment.nlp.status = "PROCESSING";
+      judgment.nlpStatus = "PROCESSING";
       await judgment.save();
 
       console.log(`✅ NLP requeued: ${judgment._id}`);

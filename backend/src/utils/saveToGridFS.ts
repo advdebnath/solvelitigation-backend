@@ -1,27 +1,16 @@
-import mongoose from "mongoose";
+import fs from "fs";
+import path from "path";
+import { getGridFSBucket } from "./gridfs";
 
-export const saveFileToGridFS = async (
-  fileStream: NodeJS.ReadableStream,
-  filename: string
-): Promise<mongoose.Types.ObjectId> => {
-  const db = mongoose.connection.db;
-
-  if (!db) {
-    throw new Error("MongoDB connection not ready");
-  }
-
-  const bucket = new mongoose.mongo.GridFSBucket(db, {
-    bucketName: "judgments",
-  });
+export async function saveToGridFS(filePath: string, filename: string) {
+  const bucket = getGridFSBucket();
 
   return new Promise((resolve, reject) => {
     const uploadStream = bucket.openUploadStream(filename);
 
-    fileStream
+    fs.createReadStream(filePath)
       .pipe(uploadStream)
       .on("error", reject)
-      .on("finish", () =>
-        resolve(uploadStream.id as mongoose.Types.ObjectId)
-      );
+      .on("finish", resolve);
   });
-};
+}

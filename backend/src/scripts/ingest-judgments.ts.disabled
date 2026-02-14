@@ -1,0 +1,73 @@
+import fs from "fs";
+import path from "path";
+import mongoose from "mongoose";
+import Judgment from "../models/models";
+
+/**
+ * Standalone script:
+ * ts-node src/scripts/ingest-judgments.ts
+ */
+
+const INBOX = "/data/judgments/inbox";
+
+const scanPdfFiles = (dir: string): string[] => {
+  let results: string[] = [];
+  if (!fs.existsSync(dir)) return results;
+
+  for (const entry of fs.readdirSync(dir)) {
+    const fullPath = path.join(dir, entry);
+    if (fs.statSync(fullPath).isDirectory()) {
+      results = results.concat(scanPdfFiles(fullPath));
+    } else if (entry.toLowerCase().endsWith(".pdf")) {
+      results.push(fullPath);
+    }
+  }
+  return results;
+};
+
+(async () => {
+  try {
+    await mongoose.connect(process.env.MONGO_URI!);
+    console.log("✅ MongoDB connected");
+
+    const files = scanPdfFiles(INBOX);
+    console.log(`📂 Found ${files.length} PDFs`);
+
+    let success = 0;
+    let failed = 0;
+
+    for (const filePath of files) {
+      const file = path.basename(filePath);
+
+      try {
+        await Judgment.create({
+          title: file.replace(/\.pdf$/i, ""),
+          year: new Date().getFullYear(),
+          courtType: "UNKNOWN",
+          category: "UNCLASSIFIED",
+          uploadedAt: new Date(),
+          nlpStatus: "PENDING",
+          nlp: { status: "PENDING" },
+          file: {
+            originalname: file,
+            path: filePath,
+          },
+        });
+
+        success++;
+      } catch (err) {
+        failed++;
+        console.error("❌ Failed:", file, err);
+      }
+    }
+
+    console.log("📊 INGEST SUMMARY");
+    console.log("✔ Success:", success);
+    console.log("✖ Failed :", failed);
+
+    process.exit(0);
+  } catch (err) {
+    console.error("❌ Ingest script failed:", err);
+    process.exit(1);
+  }
+})();

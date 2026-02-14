@@ -1,5 +1,4 @@
 import { Request, Response } from "express";
-import mongoose from "mongoose";
 import bcrypt from "bcryptjs";
 
 import { setAuthCookie } from "../../utils/authCookie";
@@ -11,14 +10,6 @@ import { User } from "../../models/user.model";
  */
 export const login = async (req: Request, res: Response) => {
   try {
-    // ⛔ HARD BLOCK if DB not ready
-    if (mongoose.connection.readyState !== 1) {
-      return res.status(503).json({
-        success: false,
-        message: "Database not ready, please retry",
-      });
-    }
-
     const { email, password } = req.body as {
       email?: string;
       password?: string;
@@ -33,7 +24,9 @@ export const login = async (req: Request, res: Response) => {
 
     const normalizedEmail = email.toLowerCase().trim();
 
-    const user = await User.findOne({ email: normalizedEmail }).select("+password");
+    const user = await User.findOne({ email: normalizedEmail }).select(
+      "+password"
+    );
 
     if (!user) {
       return res.status(401).json({
@@ -51,15 +44,16 @@ export const login = async (req: Request, res: Response) => {
       });
     }
 
-    // ✅ JWT + cookie
+    // ✅ Generate JWT
     const token = signToken({
       userId: user._id.toString(),
       role: user.role,
     });
 
+    // ✅ Set auth cookie
     setAuthCookie(res, token);
 
-    return res.json({
+    return res.status(200).json({
       success: true,
       token,
       user: {

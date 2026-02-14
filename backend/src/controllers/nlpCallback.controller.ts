@@ -1,52 +1,47 @@
 import { Request, Response } from "express";
-import { Judgment } from "../models/judgment.model";
-import { AuditLog } from "../models/auditLog.model";
+import mongoose from "mongoose";
+import JudgmentIngestion from "../models/JudgmentIngestion";
 
+/**
+ * NLP CALLBACK (Option A - Ingestion Based)
+ * Called by NLP worker
+ */
 export const nlpCallback = async (req: Request, res: Response) => {
   try {
-    const {
-      lockId,
-      status,
-      category,
-      subCategory,
-      pointsOfLaw,
-      acts,
-      error,
-    } = req.body;
+    const { ingestionId, status, error } = req.body;
 
-    if (!lockId) {
-      return res.status(400).json({ message: "lockId required" });
+    if (!mongoose.Types.ObjectId.isValid(ingestionId)) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid ingestionId",
+      });
     }
 
     const update: any = {
-      "nlp.status": status,
-      "nlp.completedAt": new Date(),
+      status,
+      updatedAt: new Date(),
     };
 
-    if (pointsOfLaw) update["nlp.pointsOfLaw"] = pointsOfLaw;
-    if (acts) update["nlp.acts"] = acts;
-    if (error) update["nlp.lastError"] = error;
-
-    const judgment = await Judgment.findOneAndUpdate(
-      { "nlp.lockId": lockId },   // ✅ FIX
-      { $set: update },
-      { new: true }
-    );
-
-    if (!judgment) {
-      return res.status(404).json({ message: "Judgment not found" });
+    if (error) {
+      update.error = error;
     }
 
-    await AuditLog.create({
-      action: "NLP_CALLBACK",
-      entity: "Judgment",
-      entityId: judgment._id,
-      meta: req.body,
+    await JudgmentIngestion.findByIdAndUpdate(
+      ingestionId,
+      { $set: update }
+    );
+
+    return res.json({
+      success: true,
+      ingestionId,
+      status,
     });
 
-    return res.json({ success: true });
-  } catch (err) {
-    console.error("NLP CALLBACK ERROR:", err);
-    return res.status(500).json({ message: "Callback failed" });
+  } catch (err: any) {
+    return res.status(500).json({
+      success: false,
+      message: "NLP callback failed",
+      error: err.message,
+    });
   }
 };

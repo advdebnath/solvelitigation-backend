@@ -1,35 +1,37 @@
-import path from "path";
-import fs from "fs";
-import mongoose from "mongoose";
-import { uploadToGridFS } from "../utils/gridfs";
+import mongoose, { Types } from "mongoose";
+import Judgment from "../models/judgment.model";
 
 /**
- * ✅ Upload a judgment PDF into GridFS
- * - Handles large files (900MB)
- * - Returns GridFS ObjectId
+ * Creates a Judgment record from an uploaded PDF file
+ * Used for both single and folder uploads
  */
-export async function uploadJudgmentFile(params: {
-  localFilePath: string;
-  originalName: string;
-  metadata?: Record<string, any>;
-}): Promise<mongoose.Types.ObjectId> {
-  const { localFilePath, originalName, metadata = {} } = params;
-
-  if (!fs.existsSync(localFilePath)) {
-    throw new Error(`File not found: ${localFilePath}`);
+export async function createJudgmentFromUpload(
+  file: Express.Multer.File,
+  meta: {
+    uploadedBy: Types.ObjectId;
+    source?: string;
+  }
+): Promise<Types.ObjectId | undefined> {
+  // 🛡 Safety: multer already filtered PDFs
+  if (!file || !file.originalname) {
+    return undefined;
   }
 
-  const fileExt = path.extname(originalName).toLowerCase();
-  if (fileExt !== ".pdf") {
-    throw new Error("Only PDF files are allowed");
+  // 🧠 Extra safety (extension only, no mimetype)
+  if (!file.originalname.toLowerCase().endsWith(".pdf")) {
+    return undefined;
   }
 
-  // ✅ Upload via canonical GridFS helper
-  const gridFsId = await uploadToGridFS(
-    localFilePath,
-    originalName,
-    metadata
-  );
+  const judgment = await Judgment.create({
+    title: file.originalname,
+    filePath: file.path,
+    originalFileName: file.originalname,
 
-  return gridFsId;
+    uploadedBy: meta.uploadedBy,
+    source: meta.source ?? "upload",
+
+    status: "UPLOADED",
+  });
+
+  return judgment._id;
 }

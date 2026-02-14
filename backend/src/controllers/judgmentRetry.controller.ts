@@ -1,6 +1,6 @@
 import axios from "axios";
 import { Request, Response } from "express";
-import { Judgment } from "../models/judgment.model";
+import { Judgment } from "../models";
 
 export const retryNLP = async (req: Request, res: Response) => {
   const { judgmentId } = req.params;
@@ -15,7 +15,7 @@ export const retryNLP = async (req: Request, res: Response) => {
       jobId: judgment._id.toString(),
     });
 
-    judgment.nlp.status = "PROCESSING";
+    judgment.nlpStatus = "PROCESSING";
     await judgment.save();
 
     return res.json({

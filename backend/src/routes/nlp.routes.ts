@@ -1,17 +1,9 @@
 import { Router } from "express";
-import { enqueueNlpJobController } from "../controllers/nlp/nlp.enqueue.controller";
-import { retryNlpJob } from "../controllers/nlp/nlp.retry.controller";
-import { nlpCallback } from "../controllers/nlpCallback.controller";
+import { nlpCallbackController } from "../controllers/nlp/nlp.callback.controller";
 
 const router = Router();
 
-// Backend → NLP
-router.post("/enqueue", enqueueNlpJobController);
-
-// NLP → Backend callback
-router.post("/callback", nlpCallback);
-
-// Manual retry
-router.post("/retry/:judgmentId", retryNlpJob);
+// ⚠️ NO AUTH — NLP service is internal
+router.post("/callback", nlpCallbackController);
 
 export default router;

@@ -1,18 +1,17 @@
 import axios from "axios";
 
-interface EnqueuePayload {
-  ingestionId: string;
-  pdfPath: string;
+export async function enqueueNlpJob(judgmentId: string) {
+const NLP_URL = process.env.NLP_BASE_URL;
+
+if (!NLP_URL) {
+  throw new Error("NLP_BASE_URL not configured");
 }
 
-export async function enqueueNlpJob(payload: EnqueuePayload) {
-  const NLP_URL = process.env.NLP_SERVICE_URL;
+  console.log("📤 Sending to NLP:", { judgmentId });
 
-  if (!NLP_URL) {
-    throw new Error("NLP_SERVICE_URL not configured");
-  }
-
-  await axios.post(`${NLP_URL}/enqueue`, payload, {
-    timeout: 10_000,
-  });
+  await axios.post(
+    `${NLP_URL}/api/enqueue`,
+    { judgmentId },
+    { timeout: 10000 }
+  );
 }

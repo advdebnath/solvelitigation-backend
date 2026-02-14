@@ -1,14 +1,18 @@
+// src/middlewares/auth.middleware.ts
+
 import { Request, Response, NextFunction } from "express";
 import jwt from "jsonwebtoken";
 import mongoose from "mongoose";
 
-import { User } from "../models/user.model";
+import UserModel from "../models/user.model";
 import { IUser } from "../models/user.types";
 import { JWT_COOKIE_NAME } from "../config";
 import { PlanType } from "../types/plan.types";
 
 /**
- * Core auth middleware
+ * ===============================
+ * AUTHENTICATE JWT (CORE)
+ * ===============================
  */
 export async function authenticateJWT(
   req: Request,
@@ -24,26 +28,30 @@ export async function authenticateJWT(
       return res.status(401).json({ message: "Unauthorized" });
     }
 
+    // 🔐 Verify token
     const decoded = jwt.verify(
       token,
       process.env.JWT_SECRET as string
-    ) as { userId: string };
+    ) as { userId: string; role?: string };
 
-    if (!mongoose.Types.ObjectId.isValid(decoded.userId)) {
+    if (!decoded.userId || !mongoose.Types.ObjectId.isValid(decoded.userId)) {
       return res.status(401).json({ message: "Invalid token" });
     }
 
-    const user = (await User.findOne({
+    // 👤 Fetch user
+    const user = (await UserModel.findOne({
       _id: decoded.userId,
-      isDeleted: false,
+      isDeleted: { $ne: true },
     }).lean()) as IUser | null;
 
     if (!user) {
       return res.status(401).json({ message: "User not found" });
     }
 
+    // 🧠 Normalize user object
     const normalizedUser = {
       _id: user._id.toString(),
+      userId: user._id.toString(), // for /me
       name: user.name,
       email: user.email,
       role: user.role,
@@ -59,12 +67,12 @@ export async function authenticateJWT(
       },
 
       grace: user.grace ?? null,
-      isVerified: user.isVerified,
+      isVerified: user.isVerified ?? false,
     };
 
-    // ✅ Backward compatibility
-    req.user = normalizedUser;
-    req.currentUser = normalizedUser;
+    // 🔁 Backward compatibility
+    (req as any).user = normalizedUser;
+    (req as any).currentUser = normalizedUser;
 
     next();
   } catch (error) {
@@ -73,14 +81,16 @@ export async function authenticateJWT(
 }
 
 /**
- * Superadmin guard
+ * ===============================
+ * SUPERADMIN GUARD
+ * ===============================
  */
 export function requireSuperAdmin(
   req: Request,
   res: Response,
   next: NextFunction
 ) {
-  const user = req.user || req.currentUser;
+  const user = (req as any).user || (req as any).currentUser;
 
   if (!user || user.role !== "superadmin") {
     return res.status(403).json({
@@ -91,3 +101,12 @@ export function requireSuperAdmin(
 
   next();
 }
+
+/**
+ * ===============================
+ * ALIAS (IMPORTANT)
+ * ===============================
+ * This fixes:
+ *   import { auth } from "../middlewares/auth.middleware"
+ */
+export const auth = authenticateJWT;

@@ -1,27 +1,39 @@
 import mongoose, { Schema, Document } from "mongoose";
 
+export type IngestionStatus =
+  | "UPLOADED"
+  | "QUEUED"
+  | "PROCESSING"
+  | "COMPLETED"
+  | "FAILED";
+
 export interface IJudgmentIngestion extends Document {
   source: string;
-  uploadType: "single" | "bulk";
-  pathMeta?: {
-    year: number;
-    month: number;
-    date: number;
-  };
+  uploadType: "single" | "folder";
+
   file: {
     originalName: string;
+    relativePath: string;
     size: number;
     sha256: string;
-    gridfsFileId: mongoose.Types.ObjectId;
   };
-  status:
-    | "UPLOADED"
-    | "REGISTERED"
-    | "NLP_PENDING"
-    | "NLP_PROCESSING"
-    | "COMPLETED"
-    | "FAILED";
-  errorReason?: string;
+
+  extractedMeta?: {
+    year?: number;
+    month?: number;
+    date?: number;
+  };
+
+  status: IngestionStatus;
+  error?: string;
+  retryCount: number;
+
+  queuedAt?: Date;
+  processingAt?: Date;
+  completedAt?: Date;
+failedAt?: Date;
+judgmentId?: mongoose.Types.ObjectId;
+
   createdBy: mongoose.Types.ObjectId;
   createdAt: Date;
   updatedAt: Date;
@@ -29,42 +41,79 @@ export interface IJudgmentIngestion extends Document {
 
 const JudgmentIngestionSchema = new Schema<IJudgmentIngestion>(
   {
-    source: { type: String, required: true },
-    uploadType: { type: String, enum: ["single", "bulk"], required: true },
+    source: {
+      type: String,
+      required: true,
+      index: true,
+    },
 
-    pathMeta: {
+    uploadType: {
+      type: String,
+      enum: ["single", "folder"],
+      required: true,
+    },
+
+    file: {
+      originalName: { type: String },
+      relativePath: { type: String },
+      size: { type: Number },
+      sha256: { type: String },
+    },
+
+    extractedMeta: {
       year: Number,
       month: Number,
       date: Number,
     },
 
-    file: {
-      originalName: { type: String, required: true },
-      size: { type: Number, required: true },
-      sha256: { type: String, required: true },
-      gridfsFileId: {
-        type: Schema.Types.ObjectId,
-        required: true,
-      },
-    },
-
     status: {
       type: String,
-      enum: [
-        "UPLOADED",
-        "REGISTERED",
-        "NLP_PENDING",
-        "NLP_PROCESSING",
-        "COMPLETED",
-        "FAILED",
-      ],
+      enum: ["UPLOADED", "QUEUED", "PROCESSING", "COMPLETED", "FAILED"],
       default: "UPLOADED",
+      index: true,
     },
 
-    errorReason: String,
-    createdBy: { type: Schema.Types.ObjectId, ref: "User", required: true },
+    error: {
+      type: String,
+    },
+
+    retryCount: {
+      type: Number,
+      default: 0,
+    },
+
+    queuedAt: {
+      type: Date,
+    },
+
+    processingAt: {
+      type: Date,
+    },
+
+    completedAt: {
+      type: Date,
+    },
+
+ failedAt: {
+    type: Date,
   },
-  { timestamps: true }
+
+ judgmentId: {
+    type: Schema.Types.ObjectId,
+    ref: "Judgment",
+    index: true,
+  },
+
+    createdBy: {
+      type: Schema.Types.ObjectId,
+      ref: "User",
+      required: true,
+      index: true,
+    },
+  },
+  {
+    timestamps: true,
+  }
 );
 
 export default mongoose.model<IJudgmentIngestion>(

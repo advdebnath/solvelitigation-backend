@@ -1,70 +1,37 @@
 import { Request, Response, NextFunction } from "express";
-import { PLAN_CAPABILITIES, PlanKey } from "@/config/planCapabilities";
+import { PLAN_LIMITS } from "@/config/planLimits";
+import { UsageKey, PlanType } from "@/types/plan.types";
 
-/**
- * Enforce per-day usage limits based on plan
- *
- * Usage:
- *   requireUsageLimit("judgments")
- *   requireUsageLimit("downloads")
- *   requireUsageLimit("aiRequests")
- */
-type UsageKey = "judgments" | "downloads" | "aiRequests";
-
-export function requireUsageLimit(key: UsageKey) {
-  return (req: Request, res: Response, next: NextFunction) => {
+export const requireUsageLimit =
+  (key: UsageKey) =>
+  (req: Request, res: Response, next: NextFunction) => {
     const user = req.user || req.currentUser;
 
-    if (!user) {
-      return res.status(401).json({
-        success: false,
-        message: "Authentication required",
-      });
+    if (!user || !user.plan) {
+      return res.status(401).json({ message: "Unauthorized" });
     }
 
-    // 🔓 Superadmin bypass
-    if (user.role === "superadmin") {
-      return next();
-    }
+    // 🔒 HARD NARROWING — this is what TS needs
+    const plan = user.plan as PlanType;
+    const limits = PLAN_LIMITS[plan];
 
-    const plan = (user.plan || "free") as PlanKey;
-    const planConfig = PLAN_CAPABILITIES[plan];
+    const used = typeof (user.usage?.[key as keyof typeof user.usage]) === "number"
+      ? (user.usage?.[key as keyof typeof user.usage] as number)
+      : 0;
+      user.usage && key in user.usage
+        ? user.usage[key as keyof typeof user.usage] ?? 0
+        : 0;
 
-    if (!planConfig) {
-      return res.status(403).json({
-        success: false,
-        message: "Invalid subscription plan",
-      });
-    }
+    const grace =
+      user.grace && key in user.grace
+        ? user.grace[key as keyof typeof user.grace] ?? 0
+        : 0;
 
-    // 🔁 Map usage key → plan capability
-    const planLimitMap = {
-      judgments: planConfig.judgmentsPerDay,
-      downloads: planConfig.downloadsPerDay,
-      aiRequests: planConfig.aiRequestsPerDay,
-    } as const;
-
-    const limit = planLimitMap[key];
-
-    // Unlimited plan
-    if (limit === "unlimited") {
-      return next();
-    }
-
-    const used = user.usage?.[key] ?? 0;
-    const grace = user.grace?.[key] ?? 0;
-
-    if (used >= limit + grace) {
+    if (used >= limits[key] && grace <= 0) {
       return res.status(429).json({
-        success: false,
-        message: `Daily ${key} limit reached`,
-        limit,
-        used,
-        upgradeRequired: true,
-        requiredPlan: "premium",
+        message: "Usage limit exceeded for your plan",
       });
     }
 
     next();
   };
-}

@@ -1,90 +1,77 @@
-import mongoose, { Schema, Document } from "mongoose";
+import mongoose, { Schema, Types } from "mongoose";
 
-/**
- * TypeScript-only NLP status type
- */
-export type NLPStatus =
-  | "PENDING"
-  | "RUNNING"
-  | "COMPLETED"
-  | "FAILED";
+export interface IJudgment {
+  ingestionId?: Types.ObjectId; // optional for legacy records
 
-export interface IJudgmentNLP {
-  status: NLPStatus;
-  startedAt?: Date;
-  completedAt?: Date;
-  retryCount?: number;
-  lastError?: string;
-  lockId?: string;
+  summary?: string;
+  category?: string;
+  subCategory?: string;
+  pointsOfLaw?: string[];
+  confidence?: number;
+
+  createdBy: Types.ObjectId;
+
+  createdAt: Date;
+  updatedAt: Date;
 }
 
-export interface IJudgment extends Document {
-  title: string;
-  year: number;
+const JudgmentSchema = new Schema<IJudgment>(
+  {
+    ingestionId: {
+      type: Schema.Types.ObjectId,
+      ref: "JudgmentIngestion",
+      required: false, // ⚠️ legacy-safe
+    },
 
-  status: "UPLOADED" | "PROCESSING" | "COMPLETED" | "FAILED";
-
-  category?: string | null;
-  subCategory?: string | null;
-
-  nlp: IJudgmentNLP;
-
-  gridfsFileId: mongoose.Types.ObjectId;
-  uploadedAt: Date;
-}
-
-const JudgmentSchema = new Schema<IJudgment>({
-  title: { type: String, required: true },
-  year: { type: Number, required: true },
-
-  status: {
-    type: String,
-    enum: ["UPLOADED", "PROCESSING", "COMPLETED", "FAILED"],
-    default: "UPLOADED",
-    index: true,
-  },
-
-  category: {
-    type: String,
-    index: true,
-    default: null,
-  },
-
-  subCategory: {
-    type: String,
-    index: true,
-    default: null,
-  },
-
-  /**
-   * NLP lifecycle state
-   */
-  nlp: {
-    status: {
+    summary: {
       type: String,
-      enum: ["PENDING", "RUNNING", "COMPLETED", "FAILED"],
-      default: "PENDING",
+      trim: true,
+    },
+
+    category: {
+      type: String,
       index: true,
     },
-    startedAt: { type: Date },
-    completedAt: { type: Date },
-    retryCount: { type: Number, default: 0 },
-    lastError: { type: String },
-    lockId: { type: String },
-  },
 
-  gridfsFileId: {
-    type: Schema.Types.ObjectId,
-    required: true,
-  },
+    subCategory: {
+      type: String,
+    },
 
-  uploadedAt: {
-    type: Date,
-    default: Date.now,
-    index: true,
-  },
-});
+    pointsOfLaw: {
+      type: [String],
+      default: [],
+    },
 
-export const Judgment =
+    confidence: {
+      type: Number,
+      min: 0,
+      max: 1,
+    },
+
+    createdBy: {
+      type: Schema.Types.ObjectId,
+      ref: "User",
+      required: true,
+      index: true,
+    },
+  },
+  {
+    timestamps: true,
+  }
+);
+
+/**
+ * ✅ ONE judgment per ingestion
+ * ✅ sparse allows old records without ingestionId
+ */
+JudgmentSchema.index(
+  { ingestionId: 1 },
+  { unique: true, sparse: true }
+);
+
+// ✅ SAFE MODEL DEFINITION (prevents OverwriteModelError)
+const Judgment =
   mongoose.models.Judgment ||
   mongoose.model<IJudgment>("Judgment", JudgmentSchema);
+
+export default Judgment;
