@@ -1,3 +1,5 @@
+print("### JUDGMENT WORKER FILE LOADED ###")
+from datetime import datetime
 # =========================================
 # SolveLitigation NLP – Judgment RQ Worker
 # =========================================
@@ -28,6 +30,7 @@ db = mongo.get_database()
 # "workers.judgment_worker.analyze_judgment"
 # =====================================================
 def analyze_judgment(job_data: dict):
+    print("### ANALYZE_JUDGMENT CALLED ###", job_data)
     """
     job_data example:
     {
@@ -38,14 +41,15 @@ def analyze_judgment(job_data: dict):
     """
 
     job_id = job_data.get("jobId")
-    pdf_path = job_data.get("pdfPath")
+    gridfs_id = job_data.get("gridfsFileId")
     options = job_data.get("options", {})
 
-    if not job_id or not pdf_path:
+    if not job_id:
         raise ValueError("jobId and pdfPath are required")
 
     print(f"[NLP] Starting job: {job_id}")
     print(f"[NLP] PDF Path: {pdf_path}")
+    if not gridfs_id:\n        raise ValueError("gridfsFileId required")\n\n    from gridfs import GridFS\n    fs = GridFS(db)\n    file = fs.get(ObjectId(gridfs_id))\n    pdf_bytes = file.read()\n    print(f"[NLP] Loaded PDF from GridFS: {file.filename}")\n
 
     # Convert jobId to ObjectId if possible
     try:
@@ -56,9 +60,9 @@ def analyze_judgment(job_data: dict):
     # -----------------------------
     # Mark job as PROCESSING
     # -----------------------------
-    db.nlpjobs.update_one(
+    db.judgments.update_one(
         {"_id": mongo_job_id},
-        {"$set": {"status": "PROCESSING"}},
+        {"$set": {"nlpStatus": "PROCESSING", "nlpStartedAt": datetime.utcnow()}},
         upsert=True
     )
 
@@ -83,11 +87,11 @@ def analyze_judgment(job_data: dict):
         # -----------------------------
         # Mark job as COMPLETED
         # -----------------------------
-        db.nlpjobs.update_one(
+        db.judgments.update_one(
             {"_id": mongo_job_id},
             {
                 "$set": {
-                    "status": "COMPLETED",
+                    "nlpStatus": "COMPLETED", "nlpCompletedAt": datetime.utcnow(),
                     "result": result
                 }
             }
@@ -99,11 +103,11 @@ def analyze_judgment(job_data: dict):
     except Exception as e:
         print(f"[NLP] Job failed: {job_id}")
 
-        db.nlpjobs.update_one(
+        db.judgments.update_one(
             {"_id": mongo_job_id},
             {
                 "$set": {
-                    "status": "FAILED",
+                    "nlpStatus": "FAILED",
                     "error": str(e),
                     "trace": traceback.format_exc()
                 }
