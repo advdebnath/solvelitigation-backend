@@ -1,17 +1,17 @@
 import axios from "axios";
 
-export async function enqueueNlpJob(judgmentId: string) {
-const NLP_URL = process.env.NLP_BASE_URL;
+export async function enqueueNlpJob(ingestionId: string) {
+  const NLP_URL = process.env.NLP_BASE_URL;
 
-if (!NLP_URL) {
-  throw new Error("NLP_BASE_URL not configured");
-}
+  if (!NLP_URL) {
+    throw new Error("NLP_BASE_URL not configured");
+  }
 
-  console.log("📤 Sending to NLP:", { judgmentId });
+  console.log("📤 Sending to NLP:", { ingestionId });
 
   await axios.post(
     `${NLP_URL}/api/enqueue`,
-    { judgmentId },
+    { ingestionId },
     { timeout: 10000 }
   );
 }

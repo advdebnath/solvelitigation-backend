@@ -37,6 +37,12 @@ declare global {
     namespace Multer {
       interface File {
         webkitRelativePath?: string;
+
+        originalname: string;
+        filename: string;
+        path: string;
+        size: number;
+        mimetype: string;
       }
     }
   }

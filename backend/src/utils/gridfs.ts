@@ -14,7 +14,7 @@ export function getGridFSBucket() {
 export async function uploadToGridFS(
   filePath: string,
   filename: string
-): Promise<void> {
+): Promise<mongoose.Types.ObjectId> {
   const bucket = getGridFSBucket();
 
   return new Promise((resolve, reject) => {
@@ -23,6 +23,8 @@ export async function uploadToGridFS(
     fs.createReadStream(filePath)
       .pipe(uploadStream)
       .on("error", reject)
-      .on("finish", () => resolve());
+      .on("finish", () => {
+        resolve(uploadStream.id as mongoose.Types.ObjectId);
+      });
   });
 }

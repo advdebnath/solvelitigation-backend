@@ -16,6 +16,7 @@ export interface IJudgmentIngestion extends Document {
     relativePath: string;
     size: number;
     sha256: string;
+    gridfsFileId: mongoose.Types.ObjectId;
   };
 
   extractedMeta?: {
@@ -31,8 +32,9 @@ export interface IJudgmentIngestion extends Document {
   queuedAt?: Date;
   processingAt?: Date;
   completedAt?: Date;
-failedAt?: Date;
-judgmentId?: mongoose.Types.ObjectId;
+  failedAt?: Date;
+
+  judgmentId?: mongoose.Types.ObjectId;
 
   createdBy: mongoose.Types.ObjectId;
   createdAt: Date;
@@ -58,6 +60,11 @@ const JudgmentIngestionSchema = new Schema<IJudgmentIngestion>(
       relativePath: { type: String },
       size: { type: Number },
       sha256: { type: String },
+      gridfsFileId: {
+        type: Schema.Types.ObjectId,
+        required: true,
+        index: true,
+      },
     },
 
     extractedMeta: {
@@ -82,27 +89,16 @@ const JudgmentIngestionSchema = new Schema<IJudgmentIngestion>(
       default: 0,
     },
 
-    queuedAt: {
-      type: Date,
+    queuedAt: Date,
+    processingAt: Date,
+    completedAt: Date,
+    failedAt: Date,
+
+    judgmentId: {
+      type: Schema.Types.ObjectId,
+      ref: "Judgment",
+      index: true,
     },
-
-    processingAt: {
-      type: Date,
-    },
-
-    completedAt: {
-      type: Date,
-    },
-
- failedAt: {
-    type: Date,
-  },
-
- judgmentId: {
-    type: Schema.Types.ObjectId,
-    ref: "Judgment",
-    index: true,
-  },
 
     createdBy: {
       type: Schema.Types.ObjectId,

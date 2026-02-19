@@ -32,13 +32,14 @@ function walk(dir: string, callback: (file: string) => void) {
 
 function insertHeadnote(htmlPath: string) {
   const html = fs.readFileSync(htmlPath, "utf-8");
-  const $ = cheerio.load(html, { decodeEntities: false });
+
+const $ = cheerio.load(html);
 
   const body = $("body");
   if (!body.length) return;
 
-  let judgmentNode: cheerio.Element | null = null;
-  let costNode: cheerio.Element | null = null;
+let judgmentNode: any = null;
+let costNode: any = null;
 
   body.find("*").each((_, el) => {
     const text = $(el).text().trim();

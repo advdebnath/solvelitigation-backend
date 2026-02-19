@@ -1,24 +1,29 @@
+import dotenv from "dotenv";
 import mongoose from "mongoose";
+import { connectDB } from "../config/db";
 import { processQueuedIngestions } from "../services/ingestionProcessingWorker.service";
 
-const POLL_INTERVAL_MS = 5000; // every 5 seconds
+dotenv.config();
+
+const POLL_INTERVAL_MS = 5000;
 
 async function startWorker() {
   try {
-    await mongoose.connect(process.env.MONGO_URI!);
+    console.log("⏳ Connecting to MongoDB...");
+    await connectDB();
     console.log("🟢 Ingestion Processing Worker connected to MongoDB");
 
-    setInterval(async () => {
+    async function poll() {
       try {
-        const processed = await processQueuedIngestions(5);
-
-        if (processed > 0) {
-          console.log(`🚀 Processed ${processed} ingestion(s)`);
-        }
+        await processQueuedIngestions();
       } catch (err) {
         console.error("❌ Processing cycle failed:", err);
+      } finally {
+        setTimeout(poll, POLL_INTERVAL_MS);
       }
-    }, POLL_INTERVAL_MS);
+    }
+
+    poll();
 
   } catch (err) {
     console.error("❌ Worker startup failed:", err);
