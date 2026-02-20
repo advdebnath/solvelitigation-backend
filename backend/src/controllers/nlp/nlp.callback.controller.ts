@@ -1,130 +1,65 @@
 import { Request, Response } from "express";
 import mongoose from "mongoose";
 import JudgmentIngestion from "../../models/JudgmentIngestion";
-import { Judgment } from "../../models";
 
-/**
- * POST /api/nlp/callback
- * Called by NLP service after processing
- */
-export async function nlpCallbackController(
-  req: Request,
-  res: Response
-) {
+export const nlpCallbackController = async (req: Request, res: Response) => {
   try {
-    const {
-      ingestionId,
-      status,
-      summary,
-      category,
-      subCategory,
-      pointsOfLaw,
-      confidence,
-      error,
-    } = req.body;
-
-    if (!ingestionId || !status) {
-      return res.status(400).json({
-        message: "ingestionId and status are required",
-      });
-    }
+    const { ingestionId, status, error } = req.body;
 
     if (!mongoose.Types.ObjectId.isValid(ingestionId)) {
-      return res.status(400).json({
-        message: "Invalid ingestionId",
-      });
+      return res.status(400).json({ message: "Invalid ingestionId" });
     }
 
     const ingestion = await JudgmentIngestion.findById(ingestionId);
 
     if (!ingestion) {
-      return res.status(404).json({
-        message: "Ingestion record not found",
-      });
+      return res.status(404).json({ message: "Ingestion not found" });
     }
 
-    // 🔒 Idempotency: if already final
-    if (["COMPLETED", "FAILED"].includes(ingestion.status)) {
-      return res.json({
-        success: true,
-        message: "Callback already processed",
-        ingestionId,
-        status: ingestion.status,
-      });
-    }
-
-    // ----------------------------
-    // Handle FAILED
-    // ----------------------------
+    // 🔴 FAILURE WITH ESCALATION
     if (status === "FAILED") {
-      ingestion.status = "FAILED";
-      ingestion.error = error || "NLP processing failed";
-      ingestion.failedAt = new Date();
-      await ingestion.save();
+      ingestion.retryCount = (ingestion.retryCount || 0) + 1;
 
-      return res.json({
-        success: true,
-        ingestionId,
-        status: "FAILED",
-      });
-    }
-
-    // ----------------------------
-    // Handle COMPLETED
-    // ----------------------------
-    if (status === "COMPLETED") {
-      // 🔍 Check if judgment already exists
-      const existingJudgment = await Judgment.findOne({
-        ingestionId: ingestion._id,
-      });
-
-      if (existingJudgment) {
-        ingestion.status = "COMPLETED";
-        ingestion.completedAt = new Date();
-        await ingestion.save();
-
-        return res.json({
-          success: true,
-          message: "Judgment already created",
-          judgmentId: existingJudgment._id,
-        });
+      if (ingestion.retryCount >= 3) {
+        ingestion.status = "PERMANENT_FAILURE";
+        ingestion.permanentFailureAt = new Date();
+        console.log("🚨 Permanent failure:", ingestionId);
+      } else {
+        ingestion.status = "QUEUED"; // re-queue instead of RETRY
+        console.log("🔁 Re-queued for retry:", ingestionId);
       }
 
-      // 📝 Create Judgment
-      const judgment = await Judgment.create({
-        ingestionId: ingestion._id,
-        summary,
-        category,
-        subCategory,
-        pointsOfLaw,
-        confidence,
-        createdBy: ingestion.createdBy,
-      });
+      ingestion.error = error || "NLP processing failed";
+      ingestion.failedAt = new Date();
 
-      // 🔗 Update ingestion
-      ingestion.status = "COMPLETED";
-      ingestion.judgmentId = judgment._id;
-      ingestion.completedAt = new Date();
       await ingestion.save();
 
       return res.json({
         success: true,
         ingestionId,
-        judgmentId: judgment._id,
-        status: "COMPLETED",
+        retryCount: ingestion.retryCount,
+        status: ingestion.status
       });
     }
 
-    // ----------------------------
-    // Fallback
-    // ----------------------------
-    return res.status(400).json({
-      message: "Unsupported status",
-    });
+    // 🟢 SUCCESS
+    if (status === "COMPLETED") {
+      ingestion.status = "COMPLETED";
+      ingestion.completedAt = new Date();
+
+      await ingestion.save();
+
+      return res.json({
+        success: true,
+        ingestionId,
+        status: ingestion.status
+      });
+    }
+
+    return res.status(400).json({ message: "Invalid status" });
+
   } catch (err) {
-    console.error("❌ NLP callback failed:", err);
-    return res.status(500).json({
-      message: "NLP callback failed",
-    });
+    console.error("❌ NLP callback error:", err);
+    return res.status(500).json({ message: "Callback failed" });
   }
-}
+};

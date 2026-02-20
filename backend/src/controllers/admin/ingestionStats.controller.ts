@@ -26,9 +26,35 @@ export const getIngestionStats = async (_req: Request, res: Response) => {
       formatted.total += s.count;
     });
 
+    const successRate =
+      formatted.total > 0
+        ? ((formatted.COMPLETED / formatted.total) * 100).toFixed(2)
+        : "0";
+
+    const failureRate =
+      formatted.total > 0
+        ? ((formatted.FAILED / formatted.total) * 100).toFixed(2)
+        : "0";
+
+    const retrying = await JudgmentIngestion.countDocuments({
+      retryCount: { $gt: 0 }
+    });
+
+    const last24h = await JudgmentIngestion.countDocuments({
+      createdAt: {
+        $gte: new Date(Date.now() - 24 * 60 * 60 * 1000)
+      }
+    });
+
     return res.json({
       success: true,
-      data: formatted
+      data: {
+        ...formatted,
+        retrying,
+        last24h,
+        successRate: `${successRate}%`,
+        failureRate: `${failureRate}%`
+      }
     });
 
   } catch (error: any) {

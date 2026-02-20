@@ -1,49 +1,55 @@
 import JudgmentIngestion from "../models/JudgmentIngestion";
-import { enqueueNlpJob } from "../utils/nlpEnqueue";
 
-/**
- * Move QUEUED → PROCESSING and trigger NLP
- */
 export async function enqueueNlpForIngestion(
   ingestionId: string
 ): Promise<void> {
-  const ingestion = await JudgmentIngestion.findOneAndUpdate(
-    { _id: ingestionId, status: "QUEUED" },
-    { status: "PROCESSING", processingStartedAt: new Date() },
-    { new: true }
-  );
-
+  const ingestion = await JudgmentIngestion.findById(ingestionId);
   if (!ingestion) return;
 
-  await enqueueNlpJob(ingestion._id.toString());
+  ingestion.status = "QUEUED";
+  await ingestion.save();
 }
 
-/**
- * Auto-enqueue UPLOADED ingestions
- * Moves: UPLOADED → QUEUED
- * Does NOT directly call NLP
- */
 export async function autoEnqueuePendingIngestions(): Promise<number> {
-  const uploads = await JudgmentIngestion.find({
-    status: "UPLOADED",
-  }).limit(5);
+  try {
+    const processingCount = await JudgmentIngestion.countDocuments({
+      status: "PROCESSING",
+    });
 
-  let processed = 0;
+    if (processingCount > 50) {
+      console.log("⚠ Throttle active: Too many PROCESSING items");
+      return 0;
+    }
 
-  for (const ingestion of uploads) {
-    const updated = await JudgmentIngestion.findOneAndUpdate(
-      { _id: ingestion._id, status: "UPLOADED" },
-      {
-        status: "QUEUED",
-        queuedAt: new Date(),
-      },
-      { new: true }
-    );
+    const ingestions = await JudgmentIngestion.find({
+      status: "UPLOADED",
+    })
+      .limit(20)
+      .sort({ createdAt: 1 });
 
-    if (updated) {
+    if (!ingestions.length) {
+      return 0;
+    }
+
+    let processed = 0;
+
+    for (const ingestion of ingestions) {
+      ingestion.status = "QUEUED";
+      await ingestion.save();
       processed++;
     }
-  }
 
-  return processed;
+    const queueDepth = await JudgmentIngestion.countDocuments({
+      status: { $in: ["QUEUED", "PROCESSING"] },
+    });
+
+    console.log(
+      `🚀 Auto-enqueued: ${processed} | Queue depth: ${queueDepth}`
+    );
+
+    return processed;
+  } catch (error) {
+    console.error("❌ Auto-enqueue error:", error);
+    return 0;
+  }
 }

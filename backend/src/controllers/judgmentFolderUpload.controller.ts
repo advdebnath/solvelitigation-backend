@@ -4,14 +4,11 @@ import fs from "fs";
 import JudgmentIngestion from "../models/JudgmentIngestion";
 import { uploadToGridFS } from "../utils/gridfs";
 
-/**
- * Extract date from filename
- */
 function extractDate(filename: string) {
   const patterns = [
-    /\d{2}-[A-Za-z]{3}-\d{4}/, // 02-Feb-2021
-    /\d{2}-\d{2}-\d{4}/,       // 02-02-2021
-    /\d{4}-\d{2}-\d{2}/        // 2021-02-02
+    /\d{2}-[A-Za-z]{3}-\d{4}/,
+    /\d{2}-\d{2}-\d{4}/,
+    /\d{4}-\d{2}-\d{2}/
   ];
 
   for (const p of patterns) {
@@ -22,13 +19,11 @@ function extractDate(filename: string) {
     }
   }
 
-  return new Date(); // fallback
+  return new Date();
 }
 
 export const uploadJudgmentFolder = async (req: Request, res: Response) => {
   try {
-    console.log("🔥 NEW CONTROLLER LOADED");
-
     const files = req.files as Express.Multer.File[];
     const court = req.body.court;
 
@@ -42,36 +37,43 @@ export const uploadJudgmentFolder = async (req: Request, res: Response) => {
 
     console.log("📁 Files received:", files.length);
 
-    const ingestions: any[] = [];
+    const ingestionDocs: any[] = [];
+    let duplicateCount = 0;
 
     for (const file of files) {
       const filename = file.originalname;
-      console.log("➡️ Processing:", filename);
-
       const detectedDate = extractDate(filename);
 
-      // ✅ Read file for checksum
       const buffer = fs.readFileSync(file.path);
       const sha256 = crypto
         .createHash("sha256")
         .update(buffer)
         .digest("hex");
 
-      // ✅ Upload to GridFS
+      // 🔥 DUPLICATE CHECK
+      const existing = await JudgmentIngestion.findOne({
+        "file.sha256": sha256
+      });
+
+      if (existing) {
+        duplicateCount++;
+        console.log("⚠ Duplicate skipped:", filename);
+        fs.unlinkSync(file.path);
+        continue;
+      }
+
       const gridfsFileId = await uploadToGridFS(
         file.path,
         filename
       );
 
-      // ✅ Remove temp file after upload
       try {
         fs.unlinkSync(file.path);
-      } catch (err) {
+      } catch {
         console.warn("⚠ Could not delete temp file:", file.path);
       }
 
-      // ✅ Create ingestion record
-      const ingestion = new JudgmentIngestion({
+      ingestionDocs.push({
         source: "superadmin-dashboard",
         uploadType: "folder",
         extractedMeta: {
@@ -91,14 +93,16 @@ export const uploadJudgmentFolder = async (req: Request, res: Response) => {
         queuedAt: new Date(),
         createdBy: req.user!._id,
       });
+    }
 
-      await ingestion.save();
-      ingestions.push(ingestion);
+    if (ingestionDocs.length > 0) {
+      await JudgmentIngestion.insertMany(ingestionDocs);
     }
 
     return res.json({
       success: true,
-      totalFiles: ingestions.length,
+      inserted: ingestionDocs.length,
+      duplicatesSkipped: duplicateCount
     });
 
   } catch (err) {

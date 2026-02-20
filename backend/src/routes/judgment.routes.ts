@@ -51,4 +51,7 @@ router.post(
   retryNLP
 );
 
+import { enqueueJudgmentNlp } from "../controllers/judgmentEnqueue.controller";
+router.post("/:judgmentId/enqueue-nlp", enqueueJudgmentNlp);
+
 export default router;

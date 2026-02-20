@@ -5,7 +5,8 @@ export type IngestionStatus =
   | "QUEUED"
   | "PROCESSING"
   | "COMPLETED"
-  | "FAILED";
+  | "FAILED"
+  | "PERMANENT_FAILURE";
 
 export interface IJudgmentIngestion extends Document {
   source: string;
@@ -33,6 +34,7 @@ export interface IJudgmentIngestion extends Document {
   processingAt?: Date;
   completedAt?: Date;
   failedAt?: Date;
+  permanentFailureAt?: Date;
 
   judgmentId?: mongoose.Types.ObjectId;
 
@@ -75,7 +77,7 @@ const JudgmentIngestionSchema = new Schema<IJudgmentIngestion>(
 
     status: {
       type: String,
-      enum: ["UPLOADED", "QUEUED", "PROCESSING", "COMPLETED", "FAILED"],
+      enum: ["UPLOADED", "QUEUED", "PROCESSING", "COMPLETED", "FAILED", "PERMANENT_FAILURE"],
       default: "UPLOADED",
       index: true,
     },
@@ -93,6 +95,7 @@ const JudgmentIngestionSchema = new Schema<IJudgmentIngestion>(
     processingAt: Date,
     completedAt: Date,
     failedAt: Date,
+    permanentFailureAt: Date,
 
     judgmentId: {
       type: Schema.Types.ObjectId,
