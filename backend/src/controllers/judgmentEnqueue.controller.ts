@@ -2,6 +2,7 @@ import { Request, Response } from "express";
 import { Types } from "mongoose";
 import axios from "axios";
 import Judgment from "../models/judgment.model";
+import JudgmentIngestion from "../models/JudgmentIngestion";
 
 export const enqueueJudgmentNlp = async (req: Request, res: Response) => {
   try {
@@ -11,22 +12,41 @@ export const enqueueJudgmentNlp = async (req: Request, res: Response) => {
       return res.status(400).json({ message: "Invalid judgmentId" });
     }
 
-    // 🔒 Atomic state transition: only QUEUED → PROCESSING
-    const updated = await Judgment.findOneAndUpdate(
-      { _id: judgmentId, nlpStatus: "QUEUED" },
-      { $set: { nlpStatus: "PROCESSING" } },
-      { new: true }
-    );
+    const judgment = await Judgment.findById(judgmentId);
 
-    if (!updated) {
+    if (!judgment) {
+      return res.status(404).json({ message: "Judgment not found" });
+    }
+
+    // 🔍 Find related ingestion
+    const ingestion = await JudgmentIngestion.findOne({
+      judgmentId: judgment._id,
+    });
+
+    if (!ingestion) {
+      return res.status(404).json({
+        message: "Related ingestion not found",
+      });
+    }
+
+    if (judgment.nlpStatus !== "QUEUED") {
       return res.status(400).json({
         message: "Judgment is not in QUEUED state",
       });
     }
 
-    // 🚀 Call NLP service
+    // 🔒 Atomic state transition
+    judgment.nlpStatus = "PROCESSING";
+await Judgment.updateOne(
+  { _id: judgment._id },
+  { $set: { nlpStatus: "QUEUED" } },
+  { runValidators: false }
+);
+
+
+    // 🚀 Call NLP service with ingestionId
     await axios.post("http://127.0.0.1:8000/api/enqueue", {
-      judgmentId: updated._id.toString(),
+      ingestionId: ingestion._id.toString(),
     });
 
     return res.json({
@@ -35,7 +55,10 @@ export const enqueueJudgmentNlp = async (req: Request, res: Response) => {
     });
 
   } catch (err: any) {
-    console.error("Direct NLP enqueue error:", err.message);
+    console.error(
+      "Direct NLP enqueue error:",
+      err.response?.data || err.message
+    );
     return res.status(500).json({ message: "Internal server error" });
   }
 };

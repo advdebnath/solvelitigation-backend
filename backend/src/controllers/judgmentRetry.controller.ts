@@ -1,6 +1,6 @@
+import Judgment from "../models/judgment.model";
 import axios from "axios";
 import { Request, Response } from "express";
-import { Judgment } from "../models";
 
 export const retryNLP = async (req: Request, res: Response) => {
   const { judgmentId } = req.params;
@@ -16,7 +16,18 @@ export const retryNLP = async (req: Request, res: Response) => {
     });
 
     judgment.nlpStatus = "PROCESSING";
-    await judgment.save();
+
+
+await Judgment.updateOne(
+  { _id: judgment._id },
+  {
+    $set: {
+      nlpStatus: "QUEUED",
+      retryCount: (judgment.retryCount || 0) + 1,
+    },
+  },
+  { runValidators: false }
+);
 
     return res.json({
       success: true,

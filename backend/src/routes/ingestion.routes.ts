@@ -1,21 +1,25 @@
-import {
-  enqueueIngestion,
-  retryIngestion,
-} from "../controllers/ingestion/ingestionControl.controller";
-
 import { Router } from "express";
 import auth from "../middleware/auth.middleware";
 import { requireRole } from "../middleware/requireRole";
 import { uploadMiddleware } from "../config/multer";
 
+import {
+  enqueueIngestion,
+  retryIngestion,
+} from "../controllers/ingestion/ingestionControl.controller";
+
 import { uploadJudgmentFolder } from "../controllers/judgmentFolderUpload.controller";
 import { getIngestionProgress } from "../controllers/ingestion/ingestionProgress.controller";
+
 
 const router = Router();
 
 /**
- * Folder upload (superadmin only)
+ * ============================================
+ * 🔒 SUPERADMIN ONLY
+ * ============================================
  */
+
 router.post(
   "/upload-folder",
   auth,
@@ -24,34 +28,25 @@ router.post(
   uploadJudgmentFolder
 );
 
-/**
- * Ingestion progress (superadmin)
- */
-router.get(
-  "/progress",
-  auth,
-  requireRole(["superadmin"]),
-  getIngestionProgress
-);
-
-/**
- * Manual enqueue (superadmin)
- */
 router.post(
-  "/:id/enqueue",
+  "/enqueue/:id",
   auth,
   requireRole(["superadmin"]),
   enqueueIngestion
 );
 
-/**
- * Retry failed ingestion (superadmin)
- */
 router.post(
-  "/:id/retry",
+  "/retry/:id",
   auth,
   requireRole(["superadmin"]),
   retryIngestion
+);
+
+router.get(
+  "/progress/:id",
+  auth,
+  requireRole(["superadmin"]),
+  getIngestionProgress
 );
 
 export default router;

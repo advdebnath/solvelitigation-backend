@@ -36,7 +36,18 @@ export const retryNlpJob = async (req: Request, res: Response) => {
 
     // ♻ Reset NLP state
     judgment.nlpStatus = "PENDING";
-    await judgment.save();
+    
+await Judgment.updateOne(
+  { _id: judgment._id },
+  {
+    $set: {
+      nlpStatus: judgment.nlpStatus,
+      retryCount: judgment.retryCount,
+    },
+  },
+  { runValidators: false }
+);
+
 
     // 🚀 Re-enqueue NLP
     await axios.post("http://127.0.0.1:4000/api/nlp/enqueue", {

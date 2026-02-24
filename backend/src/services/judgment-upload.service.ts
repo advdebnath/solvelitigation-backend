@@ -1,5 +1,5 @@
 import mongoose, { Types } from "mongoose";
-import Judgment from "../models/judgment.model";
+import JudgmentIngestion from "../models/JudgmentIngestion";
 
 /**
  * Creates a Judgment record from an uploaded PDF file
@@ -22,16 +22,11 @@ export async function createJudgmentFromUpload(
     return undefined;
   }
 
-  const judgment = await Judgment.create({
-    title: file.originalname,
-    filePath: file.path,
-    originalFileName: file.originalname,
-
-    uploadedBy: meta.uploadedBy,
-    source: meta.source ?? "upload",
-
+  const ingestion = await JudgmentIngestion.create({
+    filename: file.originalname,
     status: "UPLOADED",
+    source: meta.source ?? "upload"
   });
 
-  return judgment._id;
+  return ingestion._id;
 }

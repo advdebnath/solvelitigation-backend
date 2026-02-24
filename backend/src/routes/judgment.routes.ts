@@ -1,37 +1,47 @@
 import { Router } from "express";
 
+import auth from "../middleware/auth.middleware";
+import { requireRole } from "../middleware/requireRole";
+
 import { listJudgments } from "../controllers/judgmentList.controller";
 import { getJudgmentById } from "../controllers/judgmentDetail.controller";
 import { retryNLP } from "../controllers/judgmentRetry.controller";
-
-import auth from "../middleware/auth.middleware";
-import { requireRole } from "../middleware/requireRole";
+import { enqueueJudgmentNlp } from "../controllers/judgmentEnqueue.controller";
+import { downloadJudgmentPdf } from "../controllers/judgmentDownload.controller";
+import { getJudgmentFilters } from "../controllers/judgmentFilters.controller";
 
 const router = Router();
 
 /**
  * =====================================================
- * 🔓 PUBLIC READ APIs (NO AUTH)
+ * 📊 FILTER METADATA (AUTH REQUIRED)
  * =====================================================
  */
-router.get("/", listJudgments);
-router.get("/:id", getJudgmentById);
+router.get("/filters", auth, getJudgmentFilters);
 
 /**
  * =====================================================
- * 🔒 ADMIN / SUPERADMIN ONLY
+ * 🔐 AUTHENTICATED READ APIs
+ * Logged-in users can browse, view and download judgments
+ * =====================================================
+ */
+router.get("/", auth, listJudgments);
+router.get("/:id", auth, getJudgmentById);
+router.get("/:id/download", auth, downloadJudgmentPdf);
+
+/**
+ * =====================================================
+ * 🔒 SUPERADMIN ONLY ACTIONS
  * =====================================================
  */
 
 /**
- * ⛔ DEPRECATED: single judgment upload
- * This route is intentionally blocked.
- * Use folder ingestion instead.
+ * ⛔ Deprecated single upload
  */
 router.post(
   "/upload-single",
   auth,
-  requireRole(["admin", "superadmin"]),
+  requireRole(["superadmin"]),
   (_req, res) => {
     return res.status(410).json({
       success: false,
@@ -42,16 +52,23 @@ router.post(
 );
 
 /**
- * 🔁 Retry NLP processing (VALID)
+ * 🔁 Retry NLP
  */
 router.post(
   "/:judgmentId/retry-nlp",
   auth,
-  requireRole(["admin", "superadmin"]),
+  requireRole(["superadmin"]),
   retryNLP
 );
 
-import { enqueueJudgmentNlp } from "../controllers/judgmentEnqueue.controller";
-router.post("/:judgmentId/enqueue-nlp", enqueueJudgmentNlp);
+/**
+ * 🚀 Manual enqueue NLP
+ */
+router.post(
+  "/:judgmentId/enqueue-nlp",
+  auth,
+  requireRole(["superadmin"]),
+  enqueueJudgmentNlp
+);
 
 export default router;

@@ -7,11 +7,10 @@ export async function enqueueNlpJob(ingestionId: string) {
     throw new Error("NLP_BASE_URL not configured");
   }
 
-  console.log("📤 Sending to NLP:", { ingestionId });
 
   await axios.post(
     `${NLP_URL}/api/enqueue`,
     { ingestionId },
-    { timeout: 10000 }
+    { timeout: 120000 }
   );
 }

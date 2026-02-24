@@ -1,8 +1,8 @@
 import { Request, Response } from "express";
 import path from "path";
 import fs from "fs";
-import mongoose from "mongoose";
-import Judgment from "../../models/judgment.model";
+
+import JudgmentIngestion from "../../models/JudgmentIngestion";
 
 function extractDateFromFilename(filename: string): Date | null {
   const patterns = [
@@ -74,20 +74,18 @@ export const uploadFolder = async (req: Request, res: Response) => {
 
       fs.renameSync(file.path, storagePath);
 
-      const newJudgment = await Judgment.create({
-        _id: new mongoose.Types.ObjectId(),
-        fileName: file.originalname,
-        filePath: storagePath,
+      const ingestion = await JudgmentIngestion.create({
+        filename: file.originalname,
+        relativePath: `${year}/${month}/${day}/${file.originalname}`,
+        status: "UPLOADED",
         court,
         year,
         month,
-        day,
-        nlpStatus: "PENDING",
-        uploadedAt: new Date()
+        day
       });
 
       uploadedResults.push({
-        id: newJudgment._id,
+        id: ingestion._id,
         fileName: file.originalname,
         year,
         month,

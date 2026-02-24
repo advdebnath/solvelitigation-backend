@@ -15,9 +15,6 @@ export const nlpCallbackController = async (
       status,
     });
 
-    // --------------------------------------------------
-    // Validate payload
-    // --------------------------------------------------
     if (!ingestionId || !status) {
       return res.status(400).json({
         success: false,
@@ -34,17 +31,16 @@ export const nlpCallbackController = async (
       });
     }
 
-    // Prevent duplicate completion
-    if (ingestion.status === "COMPLETED" && status === "COMPLETED") {
+    if (ingestion.status === "COMPLETED") {
       return res.status(200).json({
         success: true,
         message: "Already completed",
       });
     }
 
-    // ==================================================
+    // ------------------------------
     // PROCESSING
-    // ==================================================
+    // ------------------------------
     if (status === "PROCESSING") {
       const previousStatus = ingestion.status;
 
@@ -64,45 +60,32 @@ export const nlpCallbackController = async (
       });
     }
 
-    // ==================================================
+    // ------------------------------
     // COMPLETED
-    // ==================================================
+    // ------------------------------
     if (status === "COMPLETED") {
       const previousStatus = ingestion.status;
 
       ingestion.status = "COMPLETED";
       ingestion.completedAt = new Date();
-      ingestion.nlpUpdatedAt = new Date();
       await ingestion.save();
 
-      // Safe UPSERT (create or update)
-      await Judgment.findOneAndUpdate(
-        { ingestionId: ingestion._id },
-        {
-          $set: {
-            ingestionId: ingestion._id,
-            htmlContent: result?.htmlContent || "",
-            metadata: result?.metadata || {},
-            category: result?.category || "Uncategorized",
-            subCategory: result?.subCategory || null,
-            summary: result?.summary || "",
-            court: result?.court || null,
-            caseNumber: result?.caseNumber || null,
-            judgmentDate: result?.judgmentDate || null,
-            judges: result?.judges || [],
-            actReferences: result?.actReferences || [],
-            confidence: result?.confidence || 0,
-            pageCount: result?.pageCount || 0,
-            textLength: result?.textLength || 0,
-            checksum: ingestion.file?.sha256 || null,
-            nlpStatus: "COMPLETED",
-            updatedAt: new Date(),
-          },
-        },
-        { upsert: true, new: true }
-      );
+      const existingJudgment = await Judgment.findOne({
+        ingestionId: ingestion._id,
+      });
 
-      io.emit("judgment:update", { ingestionId });
+
+
+
+      if (!existingJudgment) {
+        await Judgment.create({
+        io.emit("judgment:update", { ingestionId });
+          ingestionId: ingestion._id,
+          htmlContent: result?.htmlContent || "",
+          metadata: result?.metadata || {},
+          category: result?.category || "Uncategorized",
+        });
+      }
 
       io.emit("ingestion-status-updated", {
         ingestionId,
@@ -117,26 +100,15 @@ export const nlpCallbackController = async (
       });
     }
 
-    // ==================================================
+    // ------------------------------
     // FAILED
-    // ==================================================
+    // ------------------------------
     if (status === "FAILED") {
       const previousStatus = ingestion.status;
 
       ingestion.status = "FAILED";
       ingestion.error = error || "Unknown NLP failure";
-      ingestion.nlpUpdatedAt = new Date();
       await ingestion.save();
-
-      await Judgment.updateOne(
-        { ingestionId: ingestion._id },
-        {
-          $set: {
-            nlpStatus: "FAILED",
-            updatedAt: new Date(),
-          },
-        }
-      );
 
       io.emit("ingestion-status-updated", {
         ingestionId,
@@ -151,13 +123,11 @@ export const nlpCallbackController = async (
       });
     }
 
-    // --------------------------------------------------
-    // Invalid status
-    // --------------------------------------------------
     return res.status(400).json({
       success: false,
       message: "Invalid status value",
     });
+
   } catch (err) {
     console.error("❌ NLP Callback Error:", err);
 

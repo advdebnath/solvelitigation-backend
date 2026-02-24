@@ -9,7 +9,7 @@ export interface IJudgment {
   pointsOfLaw?: string[];
   confidence?: number;
 
-  createdBy: Types.ObjectId;
+createdBy?: Types.ObjectId;
 
   createdAt: Date;
   updatedAt: Date;
@@ -51,7 +51,7 @@ const JudgmentSchema = new Schema<IJudgment>(
     createdBy: {
       type: Schema.Types.ObjectId,
       ref: "User",
-      required: true,
+      required: false,
       index: true,
     },
   },

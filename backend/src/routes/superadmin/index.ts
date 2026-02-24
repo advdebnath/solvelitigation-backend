@@ -6,7 +6,6 @@ import { listIngestions } from "../../controllers/superadmin/ingestionList.contr
 import { reprocessIngestion } from "../../controllers/superadmin/reprocessIngestion.controller";
 
 import usersRoutes from "./users.routes";
-import uploadRoutes from "./upload.routes";
 import uploadAuditRoutes from "./uploadAudit.routes";
 
 const router = Router();
@@ -32,7 +31,6 @@ router.post("/ingestions/:id/reprocess", reprocessIngestion);
  * Other superadmin modules
  */
 router.use("/users", usersRoutes);
-router.use("/uploads", uploadRoutes);
 router.use("/uploads/audit", uploadAuditRoutes);
 
 export default router;

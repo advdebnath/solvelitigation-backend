@@ -1,3 +1,4 @@
+import logger from "../utils/logger";
 import JudgmentIngestion from "../models/JudgmentIngestion";
 
 export async function enqueueNlpForIngestion(
@@ -17,7 +18,7 @@ export async function autoEnqueuePendingIngestions(): Promise<number> {
     });
 
     if (processingCount > 50) {
-      console.log("⚠ Throttle active: Too many PROCESSING items");
+      logger.info("⚠ Throttle active: Too many PROCESSING items");
       return 0;
     }
 
@@ -43,13 +44,13 @@ export async function autoEnqueuePendingIngestions(): Promise<number> {
       status: { $in: ["QUEUED", "PROCESSING"] },
     });
 
-    console.log(
+    logger.info(
       `🚀 Auto-enqueued: ${processed} | Queue depth: ${queueDepth}`
     );
 
     return processed;
   } catch (error) {
-    console.error("❌ Auto-enqueue error:", error);
+    logger.error("❌ Auto-enqueue error:", error);
     return 0;
   }
 }

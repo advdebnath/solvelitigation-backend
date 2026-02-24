@@ -1,5 +1,5 @@
 import axios from "axios";
-import { Judgment } from "../models";
+import Judgment from "../models/judgment.model";
 
 export const retryPendingNLPJobs = async () => {
   const pending = await Judgment.find({
@@ -8,15 +8,24 @@ export const retryPendingNLPJobs = async () => {
 
   for (const judgment of pending) {
     try {
+      // Call NLP service
       await axios.post("http://127.0.0.1:8000/enqueue", {
         jobId: judgment._id.toString(),
       });
 
-      judgment.nlpStatus = "PROCESSING";
-      await judgment.save();
+      // Update DB safely without validation
+      await Judgment.updateOne(
+        { _id: judgment._id },
+        {
+          $set: {
+            nlpStatus: "PROCESSING",
+          },
+        },
+        { runValidators: false }
+      );
 
       console.log(`✅ NLP requeued: ${judgment._id}`);
-    } catch {
+    } catch (err) {
       console.warn(`⚠️ NLP still unavailable for ${judgment._id}`);
     }
   }
