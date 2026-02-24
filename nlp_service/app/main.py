@@ -1,5 +1,6 @@
 from fastapi import FastAPI
 from app.api.enqueue import router as enqueue_router
+from app.api.pdf import router as pdf_router
 from app.config import settings
 
 app = FastAPI(
@@ -9,6 +10,7 @@ app = FastAPI(
 
 # Routes
 app.include_router(enqueue_router, prefix="/api")
+app.include_router(pdf_router, prefix="/api")
 
 @app.get("/health")
 def health():

@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+
+<style>
+
+@page {
+    size: A4;
+    margin: 25mm 20mm 25mm 25mm;
+
+    @top-left {
+        content: element(header);
+    }
+
+    @bottom-center {
+        content: element(footer);
+    }
+}
+
+body {
+    font-family: "Times New Roman", serif;
+    font-size: 12pt;
+    text-align: justify;
+    line-height: 1.5;
+}
+
+.header {
+    position: running(header);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 10pt;
+    border-bottom: 1px solid #000;
+    padding-bottom: 5px;
+}
+
+.header-center {
+    text-align: center;
+    flex: 1;
+}
+
+.footer {
+    position: running(footer);
+    text-align: center;
+    font-size: 9pt;
+}
+
+.page-number:before {
+    content: "Page " counter(page) " of " counter(pages);
+}
+
+.judgment-body {
+    margin-top: 20px;
+}
+
+</style>
+</head>
+
+<body>
+
+<div class="header">
+    <div>
+        <img src="{{ logo_path }}" height="28">
+    </div>
+
+    <div class="header-center">
+        <strong>{{ court_name }}</strong><br>
+        {{ judgment_number }}
+    </div>
+
+    <div>
+        {{ year }}
+    </div>
+</div>
+
+<div class="judgment-body">
+    {{ judgment_content | safe }}
+</div>
+
+<div class="footer">
+    <div class="page-number"></div>
+    <div>
+        Downloaded by: {{ user_name }}<br>
+        SolveLitigation.com | {{ timestamp }}
+    </div>
+</div>
+
+</body>
+</html>

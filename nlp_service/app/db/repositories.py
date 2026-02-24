@@ -6,6 +6,10 @@ from app.db.mongo import get_db
 from app.config import settings
 
 
+# ==========================================
+# 🔹 UPDATE NLP STATUS (Judgment Collection)
+# ==========================================
+
 def update_nlp_status(
     judgment_id: str,
     status: str,
@@ -41,8 +45,12 @@ def update_nlp_status(
             raise ValueError(f"Judgment not found: {judgment_id}")
 
     except PyMongoError as e:
-        # Let Celery retry
         raise RuntimeError(f"Mongo update failed: {str(e)}")
+
+
+# ==========================================
+# 🔹 UPDATE INGESTION STATUS
+# ==========================================
 
 def update_ingestion_status(
     ingestion_id: str,
@@ -76,3 +84,30 @@ def update_ingestion_status(
 
     except PyMongoError as e:
         raise RuntimeError(f"Mongo update failed: {str(e)}")
+
+
+# ==========================================
+# 🔹 FETCH INGESTION RECORD
+# ==========================================
+
+def get_ingestion_by_id(ingestion_id: str):
+    """
+    Fetch ingestion record by ID.
+    Used by Celery task (Option A).
+    """
+
+    db = get_db()
+    collection = db["judgmentingestions"]
+
+    try:
+        ingestion = collection.find_one(
+            {"_id": ObjectId(ingestion_id)}
+        )
+
+        if not ingestion:
+            raise ValueError(f"Ingestion not found: {ingestion_id}")
+
+        return ingestion
+
+    except PyMongoError as e:
+        raise RuntimeError(f"Mongo fetch failed: {str(e)}")

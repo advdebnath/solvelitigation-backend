@@ -24,14 +24,19 @@ class Settings(BaseSettings):
         ..., description="Backend NLP callback URL"
     )
 
+    # 🔹 ADD THIS LINE
+    UPLOAD_BASE_DIR: str = Field(
+        ..., description="Base directory for uploaded PDFs"
+    )
+
     # Service name
     NLP_SERVICE_NAME: str = Field(default="nlp_service")
+
 
     class Config:
         env_file = ".env"
         env_file_encoding = "utf-8"
-        extra = "forbid"  # explicitly forbid unknown keys
+        extra = "forbid"
 
 
-# Singleton
 settings = Settings()
