@@ -10,6 +10,7 @@ from app.extractors.procedural_history_detector import (
 
 LEGAL_OPERATIVE_VERBS = [
 
+
     "allowed",
     "dismissed",
     "disposed",
@@ -26,6 +27,31 @@ LEGAL_OPERATIVE_VERBS = [
     "reversed",
     "partly allowed",
     "partially allowed",
+]
+
+
+# ============================================================
+# 🔥 HISTORICAL / NON-FINAL CONTEXT SUPPRESSION
+# ============================================================
+
+HISTORICAL_CONTEXT_MARKERS = [
+
+    "trial court",
+    "sessions court",
+    "lower court",
+    "single judge",
+    "division bench",
+    "earlier",
+    "previously",
+    "prior proceedings",
+    "before the high court",
+    "before the tribunal",
+    "impugned judgment",
+    "impugned order",
+    "learned trial judge",
+    "the high court held",
+    "the tribunal held",
+    "the trial court held",
 ]
 
 
@@ -577,6 +603,21 @@ def extract_operative_order(
                         ):
 
                             score += 140
+
+                        # ====================================================
+                        # 🔥 HISTORICAL CONTEXT PENALTY
+                        # ====================================================
+
+                        historical_hits = sum(
+
+                            1 for marker in HISTORICAL_CONTEXT_MARKERS
+                            if marker in para_lower
+                        )
+
+                        if historical_hits > 0:
+
+                            score -= (historical_hits * 55)
+
 
 
                         # ------------------------------------------------
