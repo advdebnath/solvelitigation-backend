@@ -1461,14 +1461,6 @@ def process_judgment(ingestion_id):
 
             semantic_body_text = full_text
 
-            semantic_body_text = semantic_body_text.replace("\r", "\n")
-
-            semantic_body_text = re.sub(
-                r"\n{2,}",
-                "\n\n",
-                semantic_body_text
-            )
-
             # =====================================================
 
             # =====================================================
@@ -1532,12 +1524,19 @@ def process_judgment(ingestion_id):
                 semantic_body_text,
                 flags=re.I | re.S
             )
+
             semantic_body_text = re.sub(
-                r"[ \t]+",
+                r"DATE OF JUDGMENT.*?BENCH",
+                " ",
+                semantic_body_text,
+                flags=re.I | re.S
+            )
+
+            semantic_body_text = re.sub(
+                r"\\s+",
                 " ",
                 semantic_body_text
             ).strip()
-
 
             print("✅ AGGRESSIVE MULTILINE HEADER ERADICATION COMPLETE")
 
@@ -1766,13 +1765,6 @@ def process_judgment(ingestion_id):
             )
 
             semantic_body_text = re.sub(
-                r"(?<!\\n)\.(\s+)([A-Z])",
-                r".\\n\\2",
-                semantic_body_text
-            )
-
-
-            semantic_body_text = re.sub(
                 r"[ \t]+",
                 " ",
                 semantic_body_text
@@ -1991,45 +1983,6 @@ def process_judgment(ingestion_id):
             print("✅ LEGAL ABBREVIATION PRESERVATION COMPLETE")
 
 
-
-
-            # =====================================================
-            # 🔥 LEGAL OCR TOKEN DE-MERGING ENGINE
-            # =====================================================
-
-            OCR_TOKEN_FIXES = {
-                r"\bbyspecial\b": "by special",
-                r"\bbythe\b": "by the",
-                r"\bappealno\b": "appeal no",
-                r"\bcriminalappeal\b": "criminal appeal",
-                r"\bsection([0-9]{2,4})\b": r"section \1",
-                r"\bu\/s([0-9]{1,4})\b": r"u/s \1",
-                r"\bundersection\b": "under section",
-                r"\bincodeofcriminalprocedure\b": "code of criminal procedure",
-                r"\bindianpenalcode\b": "indian penal code",
-                r"\bhighcourt\b": "high court",
-                r"\bsupremecourt\b": "supreme court",
-                r"\brespondent\(s\)\b": "respondent(s)",
-                r"\bappellant\(s\)\b": "appellant(s)",
-                r"\bdatedon\b": "dated on",
-                r"\bpassedby\b": "passed by",
-                r"\bjudgmentdated\b": "judgment dated",
-                r"\bappealdismissed\b": "appeal dismissed",
-                r"\bappealallowed\b": "appeal allowed",
-                r"\bpetitiondismissed\b": "petition dismissed",
-                r"\bpetitionallowed\b": "petition allowed",
-            }
-
-            for broken_pattern, repaired_text in OCR_TOKEN_FIXES.items():
-
-                semantic_body_text = re.sub(
-                    broken_pattern,
-                    repaired_text,
-                    semantic_body_text,
-                    flags=re.I
-                )
-
-            print("✅ LEGAL OCR TOKEN DE-MERGING COMPLETE")
 
             print("✅ LEGAL OCR SANITIZATION COMPLETE")
 
@@ -2888,134 +2841,12 @@ def process_judgment(ingestion_id):
 
         if isinstance(judges, list):
 
-
-            cleaned_judges = []
-
-            for judge in judges:
-
-                if isinstance(judge, dict):
-
-                    judge_name = str(
-                        judge.get("name", "")
-                    ).strip()
-
-                    normalized_judge = {
-                        "name": judge_name
-                    }
-
-                else:
-
-                    judge_name = str(judge).strip()
-
-                    normalized_judge = {
-                        "name": judge_name
-                    }
-
-                if re.match(
-                    r"^[a-z]\.\s+(on|to|of|in|at|by|for|with|from)$",
-                    judge_name.lower()
-                ):
-                    continue
-
-                cleaned_judges.append(
-                    normalized_judge
-                )
-
-
-            deduped_judges = []
-
-            seen_normalized = set()
-
-            for judge_obj in cleaned_judges:
-
-                judge_name = str(
-                    judge_obj.get("name", "")
-                ).strip()
-
-                normalized_key = re.sub(
-                    r"^[A-Z]\.\s+",
-                    "",
-                    judge_name
-                ).lower()
-
-                if normalized_key in seen_normalized:
-                    continue
-
-                seen_normalized.add(normalized_key)
-
-                deduped_judges.append(judge_obj)
-
-            cleaned_judges = deduped_judges
-
-            judges = cleaned_judges
-
             judges = {
                 "judges": judges,
                 "confidence": 0
             }
 
         elif not isinstance(judges, dict):
-
-
-            cleaned_judges = []
-
-            for judge in judges:
-
-                if isinstance(judge, dict):
-
-                    judge_name = str(
-                        judge.get("name", "")
-                    ).strip()
-
-                    normalized_judge = {
-                        "name": judge_name
-                    }
-
-                else:
-
-                    judge_name = str(judge).strip()
-
-                    normalized_judge = {
-                        "name": judge_name
-                    }
-
-                if re.match(
-                    r"^[a-z]\.\s+(on|to|of|in|at|by|for|with|from)$",
-                    judge_name.lower()
-                ):
-                    continue
-
-                cleaned_judges.append(
-                    normalized_judge
-                )
-
-
-            deduped_judges = []
-
-            seen_normalized = set()
-
-            for judge_obj in cleaned_judges:
-
-                judge_name = str(
-                    judge_obj.get("name", "")
-                ).strip()
-
-                normalized_key = re.sub(
-                    r"^[A-Z]\.\s+",
-                    "",
-                    judge_name
-                ).lower()
-
-                if normalized_key in seen_normalized:
-                    continue
-
-                seen_normalized.add(normalized_key)
-
-                deduped_judges.append(judge_obj)
-
-            cleaned_judges = deduped_judges
-
-            judges = cleaned_judges
 
             judges = {
                 "judges": [],

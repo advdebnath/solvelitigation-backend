@@ -2053,7 +2053,7 @@ def normalize_legal_text(text):
             flags=re.I
         )
 
-    # text = stitch_broken_tokens(text)
+    text = stitch_broken_tokens(text)
 
     text = normalize_legal_citations(text)
 
@@ -2127,89 +2127,6 @@ def normalize_legal_text(text):
             text,
             flags=re.I
         )
-
-    # =====================================================
-    # 🔥 LEGAL SENTENCE RECONSTRUCTION ENGINE
-    # =====================================================
-
-    text = re.sub(
-        r"([a-z])([A-Z])",
-        r"\1 \2",
-        text
-    )
-
-    text = re.sub(
-        r"(appeal)(by)",
-        r"\1 by",
-        text,
-        flags=re.I
-    )
-
-    text = re.sub(
-        r"(special)(leave)",
-        r"\1 leave",
-        text,
-        flags=re.I
-    )
-
-    text = re.sub(
-        r"(leave)(isfiled)",
-        r"\1 is filed",
-        text,
-        flags=re.I
-    )
-
-    text = re.sub(
-        r"(passed)(by)",
-        r"\1 by",
-        text,
-        flags=re.I
-    )
-
-    text = re.sub(
-        r"(judgment)(dated)",
-        r"\1 dated",
-        text,
-        flags=re.I
-    )
-
-    text = re.sub(
-        r"(order)(dated)",
-        r"\1 dated",
-        text,
-        flags=re.I
-    )
-
-    text = re.sub(
-        r"(section)([0-9])",
-        r"\1 \2",
-        text,
-        flags=re.I
-    )
-
-    text = re.sub(
-        r"(article)([0-9])",
-        r"\1 \2",
-        text,
-        flags=re.I
-    )
-
-    text = re.sub(
-        r"(rule)([0-9])",
-        r"\1 \2",
-        text,
-        flags=re.I
-    )
-
-    text = re.sub(
-        r"\s+",
-        " ",
-        text
-    ).strip()
-
-    print("✅ LEGAL SENTENCE RECONSTRUCTION COMPLETE")
-
-
 
     # =====================================================
     # 🔥 ADVANCED LEGAL OCR RECOVERY ENGINE

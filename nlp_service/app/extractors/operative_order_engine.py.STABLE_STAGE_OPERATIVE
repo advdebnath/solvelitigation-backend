@@ -756,35 +756,6 @@ def extract_operative_order(
         highest_score = 0
 
         # ====================================================
-        # 🔥 PRIMARY DISPOSITION SCORE PROMOTION
-        # ====================================================
-
-        if disposition_scores:
-
-            filtered_scores = {
-                k: v
-                for k, v in disposition_scores.items()
-                if k != "BEST_INTERNAL"
-            }
-
-            if filtered_scores:
-
-                final_holding = max(
-                    filtered_scores,
-                    key=filtered_scores.get
-                )
-
-                highest_score = filtered_scores.get(
-                    final_holding,
-                    0
-                )
-
-                print("🔥 PRIMARY DISPOSITION PROMOTED")
-                print(final_holding)
-                print(highest_score)
-
-
-        # ====================================================
         # 🔥 SUPREME COURT FINAL OVERRIDE
         # ====================================================
 
@@ -1011,8 +982,6 @@ def extract_operative_order(
 
 
         # ====================================================
-        confidence = 0
-
         # 🔥 CONFIDENCE
         # ====================================================
 

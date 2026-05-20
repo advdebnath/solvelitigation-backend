@@ -320,9 +320,10 @@ def split_into_sentences(text: str) -> List[str]:
             continue
 
         para_sentences = re.split(
-            r'(?<=[.!?])\s+(?=[A-Z0-9])',
+            r'(?<=[.!?])\s+(?=(?:[A-Z0-9]|\(?[ivxlcdm]+\)|\d+\.|[a-z]))',
             para
         )
+
 
         raw_sentences.extend(
             para_sentences

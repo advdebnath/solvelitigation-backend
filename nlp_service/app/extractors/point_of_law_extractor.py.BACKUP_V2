@@ -65,42 +65,6 @@ POINT_SUPPRESSION_RULES = {
 }
 
 
-
-CRIMINAL_DOMINANCE_TERMS = [
-
-    "ndps",
-    "narcotic",
-    "contraband",
-    "ganja",
-    "heroin",
-    "cocaine",
-    "charas",
-    "psychotropic",
-    "fir",
-    "chargesheet",
-    "charge sheet",
-    "criminal appeal",
-    "section 302",
-    "section 307",
-    "section 376",
-    "section 498a",
-    "section 420",
-    "ipc",
-    "crpc",
-    "pocso",
-    "money laundering",
-    "prevention of corruption",
-    "bail",
-    "custody",
-    "acquittal",
-    "conviction",
-    "sentence",
-    "prosecution",
-    "appellant accused",
-    "accused appellant"
-]
-
-
 LEGAL_POINT_PATTERNS = {
 
     "Wakf Property Dispute": {
@@ -477,23 +441,6 @@ def extract_points_of_law(
 
     detected = defaultdict(int)
 
-
-    # =====================================================
-    # 🔥 SEMANTIC CRIMINAL DOMINANCE ENGINE
-    # =====================================================
-
-    criminal_semantic_score = 0
-
-    for criminal_term in CRIMINAL_DOMINANCE_TERMS:
-
-        if criminal_term in text:
-
-            criminal_semantic_score += 1
-
-    print("🔥 CRIMINAL SEMANTIC SCORE:")
-    print(criminal_semantic_score)
-
-
     # -----------------------------------------------------
     # 🔥 PRIORITY 1 → CLUSTERED ISSUES
     # -----------------------------------------------------
@@ -539,8 +486,6 @@ def extract_points_of_law(
                     re.findall(
                         pattern,
                         text,
-
-
                         flags=re.I
                     )
                 )
@@ -558,35 +503,6 @@ def extract_points_of_law(
                 detected[point] += (
                     hits * 25
                 )
-
-                # ---------------------------------------------
-                # 🔥 CRIMINAL CONTEXT CIVIL SUPPRESSION
-                # ---------------------------------------------
-
-                if (
-                    criminal_semantic_score >= 3
-                    and point in [
-                        "Property Possession",
-                        "Landlord Tenant Dispute",
-                        "Hereditary Tenancy",
-                        "Tenancy Surrender"
-                    ]
-                ):
-
-                    detected[point] -= 40
-
-                # ---------------------------------------------
-                # 🔥 CRIMINAL DOMINANCE BOOST
-                # ---------------------------------------------
-
-                if (
-                    criminal_semantic_score >= 3
-                    and config.get("category") == "Criminal"
-                ):
-
-                    detected[point] += 60
-
-
 
 
     acts_lower = [
