@@ -1,0 +1,390 @@
+import re
+
+# =========================================================
+# 🔥 POINTS OF LAW DATABASE
+# =========================================================
+
+POINTS_DATABASE = {
+
+    # =====================================================
+    # 🔥 CRIMINAL
+    # =====================================================
+
+    "Criminal": {
+
+        "Murder": [
+
+            r"\b302\b",
+            r"\bmurder\b",
+            r"\bhomicide\b"
+        ],
+
+        "Bail": [
+
+            r"\bbail\b",
+            r"\banticipatory bail\b"
+        ],
+
+        "Quashing Of FIR": [
+
+            r"\bquash",
+            r"\b482 crpc\b"
+        ],
+
+        "Dying Declaration": [
+
+            r"\bdying declaration\b"
+        ],
+
+        "Circumstantial Evidence": [
+
+            r"\bcircumstantial evidence\b"
+        ],
+
+        "Conviction": [
+
+            r"\bconviction\b",
+            r"\bconvicted\b"
+        ],
+
+        "Acquittal": [
+
+            r"\bacquittal\b",
+            r"\bacquitted\b"
+        ],
+
+        "Cheque Bounce": [
+
+            r"\b138\b",
+            r"\bnegotiable instruments act\b",
+            r"\bcheque bounce\b"
+        ],
+
+        "Corruption": [
+
+            r"\bprevention of corruption\b",
+            r"\bpc act\b"
+        ],
+
+        "NDPS Recovery": [
+
+            r"\bndps\b",
+            r"\bcontraband\b",
+        ]
+    },
+
+    # =====================================================
+    # 🔥 CIVIL
+    # =====================================================
+
+    "Civil": {
+
+        "Breach Of Contract": [
+
+            r"\bbreach of contract\b",
+            r"\bcontract act\b"
+        ],
+
+        "Specific Performance": [
+
+            r"\bspecific performance\b"
+        ],
+
+        "Injunction": [
+
+            r"\binjunction\b"
+        ],
+
+        "Title Dispute": [
+
+            r"\btitle suit\b",
+            r"\bownership\b"
+        ],
+
+        "Arbitration": [
+
+            r"\barbitration\b"
+        ],
+
+        "Ejectment": [
+
+            r"\bejectment\b"
+        ],
+
+        "Lease Dispute": [
+
+            r"\blease\b",
+            r"\btenancy\b"
+        ],
+
+        "Partition": [
+
+            r"\bpartition\b"
+        ]
+    },
+
+    # =====================================================
+    # 🔥 SERVICE LAW
+    # =====================================================
+
+    "Service": {
+
+        "Termination": [
+
+            r"\btermination\b",
+            r"\bdismissal\b"
+        ],
+
+        "Departmental Proceeding": [
+
+            r"\bdepartmental proceeding\b",
+            r"\bdisciplinary proceeding\b"
+        ],
+
+        "Reinstatement": [
+
+            r"\breinstatement\b"
+        ],
+
+        "Promotion": [
+
+            r"\bpromotion\b"
+        ],
+
+        "Seniority": [
+
+            r"\bseniority\b"
+        ],
+
+        "Pension": [
+
+            r"\bpension\b"
+        ],
+
+        "Disciplinary Action": [
+
+            r"\bdisciplinary action\b"
+        ]
+    },
+
+    # =====================================================
+    # 🔥 TAX / CORPORATE
+    # =====================================================
+
+    "Taxation & Corporate": {
+
+        "Reassessment": [
+
+            r"\breassessment\b"
+        ],
+
+        "Input Tax Credit": [
+
+            r"\binput tax credit\b",
+            r"\bitc\b"
+        ],
+
+        "GST Refund": [
+
+            r"\bgst refund\b"
+        ],
+
+        "Insolvency": [
+
+            r"\binsolvency\b",
+            r"\bibc\b"
+        ],
+
+        "Corporate Insolvency": [
+
+            r"\bcirp\b",
+            r"\binsolvency resolution\b"
+        ],
+
+        "Oppression And Mismanagement": [
+
+            r"\boppression and mismanagement\b"
+        ]
+    }
+}
+
+# =========================================================
+# 🔥 NORMALIZE
+# =========================================================
+
+def normalize_text(text):
+
+    text = text.lower()
+
+    text = re.sub(
+        r"\s+",
+        " ",
+        text
+    )
+
+    return text
+
+# =========================================================
+# 🔥 MAIN EXTRACTION
+# =========================================================
+
+def extract_points_of_law(text):
+
+    try:
+
+        if not text:
+
+            return {
+
+                "points_of_law": [],
+
+                "category": "Unknown",
+
+                "confidence": 0
+            }
+
+        # =====================================================
+        # 🔥 NORMALIZE
+        # =====================================================
+
+        clean_text = normalize_text(
+
+            text[:70000]
+        )
+
+        found_points = []
+
+        category_scores = {}
+
+        # =====================================================
+        # 🔥 DETECT POINTS
+        # =====================================================
+
+        for category, topics in POINTS_DATABASE.items():
+
+            score = 0
+
+            for point_name, patterns in topics.items():
+
+                matched = False
+
+                for pattern in patterns:
+
+                    if re.search(
+
+                        pattern,
+
+                        clean_text,
+
+                        flags=re.I
+                    ):
+
+                        matched = True
+
+                        score += 1
+
+                        break
+
+                if matched:
+
+                    found_points.append({
+
+                        "point": point_name,
+
+                        "category": category
+                    })
+
+            category_scores[category] = score
+
+        # =====================================================
+        # 🔥 PRIMARY CATEGORY
+        # =====================================================
+
+        primary_category = "Unknown"
+
+        highest_score = 0
+
+        for category, score in category_scores.items():
+
+            if score > highest_score:
+
+                highest_score = score
+
+                primary_category = category
+
+        # =====================================================
+        # 🔥 CATEGORY FILTER
+        # =====================================================
+
+        filtered_points = []
+
+        for item in found_points:
+
+            if item.get("category") == primary_category:
+
+                filtered_points.append(item)
+
+        found_points = filtered_points
+
+        # =====================================================
+        # 🔥 REMOVE DUPLICATES
+        # =====================================================
+
+        unique_points = []
+
+        seen = set()
+
+        for item in found_points:
+
+            key = item["point"]
+
+            if key not in seen:
+
+                seen.add(key)
+
+                unique_points.append(item)
+
+        # =====================================================
+        # 🔥 CONFIDENCE
+        # =====================================================
+
+        confidence = min(
+
+            95,
+
+            40 + (len(unique_points) * 10)
+        )
+
+        result = {
+
+            "points_of_law": unique_points,
+
+            "category": primary_category,
+
+            "confidence": confidence
+        }
+
+        print(
+
+            "✅ Points Of Law Extracted:",
+
+            result
+        )
+
+        return result
+
+    except Exception as e:
+
+        print(
+            "❌ POINT OF LAW EXTRACTION ERROR:",
+            e
+        )
+
+        return {
+
+            "points_of_law": [],
+
+            "category": "Unknown",
+
+            "confidence": 0
+        }

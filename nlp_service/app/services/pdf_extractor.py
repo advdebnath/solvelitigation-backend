@@ -1,4 +1,5 @@
-import fitz  # PyMuPDF
+import fitz
+fitz.TOOLS.mupdf_display_errors(False)  # PyMuPDF
 import os
 from typing import Tuple
 

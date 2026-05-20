@@ -1,0 +1,242 @@
+import re
+
+# =========================================================
+# 🔥 CITATION PATTERNS
+# =========================================================
+
+CITATION_PATTERNS = [
+
+    # =====================================================
+    # 🔥 SCC
+    # =====================================================
+
+    {
+        "name": "SCC",
+
+        "pattern": r"\((\d{4})\)\s*(\d+)\s*SCC\s*(\d+)",
+
+        "court": "Supreme Court"
+    },
+
+    # =====================================================
+    # 🔥 AIR SC
+    # =====================================================
+
+    {
+        "name": "AIR",
+
+        "pattern": r"AIR\s*(\d{4})\s*SC\s*(\d+)",
+
+        "court": "Supreme Court"
+    },
+
+    # =====================================================
+    # 🔥 SCR
+    # =====================================================
+
+    {
+        "name": "SCR",
+
+        "pattern": r"(\d{4})\s*\((\d+)\)\s*SCR\s*(\d+)",
+
+        "court": "Supreme Court"
+    },
+
+    # =====================================================
+    # 🔥 SCALE
+    # =====================================================
+
+    {
+        "name": "SCALE",
+
+        "pattern": r"\((\d{4})\)\s*(\d+)\s*SCALE\s*(\d+)",
+
+        "court": "Supreme Court"
+    },
+
+    # =====================================================
+    # 🔥 SCC ONLINE
+    # =====================================================
+
+    {
+        "name": "SCC Online",
+
+        "pattern": r"(\d{4})\s*SCC\s*OnLine\s*SC\s*(\d+)",
+
+        "court": "Supreme Court"
+    }
+]
+
+# =========================================================
+# 🔥 CLEAN TEXT
+# =========================================================
+
+def clean_text(text):
+
+    if not text:
+
+        return ""
+
+    text = re.sub(
+        r"\s+",
+        " ",
+        text
+    )
+
+    return text.strip()
+
+# =========================================================
+# 🔥 BUILD CITATION OBJECT
+# =========================================================
+
+def build_citation_object(
+
+    citation_text,
+
+    reporter,
+
+    year,
+
+    court
+):
+
+    return {
+
+        "citation": citation_text,
+
+        "reporter": reporter,
+
+        "year": int(year),
+
+        "court": court
+    }
+
+# =========================================================
+# 🔥 MAIN CITATION EXTRACTOR
+# =========================================================
+
+def extract_structured_citations(text):
+
+    try:
+
+        if not text:
+
+            return {
+
+                "citations": [],
+
+                "confidence": 0
+            }
+
+        clean_input = clean_text(
+
+            text
+        )
+
+        extracted = []
+
+        seen = set()
+
+        # =====================================================
+        # 🔥 PROCESS PATTERNS
+        # =====================================================
+
+        for item in CITATION_PATTERNS:
+
+            reporter = item["name"]
+
+            pattern = item["pattern"]
+
+            court = item["court"]
+
+            matches = re.finditer(
+
+                pattern,
+
+                clean_input,
+
+                flags=re.I
+            )
+
+            for match in matches:
+
+                full_match = clean_text(
+
+                    match.group(0)
+                )
+
+                if full_match in seen:
+
+                    continue
+
+                seen.add(full_match)
+
+                year = match.group(1)
+
+                citation_obj = build_citation_object(
+
+                    citation_text=full_match,
+
+                    reporter=reporter,
+
+                    year=year,
+
+                    court=court
+                )
+
+                extracted.append(
+
+                    citation_obj
+                )
+
+        # =====================================================
+        # 🔥 SORT BY YEAR
+        # =====================================================
+
+        extracted.sort(
+
+            key=lambda x: x["year"],
+
+            reverse=True
+        )
+
+        # =====================================================
+        # 🔥 CONFIDENCE
+        # =====================================================
+
+        confidence = min(
+
+            95,
+
+            40 + (len(extracted) * 10)
+        )
+
+        result = {
+
+            "citations": extracted,
+
+            "confidence": confidence
+        }
+
+        print(
+
+            "✅ Structured Citations Extracted:",
+
+            result
+        )
+
+        return result
+
+    except Exception as e:
+
+        print(
+            "❌ CITATION EXTRACTION ERROR:",
+            e
+        )
+
+        return {
+
+            "citations": [],
+
+            "confidence": 0
+        }

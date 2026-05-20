@@ -1,0 +1,687 @@
+import re
+from collections import defaultdict
+
+# =========================================================
+# 🔥 FALSE ISSUE SUPPRESSION
+# =========================================================
+
+# =========================================================
+# 🔥 CONTEXTUAL DOCTRINAL SUPPRESSION
+# =========================================================
+
+DOCTRINAL_SUPPRESSION = {
+
+    "Joint Hindu Family": [
+
+        "wakf",
+        "wakf board",
+        "wakf tribunal",
+        "mutawalli"
+    ],
+
+    "Tenancy Surrender": [
+
+        "wakf",
+        "section 83",
+        "section 85",
+        "tribunal"
+    ],
+
+    "Murder Conviction": [
+
+        "civil appeal",
+        "wakf",
+        "property dispute"
+    ]
+}
+
+
+SUPPRESSED_ISSUES = [
+
+    "Joint Hindu Family",
+
+    "Tenancy Surrender",
+
+    "Coparcenary",
+
+    "Karta",
+
+    "Partition"
+]
+
+# =========================================================
+# 🔥 ADVANCED LEGAL ISSUE ONTOLOGY
+# =========================================================
+
+LEGAL_ISSUE_ONTOLOGY = {
+
+    "Wakf Tribunal Jurisdiction": [
+
+        "wakf tribunal",
+        "tribunal constituted under section 83",
+        "exclusive jurisdiction",
+        "wakf dispute",
+        "tribunal jurisdiction"
+    ],
+
+    "Bar Of Civil Court Jurisdiction": [
+
+        "civil court shall have no jurisdiction",
+        "bar of jurisdiction",
+        "section 85",
+        "jurisdiction barred",
+        "civil court barred"
+    ],
+
+    "Maintainability Of Writ Petition": [
+
+        "maintainability",
+        "writ petition",
+        "article 226",
+        "article 227"
+    ],
+
+    "Jurisdictional Error": [
+
+        "without jurisdiction",
+        "lack of jurisdiction",
+        "jurisdictional issue"
+    ],
+
+    "Natural Justice": [
+
+        "principles of natural justice",
+        "audi alteram partem",
+        "opportunity of hearing"
+    ],
+
+    "Fraud And Misrepresentation": [
+
+        "fraud",
+        "misrepresentation",
+        "suppression of facts"
+    ],
+
+    "Electoral Transparency": [
+
+        "criminal antecedents",
+        "electoral transparency",
+        "right to vote",
+        "informed choice of voters",
+        "candidate disclosure"
+    ],
+
+    "Criminal Antecedent Disclosure": [
+
+        "criminal antecedents",
+        "candidate is convicted",
+        "candidate is acquitted",
+        "disclosure of criminal cases",
+        "pending criminal cases"
+    ],
+
+    "Election Commission Compliance": [
+
+        "election commission of india",
+        "eci",
+        "compliance with directions",
+        "election commission",
+        "directions issued"
+    ],
+
+    "Free And Fair Election": [
+
+        "free and fair election",
+        "constitutional democracy",
+        "purity of elections",
+        "electoral process"
+    ],
+
+    "Contempt Jurisdiction": [
+
+        "contempt petition",
+        "wilful disobedience",
+        "contempt jurisdiction",
+        "flouting of directions"
+    ]
+}
+
+# =========================================================
+# 🔥 FALLBACK ISSUE PATTERNS
+# =========================================================
+
+SEMANTIC_ISSUE_PATTERNS = {
+
+    "Wakf Tribunal Jurisdiction": [
+
+        "wakf tribunal",
+        "section 83",
+        "section 85",
+        "tribunal had jurisdiction",
+        "exclusive jurisdiction"
+    ],
+
+    "Bar Of Civil Court Jurisdiction": [
+
+        "civil court shall have no jurisdiction",
+        "barred by section 85",
+        "jurisdiction barred",
+        "civil court jurisdiction"
+    ],
+
+    "Maintainability Of Writ Petition": [
+
+        "article 226",
+        "article 227",
+        "writ petition",
+        "maintainability"
+    ],
+
+    "Jurisdictional Error": [
+
+        "without jurisdiction",
+        "exceeded jurisdiction",
+        "jurisdictional issue"
+    ],
+
+    "Tribunal Adjudication": [
+
+        "tribunal",
+        "adjudication",
+        "wakf board"
+    ],
+
+    "Jurisdiction Of Tribunal": [
+
+        "jurisdiction of tribunal",
+        "tribunal jurisdiction",
+        "competent tribunal"
+    ],
+
+    "Bail Jurisprudence": [
+
+        "grant of bail",
+        "anticipatory bail",
+        "regular bail"
+    ],
+
+    "Murder Conviction": [
+
+        "section 302",
+        "homicidal death",
+        "murder conviction"
+    ],
+
+    "Departmental Proceeding": [
+
+        "departmental proceeding",
+        "disciplinary authority",
+        "dismissal from service"
+    ],
+
+    "Contractual Breach": [
+
+        "breach of contract",
+        "specific performance"
+    ],
+
+    "Electoral Transparency": [
+
+        "electoral transparency",
+        "right to vote",
+        "informed choice"
+    ],
+
+    "Criminal Antecedent Disclosure": [
+
+        "criminal antecedents",
+        "candidate disclosure",
+        "pending criminal cases"
+    ],
+
+    "Election Commission Compliance": [
+
+        "election commission",
+        "eci",
+        "compliance report"
+    ],
+
+    "Free And Fair Election": [
+
+        "free and fair election",
+        "purity of elections"
+    ],
+
+    "Contempt Jurisdiction": [
+
+        "contempt petition",
+        "wilful disobedience"
+    ]
+}
+
+# =========================================================
+# 🔥 ISSUE CATEGORY MAP
+# =========================================================
+
+ISSUE_CATEGORY_MAP = {
+
+    "Wakf Tribunal Jurisdiction":
+        "Civil",
+
+    "Bar Of Civil Court Jurisdiction":
+        "Civil",
+
+    "Maintainability Of Writ Petition":
+        "Constitutional",
+
+    "Jurisdictional Error":
+        "Constitutional",
+
+    "Natural Justice":
+        "Civil",
+
+    "Fraud And Misrepresentation":
+        "Civil",
+
+    "Jurisdiction Of Tribunal":
+        "Civil",
+
+    "Bail Jurisprudence":
+        "Criminal",
+
+    "Murder Conviction":
+        "Criminal",
+
+    "Departmental Proceeding":
+        "Service Law",
+
+    "Contractual Breach":
+        "Civil",
+
+    "Electoral Transparency":
+        "Constitutional",
+
+    "Criminal Antecedent Disclosure":
+        "Constitutional",
+
+    "Election Commission Compliance":
+        "Constitutional",
+
+    "Free And Fair Election":
+        "Constitutional",
+
+    "Contempt Jurisdiction":
+        "Constitutional"
+}
+
+# =========================================================
+# 🔥 MAIN ENGINE
+# =========================================================
+
+def cluster_semantic_issues(
+
+    full_text="",
+
+    acts=None,
+
+    sections=None,
+
+    points_of_law=None
+):
+
+    if acts is None:
+        acts = []
+
+    if sections is None:
+        sections = []
+
+    if points_of_law is None:
+        points_of_law = []
+
+    issue_scores = defaultdict(int)
+
+    # =====================================================
+    # 🔥 BOOST FUNCTION
+    # =====================================================
+
+    def boost_issue(issue, score):
+
+        if not issue:
+            return
+
+        if issue in SUPPRESSED_ISSUES:
+            return
+
+        issue_scores[issue] += score
+
+    # =====================================================
+    # 🔥 DOCTRINAL ISSUE DETECTION
+    # =====================================================
+
+    for issue, phrases in LEGAL_ISSUE_ONTOLOGY.items():
+
+        total_hits = 0
+
+        for phrase in phrases:
+
+            hits = len(
+
+                re.findall(
+                    re.escape(phrase),
+                    full_text,
+                    flags=re.I
+                )
+            )
+
+            total_hits += hits
+
+        if total_hits:
+
+            score = total_hits * 25
+
+            if "jurisdiction" in issue.lower():
+
+                score += 60
+
+            if "maintainability" in issue.lower():
+
+                score += 50
+
+            boost_issue(
+                issue,
+                score
+            )
+
+    # =====================================================
+    # 🔥 FALLBACK PATTERN MATCHING
+    # =====================================================
+
+    text = full_text.lower()
+
+    for issue, patterns in SEMANTIC_ISSUE_PATTERNS.items():
+
+        for pattern in patterns:
+
+            hits = len(
+
+                re.findall(
+                    re.escape(pattern.lower()),
+                    text
+                )
+            )
+
+            if hits:
+
+                boost_issue(
+                    issue,
+                    hits * 15
+                )
+
+    # =====================================================
+    # 🔥 ACT BOOSTING
+    # =====================================================
+
+    acts_text = " ".join(acts).lower()
+
+    if "wakf" in acts_text:
+
+        boost_issue(
+            "Wakf Tribunal Jurisdiction",
+            80
+        )
+
+        boost_issue(
+            "Bar Of Civil Court Jurisdiction",
+            80
+        )
+
+    if "constitution" in acts_text:
+
+        boost_issue(
+            "Maintainability Of Writ Petition",
+            50
+        )
+
+    # =====================================================
+    # 🔥 SECTION BOOSTING
+    # =====================================================
+
+    section_values = []
+
+    for s in sections:
+
+        if isinstance(s, dict):
+
+            section_values.append(
+
+                str(
+                    s.get(
+                        "section",
+                        ""
+                    )
+                )
+            )
+
+        else:
+
+            section_values.append(
+                str(s)
+            )
+
+    if "85" in section_values:
+
+        boost_issue(
+            "Bar Of Civil Court Jurisdiction",
+            100
+        )
+
+    if "226" in section_values:
+
+        boost_issue(
+            "Maintainability Of Writ Petition",
+            80
+        )
+
+    if "227" in section_values:
+
+        boost_issue(
+            "Maintainability Of Writ Petition",
+            80
+        )
+
+    if "302" in section_values:
+
+        boost_issue(
+            "Murder Conviction",
+            100
+        )
+
+    # =====================================================
+    # 🔥 POINT OF LAW BOOSTING
+    # =====================================================
+
+    for point in points_of_law:
+
+        if isinstance(point, dict):
+
+            p = point.get(
+                "point",
+                ""
+            ).lower()
+
+        else:
+
+            p = str(point).lower()
+
+        if "wakf" in p:
+
+            boost_issue(
+                "Wakf Tribunal Jurisdiction",
+                50
+            )
+
+        if "bail" in p:
+
+            boost_issue(
+                "Bail Jurisprudence",
+                50
+            )
+
+    # =====================================================
+    # 🔥 OPERATIVE ORDER BOOST
+    # =====================================================
+
+    operative_zone = full_text[-15000:].lower()
+
+    for issue in list(issue_scores.keys()):
+
+        issue_lower = issue.lower()
+
+        if any(
+
+            word in operative_zone
+
+            for word in issue_lower.split()
+        ):
+
+            issue_scores[issue] += 80
+
+    # =====================================================
+    # 🔥 STRICT FILTER
+    # =====================================================
+
+    # =====================================================
+    # 🔥 DYNAMIC ISSUE THRESHOLD
+    # =====================================================
+
+    dynamic_threshold = 35
+
+    if any(
+
+        "jurisdiction" in k.lower()
+
+        for k in issue_scores
+    ):
+
+        dynamic_threshold = 25
+
+    if any(
+
+        "wakf" in k.lower()
+
+        for k in issue_scores
+    ):
+
+        dynamic_threshold = 20
+
+    print("🔥 RAW ISSUE SCORES:")
+    print(issue_scores)
+
+    print("🔥 DYNAMIC THRESHOLD:")
+    print(dynamic_threshold)
+
+    filtered_issues = {
+
+        k: v
+
+        for k, v in issue_scores.items()
+
+        if v >= dynamic_threshold
+    }
+
+    # =====================================================
+    # 🔥 FALLBACK DOMINANT ISSUE RECOVERY
+    # =====================================================
+
+    if not filtered_issues and issue_scores:
+
+        top_issue = max(
+
+            issue_scores,
+
+            key=issue_scores.get
+        )
+
+        filtered_issues[top_issue] = issue_scores[top_issue]
+
+    # =====================================================
+    # 🔥 ACTIVE DOCTRINAL SUPPRESSION
+    # =====================================================
+
+    cleaned_filtered_issues = {}
+
+    for issue, score in filtered_issues.items():
+
+        suppress = False
+
+        suppression_terms = DOCTRINAL_SUPPRESSION.get(
+            issue,
+            []
+        )
+
+        for term in suppression_terms:
+
+            if term.lower() in full_text.lower():
+
+                suppress = True
+                break
+
+        if suppress:
+
+            continue
+
+        cleaned_filtered_issues[issue] = score
+
+    filtered_issues = cleaned_filtered_issues
+
+    # =====================================================
+    # 🔥 FINAL ISSUES
+    # =====================================================
+
+    final_issues = []
+
+    for issue, score in sorted(
+
+        filtered_issues.items(),
+
+        key=lambda x: x[1],
+
+        reverse=True
+    ):
+
+        final_issues.append({
+
+            "issue": issue,
+
+            "category":
+
+                ISSUE_CATEGORY_MAP.get(
+                    issue,
+                    "General"
+                ),
+
+            "score": score
+        })
+
+    dominant_issue = None
+    dominant_category = None
+
+    if final_issues:
+
+        dominant_issue = final_issues[0]["issue"]
+
+        dominant_category = final_issues[0]["category"]
+
+    return {
+
+        "issues": final_issues[:8],
+
+        "dominant_issue": dominant_issue,
+
+        "dominant_category": dominant_category,
+
+        "confidence": min(
+            95,
+            50 + len(final_issues) * 5
+        )
+    }

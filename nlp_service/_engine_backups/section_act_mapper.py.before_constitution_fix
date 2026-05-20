@@ -1,0 +1,358 @@
+# =========================================================
+# 🔥 SECTION → ACT → CATEGORY MAPPER
+# =========================================================
+
+import re
+
+# =========================================================
+# 🔥 MASTER LEGAL SECTION DATABASE
+# =========================================================
+
+SECTION_ACT_MAP = {
+
+    # =====================================================
+    # 🔥 IPC
+    # =====================================================
+
+    "302": {
+        "act": "Indian Penal Code, 1860",
+        "category": "Criminal"
+    },
+
+    "304B": {
+        "act": "Indian Penal Code, 1860",
+        "category": "Criminal"
+    },
+
+    "307": {
+        "act": "Indian Penal Code, 1860",
+        "category": "Criminal"
+    },
+
+    "376": {
+        "act": "Indian Penal Code, 1860",
+        "category": "Criminal"
+    },
+
+    "498A": {
+        "act": "Indian Penal Code, 1860",
+        "category": "Criminal"
+    },
+
+    "420": {
+        "act": "Indian Penal Code, 1860",
+        "category": "Criminal"
+    },
+
+    # =====================================================
+    # 🔥 CrPC
+    # =====================================================
+
+    "438": {
+        "act": "Code Of Criminal Procedure, 1973",
+        "category": "Criminal"
+    },
+
+    "439": {
+        "act": "Code Of Criminal Procedure, 1973",
+        "category": "Criminal"
+    },
+
+    "482": {
+        "act": "Code Of Criminal Procedure, 1973",
+        "category": "Criminal"
+    },
+
+    # =====================================================
+    # 🔥 NDPS
+    # =====================================================
+
+    # =====================================================
+    # 🔥 NI ACT
+    # =====================================================
+
+    "138": {
+        "act": "Negotiable Instruments Act, 1881",
+        "category": "Criminal"
+    },
+
+    # =====================================================
+    # 🔥 CPC
+    # =====================================================
+
+    "9": {
+        "act": "Code Of Civil Procedure, 1908",
+        "category": "Civil"
+    },
+
+    "10": {
+        "act": "Code Of Civil Procedure, 1908",
+        "category": "Civil"
+    },
+
+    "11": {
+        "act": "Code Of Civil Procedure, 1908",
+        "category": "Civil"
+    },
+
+    # =====================================================
+    # 🔥 CONSTITUTION
+    # =====================================================
+
+    "14": {
+        "act": "Constitution Of India",
+        "category": "Constitutional"
+    },
+
+    "19": {
+        "act": "Constitution Of India",
+        "category": "Constitutional"
+    },
+
+    "21": {
+        "act": "Constitution Of India",
+        "category": "Constitutional"
+    },
+
+    "32": {
+        "act": "Constitution Of India",
+        "category": "Constitutional"
+    },
+
+    "136": {
+        "act": "Constitution Of India",
+        "category": "Constitutional"
+    },
+
+    "226": {
+        "act": "Constitution Of India",
+        "category": "Constitutional"
+    },
+
+    "227": {
+        "act": "Constitution Of India",
+        "category": "Constitutional"
+    },
+
+    # =====================================================
+    # 🔥 SERVICE LAW
+    # =====================================================
+
+    "311": {
+        "act": "Constitution Of India",
+        "category": "Service"
+    },
+
+    # =====================================================
+    # 🔥 ARBITRATION
+    # =====================================================
+
+    "34": {
+        "act": "Arbitration And Conciliation Act, 1996",
+        "category": "Civil"
+    },
+
+    # =====================================================
+    # 🔥 GST
+    # =====================================================
+
+    "74": {
+        "act": "Central Goods And Services Tax Act, 2017",
+        "category": "Taxation"
+    },
+
+    # =====================================================
+    # 🔥 INCOME TAX
+    # =====================================================
+
+    "147": {
+        "act": "Income Tax Act, 1961",
+        "category": "Taxation"
+    }
+}
+
+# =========================================================
+# 🔥 CLEAN SECTION
+# =========================================================
+
+def clean_section(section):
+
+    if not section:
+        return ""
+
+    return re.sub(
+        r"[^0-9A-Za-z]",
+        "",
+        str(section)
+    ).upper()
+
+# =========================================================
+# 🔥 MAIN MAPPER
+# =========================================================
+
+def map_sections_to_acts(sections):
+
+    acts = set()
+
+    mapped_sections = []
+
+    categories = set()
+
+    if not isinstance(sections, list):
+
+        sections = []
+
+    # =====================================================
+    # 🔥 LOOP
+    # =====================================================
+
+    for item in sections:
+
+        if not isinstance(item, dict):
+            continue
+
+        raw_section = item.get("section")
+
+        cleaned = clean_section(raw_section)
+
+        mapping = SECTION_ACT_MAP.get(cleaned)
+
+        # =================================================
+        # 🔥 MAPPING FOUND
+        # =================================================
+
+        if mapping:
+
+            act_name = mapping["act"]
+
+            category = mapping["category"]
+
+        else:
+
+            act_name = item.get(
+                "act",
+                "Unknown Act"
+            )
+
+            category = item.get(
+                "category",
+                "General"
+            )
+
+        # =================================================
+        # 🔥 UPDATE SECTION OBJECT
+        # =================================================
+
+        item["act"] = act_name
+
+        item["normalized_section"] = cleaned
+
+        item["category"] = category
+
+        mapped_sections.append(item)
+
+        acts.add(act_name)
+
+        categories.add(category)
+
+    # =====================================================
+    # 🔥 SAFETY
+    # =====================================================
+
+    clean_acts = sorted(list(set([
+        a for a in acts
+        if a and a != "Unknown Act"
+    ])))
+
+    if not clean_acts:
+
+        clean_acts = ["Unknown Act"]
+
+    # =====================================================
+    # 🔥 RESPONSE
+    # =====================================================
+
+    return {
+
+        "acts":
+            clean_acts,
+
+        "categories":
+            sorted(list(categories)),
+
+        "mapped_sections":
+            mapped_sections,
+
+        "confidence":
+            90
+    }
+
+# =========================================================
+# 🔥 BACKWARD COMPATIBILITY
+# =========================================================
+
+def enrich_sections_with_acts(sections):
+
+    return map_sections_to_acts(sections)
+
+# =========================================================
+# 🔥 EXTRACT ACT NAMES
+# =========================================================
+
+def extract_act_names(sections):
+
+    try:
+
+        result = map_sections_to_acts(
+            sections
+        )
+
+        mapped_sections = result.get(
+            "mapped_sections",
+            []
+        )
+
+        acts = result.get(
+            "acts",
+            []
+        )
+
+        # =================================================
+        # 🔥 UPDATE ORIGINAL SECTION OBJECTS
+        # =================================================
+
+        if isinstance(sections, list):
+
+            for i in range(
+
+                min(
+                    len(sections),
+                    len(mapped_sections)
+                )
+            ):
+
+                if isinstance(sections[i], dict):
+
+                    sections[i].update(
+                        mapped_sections[i]
+                    )
+
+        # =================================================
+        # 🔥 SAFETY
+        # =================================================
+
+        if not acts:
+
+            return ["Unknown Act"]
+
+        return acts
+
+    except Exception as e:
+
+        print(
+            "❌ extract_act_names error"
+        )
+
+        print(e)
+
+        return ["Unknown Act"]

@@ -1,0 +1,31 @@
+import re
+
+RATIO_PATTERNS = [
+
+    r"we hold that.*?\.",
+    r"we conclude that.*?\.",
+    r"therefore.*?\.",
+    r"it is settled law.*?\.",
+    r"accordingly.*?\.",
+]
+
+
+def extract_ratio(text: str):
+
+    if not text:
+        return []
+
+    text = re.sub(r"\s+", " ", text)
+
+    ratios = []
+
+    for pattern in RATIO_PATTERNS:
+
+        matches = re.findall(pattern, text, flags=re.I)
+
+        for match in matches:
+
+            if len(match.strip()) > 30:
+                ratios.append(match.strip())
+
+    return ratios[:10]

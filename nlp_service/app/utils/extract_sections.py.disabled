@@ -1,0 +1,39 @@
+import re
+
+SECTION_ACT_MAP = {
+    "IPC": "Indian Penal Code, 1860",
+    "CRPC": "Code of Criminal Procedure, 1973",
+    "CPC": "Code of Civil Procedure, 1908",
+}
+
+def extract_sections(text, detected_acts=None):
+    sections = []
+    seen = set()
+
+    pattern = r'Section\s+(\d+[A-Za-z]*)\s*(IPC|CrPC|CPC)?'
+    matches = re.findall(pattern, text, flags=re.IGNORECASE)
+
+    for sec, act_abbr in matches:
+        sec_clean = f"Section {sec}"
+
+        if sec_clean in seen:
+            continue
+        seen.add(sec_clean)
+
+        act_name = None
+
+        # explicit mapping
+        if act_abbr:
+            act_name = SECTION_ACT_MAP.get(act_abbr.upper())
+
+        # fallback ONLY for criminal cases
+        elif detected_acts:
+            if any("Penal Code" in a for a in detected_acts):
+                act_name = "Indian Penal Code, 1860"
+
+        sections.append({
+            "section": sec_clean,
+            "act": act_name
+        })
+
+    return sections

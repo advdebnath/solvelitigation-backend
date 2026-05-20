@@ -1,0 +1,378 @@
+import re
+from collections import defaultdict
+
+
+
+# =========================================================
+# 🔥 CLEAN
+# =========================================================
+
+def clean_text(text):
+
+    text = re.sub(
+        r"\s+",
+        " ",
+        str(text)
+    )
+
+    return text.strip()
+
+
+# =========================================================
+# 🔥 BUILD GRAPH
+# =========================================================
+
+def build_legal_graph(
+
+    case_title=None,
+
+    judges=None,
+
+    precedent_data=None,
+
+    doctrine_data=None,
+
+    issue_data=None,
+
+    operative_data=None
+):
+
+    graph = defaultdict(dict)
+
+    # =====================================================
+    # 🔥 CASE NODE
+    # =====================================================
+
+    case_node = case_title or "Unknown Case"
+
+    graph[case_node]["type"] = "case"
+
+    # =====================================================
+    # 🔥 PRECEDENTS
+    # =====================================================
+
+    precedents = []
+
+    if precedent_data:
+
+        precedents = precedent_data.get(
+            "ranked_precedents",
+            []
+        )
+
+    precedent_nodes = []
+
+    for p in precedents:
+
+        citation = p.get(
+            "citation"
+        )
+
+        if not citation:
+
+            continue
+
+        precedent_nodes.append(
+            citation
+        )
+
+    graph[case_node]["precedents"] = precedent_nodes
+
+    # =====================================================
+    # 🔥 DOCTRINES
+    # =====================================================
+
+    doctrines = []
+
+    if doctrine_data:
+
+        doctrine_list = doctrine_data.get(
+            "doctrine_evolution",
+            []
+        )
+
+        for d in doctrine_list:
+
+            doctrine = d.get(
+                "doctrine"
+            )
+
+            if doctrine:
+
+                doctrines.append(
+                    doctrine
+                )
+
+    graph[case_node]["doctrines"] = doctrines
+
+    # =====================================================
+    # 🔥 JUDGES
+    # =====================================================
+
+    graph[case_node]["judges"] = judges or []
+
+    # =====================================================
+    # 🔥 ISSUE
+    # =====================================================
+    dominant_issue = None
+
+    if isinstance(issue_data, dict):
+
+        dominant_issue = issue_data.get(
+            "dominant_issue"
+        )
+
+    elif isinstance(issue_data, str):
+
+        dominant_issue = re.sub(
+            r"\\s+",
+            " ",
+            issue_data
+        ).strip()
+
+    graph[case_node]["dominant_issue"] = dominant_issue
+
+    # =====================================================
+    # 🔥 OUTCOME
+    # =====================================================
+
+    holding = None
+
+    if operative_data:
+
+        holding = operative_data.get("final_disposition") or operative_data.get("final_holding") or "Disposition Unknown"
+
+    graph[case_node]["final_holding"] = holding
+
+    # =====================================================
+    # 🔥 BUILD PRECEDENT LINKS
+    # =====================================================
+
+    for citation in precedent_nodes:
+
+        graph[citation]["type"] = "precedent"
+
+        graph[citation]["relied_by"] = [
+
+            case_node
+        ]
+
+        graph[citation]["doctrines"] = doctrines
+
+    # =====================================================
+    # 🔥 BUILD DOCTRINE LINKS
+    # =====================================================
+
+    for doctrine in doctrines:
+
+        graph[doctrine]["type"] = "doctrine"
+
+        graph[doctrine]["cases"] = [
+
+            case_node
+        ]
+
+        graph[doctrine]["judges"] = judges or []
+
+    return graph
+
+
+# =========================================================
+# 🔥 SERIALIZE GRAPH
+# =========================================================
+
+def serialize_graph(graph):
+
+    output = {}
+
+    for key, value in graph.items():
+
+        output[key] = dict(value)
+
+    return output
+
+
+# =========================================================
+# 🔥 GENERATE GRAPH INTELLIGENCE
+# =========================================================
+
+def generate_legal_graph_intelligence(
+
+    case_title=None,
+
+    judges=None,
+
+    precedent_data=None,
+
+    doctrine_data=None,
+
+    issue_data=None,
+
+    operative_data=None
+):
+
+    try:
+
+        graph = build_legal_graph(
+
+            case_title=case_title,
+
+            judges=judges,
+
+            precedent_data=precedent_data,
+
+            doctrine_data=doctrine_data,
+
+            issue_data=issue_data,
+
+            operative_data=operative_data
+        )
+
+        serialized = serialize_graph(
+            graph
+        )
+
+        result = {
+
+            "legal_graph":
+                serialized,
+
+            "confidence":
+                95
+        }
+
+        print(
+            "✅ Legal Graph Intelligence Generated:"
+        )
+
+        print(result)
+
+        return result
+
+    except Exception as e:
+
+        print(
+            "❌ Legal Graph Engine Error:",
+            str(e)
+        )
+
+        return {
+
+            "legal_graph": {},
+
+            "confidence": 0
+        }
+
+
+# =========================================================
+# 🔥 TEST
+# =========================================================
+
+if __name__ == "__main__":
+
+    precedent_data = {
+
+        "ranked_precedents": [
+
+            {
+
+                "citation":
+                    "AIR 1967 SC 574"
+            }
+        ]
+    }
+
+    doctrine_data = {
+
+        "doctrine_evolution": [
+
+            {
+
+                "doctrine":
+                    "natural justice"
+            }
+        ]
+    }
+
+    issue_data = {
+
+        "dominant_issue":
+            "Natural Justice Violation"
+    }
+
+    operative_data = {
+
+        "final_holding":
+            "Appeal Allowed"
+    }
+
+    print(
+
+        generate_legal_graph_intelligence(
+
+            case_title="2021 Wakf Case",
+
+            judges=[
+
+                "Justice Chandrachud"
+            ],
+
+            precedent_data=precedent_data,
+
+            doctrine_data=doctrine_data,
+
+            issue_data=issue_data,
+
+            operative_data=operative_data
+        )
+    )
+
+# =========================================================
+# 🔥 COMPATIBILITY WRAPPER
+# =========================================================
+
+def build_legal_graph_intelligence(
+
+    full_text,
+
+    precedent_data=None,
+
+    doctrine_data=None,
+
+    judge_data=None,
+
+    issue_data=None,
+
+    operative_data=None
+):
+
+    try:
+
+        return generate_legal_graph_intelligence(
+
+            full_text=full_text,
+
+            precedent_data=precedent_data,
+
+            doctrine_data=doctrine_data,
+
+            judge_data=judge_data,
+
+            issue_data=issue_data,
+
+            operative_data=operative_data
+        )
+
+    except Exception as e:
+
+        print(
+            "❌ Legal Graph Wrapper Error:",
+            str(e)
+        )
+
+        return {
+
+            "legal_graph": {},
+            "confidence": 0
+        }
+

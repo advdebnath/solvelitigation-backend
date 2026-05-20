@@ -1,0 +1,159 @@
+import re
+from typing import List, Dict
+
+
+# =========================================================
+# 🔥 LEGAL SAFE ABBREVIATIONS
+# =========================================================
+
+PROTECTED_ABBREVIATIONS = [
+
+    "v.",
+    "vs.",
+    "mr.",
+    "mrs.",
+    "dr.",
+    "jr.",
+    "sr.",
+    "no.",
+    "nos.",
+    "sec.",
+    "scc.",
+    "air.",
+    "cri.",
+    "ltd.",
+    "jj.",
+    "j.",
+    "w.p.",
+    "s.l.p.",
+    "u/s.",
+]
+
+
+# =========================================================
+# 🔥 NORMALIZE TEXT
+# =========================================================
+
+def normalize_text(text: str) -> str:
+
+    if not text:
+        return ""
+
+    text = re.sub(r"\s+", " ", text)
+
+    return text.strip()
+
+
+# =========================================================
+# 🔥 PROTECT LEGAL ABBREVIATIONS
+# =========================================================
+
+def protect_abbreviations(text: str) -> str:
+
+    protected = text
+
+    for abbr in PROTECTED_ABBREVIATIONS:
+
+        safe = abbr.replace(".", "__DOT__")
+
+        protected = re.sub(
+
+            re.escape(abbr),
+            safe,
+            protected,
+            flags=re.IGNORECASE
+        )
+
+    return protected
+
+
+# =========================================================
+# 🔥 RESTORE ABBREVIATIONS
+# =========================================================
+
+def restore_abbreviations(text: str) -> str:
+
+    return text.replace("__DOT__", ".")
+
+
+# =========================================================
+# 🔥 SENTENCE SPLITTER
+# =========================================================
+
+def split_into_sentences(text: str) -> List[str]:
+
+    if not text:
+        return []
+
+    text = normalize_text(text)
+
+    protected_text = protect_abbreviations(text)
+
+    raw_sentences = re.split(
+
+    raw_sentences = [
+        s for chunk in raw_sentences
+        for s in re.split(r"(?<=[.!?])\s+", chunk)
+    ]
+
+
+        r'(?<=[.!?])\s+(?=[A-Z])',
+        protected_text
+    )
+
+    sentences = []
+
+    for sent in raw_sentences:
+
+        sent = restore_abbreviations(sent)
+
+        sent = sent.strip()
+
+        if len(sent) < 15:
+            continue
+
+        sentences.append(sent)
+
+    return sentences
+
+
+# =========================================================
+# 🔥 MAIN EXTRACTION ENGINE
+# =========================================================
+
+def extract_jurisprudential_sentences(
+    text: str
+) -> List[Dict]:
+
+    if not text:
+        return []
+
+    sentences = split_into_sentences(text)
+
+    total = len(sentences)
+
+    results = []
+
+    for idx, sentence in enumerate(sentences):
+
+        results.append({
+
+            "sentence_id": f"S{idx+1}",
+
+            "text": sentence,
+
+            "normalized_text": sentence.lower(),
+
+            "sentence_index": idx,
+
+            "position": round(
+                idx / max(total, 1),
+                4
+            ),
+
+            "word_count": len(sentence.split()),
+
+            "char_count": len(sentence),
+        })
+
+    return results

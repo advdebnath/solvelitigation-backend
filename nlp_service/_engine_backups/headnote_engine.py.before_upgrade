@@ -1,0 +1,447 @@
+import re
+
+# =========================================================
+# 🔥 CLEAN TEXT
+# =========================================================
+
+def clean_text(text):
+
+    text = re.sub(
+        r"\s+",
+        " ",
+        text
+    )
+
+    return text.strip()
+
+# =========================================================
+# 🔥 FIND HOLDING
+# =========================================================
+
+def extract_holding(text):
+
+    patterns = [
+
+        r"appeal\s+is\s+allowed",
+
+        r"appeal\s+stands\s+allowed",
+
+        r"petition\s+is\s+dismissed",
+
+        r"high\s+court\s+is\s+set\s+aside",
+
+        r"tribunal\s+is\s+restored",
+
+        r"judgment\s+is\s+set\s+aside"
+    ]
+
+    lower = text.lower()
+
+    findings = []
+
+    for pattern in patterns:
+
+        if re.search(
+            pattern,
+            lower,
+            re.I
+        ):
+
+            findings.append(pattern)
+
+    if not findings:
+
+        return None
+
+    # =====================================================
+    # 🔥 HUMANIZED HOLDINGS
+    # =====================================================
+
+    result = []
+
+    for item in findings:
+
+        if "allowed" in item:
+
+            result.append(
+                "Appeal allowed"
+            )
+
+        elif "dismissed" in item:
+
+            result.append(
+                "Petition dismissed"
+            )
+
+        elif "set aside" in item:
+
+            result.append(
+                "High Court judgment set aside"
+            )
+
+        elif "restored" in item:
+
+            result.append(
+                "Tribunal restored"
+            )
+
+    return ", ".join(
+        list(dict.fromkeys(result))
+    )
+
+# =========================================================
+# 🔥 KEY FACTS
+# =========================================================
+
+def detect_key_facts(text):
+
+    lower = text.lower()
+
+    facts = []
+
+    checks = {
+
+        "surrender of tenancy":
+            "Tenancy surrender",
+
+        "joint hindu family":
+            "Joint Hindu Family",
+
+        "karta":
+            "Karta powers",
+
+        "wakf tribunal":
+            "Wakf Tribunal",
+
+        "benefit of the joint family":
+            "Benefit of Joint Family"
+    }
+
+    for key, label in checks.items():
+
+        if key in lower:
+
+            facts.append(label)
+
+    return facts[:4]
+
+# =========================================================
+# 🔥 PARA FINDER
+# =========================================================
+
+def find_relevant_para(text):
+
+    para_matches = re.findall(
+
+        r"\b(\d{1,3})\.\s",
+
+        text
+    )
+
+    if not para_matches:
+
+        return "para-unknown"
+
+    try:
+
+        para = para_matches[-1]
+
+        return f"para-{para}"
+
+    except:
+
+        return "para-unknown"
+
+# =========================================================
+# 🔥 MAIN ENGINE
+# =========================================================
+
+def generate_headnote(
+
+    full_text,
+
+    issue_data=None,
+
+    points_data=None,
+
+    sections_data=None,
+
+    operative_data=None
+):
+
+    try:
+
+        if not full_text:
+
+            return {
+
+                "headnote":
+                    "",
+
+                "confidence":
+                    0
+            }
+
+        full_text = clean_text(
+            full_text
+        )
+
+        # =================================================
+        # 🔥 DOMINANT ISSUE
+        # =================================================
+
+        dominant_issue = None
+
+        if issue_data:
+
+            dominant_issue = issue_data.get(
+                "dominant_issue"
+            )
+
+        # =================================================
+        # 🔥 KEY FACTS
+        # =================================================
+
+        facts = detect_key_facts(
+            full_text
+        )
+
+        # =================================================
+        # 🔥 HOLDING
+        # =================================================
+
+        holding = None
+
+        if operative_data:
+
+            print(
+                "🔥 OPERATIVE DATA RECEIVED:",
+                operative_data
+            )
+
+            holding = operative_data.get(
+                "final_holding"
+            )
+
+            print(
+                "🔥 HOLDING AFTER OPERATIVE:",
+                holding
+            )
+
+        if not holding:
+
+            holding = extract_holding(
+                full_text
+            )
+
+        # =================================================
+        # 🔥 PARA
+        # =================================================
+
+        para = None
+
+        if operative_data:
+
+            para = operative_data.get(
+                "operative_para"
+            )
+
+        if not para:
+
+            para = find_relevant_para(
+                full_text
+            )
+
+        # =================================================
+        # 🔥 BUILD HEADNOTE
+        # =================================================
+
+        parts = []
+
+        # =============================================
+        # 🔥 DOMINANT ISSUE FIRST
+        # =============================================
+
+        if dominant_issue:
+
+            parts.append(
+                dominant_issue
+            )
+
+        # =============================================
+        # 🔥 FACTS
+        # =============================================
+
+        if facts:
+
+            parts.append(
+                " — ".join(facts)
+            )
+
+        # =============================================
+        # 🔥 HOLDING
+        # =============================================
+
+        if holding:
+
+            parts.append(
+                holding
+            )
+
+        # =============================================
+        # 🔥 FALLBACK POINTS
+        # =============================================
+
+        if not dominant_issue and points_data:
+
+            points = points_data.get(
+                "points_of_law",
+                []
+            )
+
+            labels = []
+
+            for p in points[:3]:
+
+                point = p.get(
+                    "point"
+                )
+
+                if point:
+
+                    labels.append(
+                        point
+                    )
+
+            if labels:
+
+                parts.append(
+                    " — ".join(labels)
+                )
+
+        # =================================================
+        # 🔥 CLEAN DUPLICATES
+        # =================================================
+
+        final = []
+
+        seen = set()
+
+        for part in parts:
+
+            part = clean_text(part)
+
+            if not part:
+
+                continue
+
+            if part.lower() in seen:
+
+                continue
+
+            seen.add(
+                part.lower()
+            )
+
+            final.append(part)
+
+        # =================================================
+        # 🔥 FINAL HEADNOTE
+        # =================================================
+
+        headnote = " — ".join(final)
+
+        if para:
+
+            headnote += f". ({para})"
+
+        # =================================================
+        # 🔥 CONFIDENCE
+        # =================================================
+
+        confidence = 70
+
+        if dominant_issue:
+
+            confidence += 10
+
+        if holding:
+
+            confidence += 10
+
+        if facts:
+
+            confidence += 5
+
+        confidence = min(
+            confidence,
+            95
+        )
+
+        result = {
+
+            "headnote":
+                headnote,
+
+            "confidence":
+                confidence
+        }
+
+        print(
+            "✅ Intelligent Headnote Generated:"
+        )
+
+        print(result)
+
+        return result
+
+    except Exception as e:
+
+        print(
+            "❌ HEADNOTE ENGINE ERROR:",
+            e
+        )
+
+        return {
+
+            "headnote":
+                "",
+
+            "confidence":
+                0
+        }
+
+# =========================================================
+# 🔥 DIRECT TEST
+# =========================================================
+
+if __name__ == "__main__":
+
+    sample = """
+
+    The appeal is allowed.
+
+    The Wakf Tribunal is restored.
+
+    The surrender of tenancy by the karta
+    of the joint Hindu family
+    was valid.
+
+    38.
+    """
+
+    issue_data = {
+
+        "dominant_issue":
+            "Wakf Property Dispute"
+    }
+
+    print(
+
+        generate_headnote(
+
+            sample,
+
+            issue_data=issue_data
+        )
+    )

@@ -1,0 +1,481 @@
+import re
+import unicodedata
+
+# =========================================================
+# 🔥 NORMALIZE TEXT
+# =========================================================
+
+def normalize_text(text):
+
+    if not text:
+
+        return ""
+
+    text = unicodedata.normalize(
+        "NFKC",
+        text
+    )
+
+    text = text.replace(
+        "\x0c",
+        " "
+    )
+
+    text = text.replace(
+        "\r",
+        " "
+    )
+
+    text = text.replace(
+        "\t",
+        " "
+    )
+
+    # =====================================================
+    # 🔥 FIX OCR HYPHENS
+    # =====================================================
+
+    text = re.sub(
+        r"-\s+",
+        "",
+        text
+    )
+
+    text = re.sub(
+        r"\s+",
+        " ",
+        text
+    )
+
+    return text.strip()
+
+# =========================================================
+# 🔥 NOISE FILTER
+# =========================================================
+
+def is_noise(line):
+
+    if not line:
+
+        return True
+
+    lower = line.lower().strip()
+
+    patterns = [
+
+        r"^page\s+\d+",
+
+        r"digitally signed",
+
+        r"signature not verified",
+
+        r"downloaded on",
+
+        r"scanned with",
+
+        r"uploaded on",
+
+        r"^http",
+
+        r"^www\.",
+
+        r"^\d+$",
+
+        r"^cid:",
+
+        r"^untitled"
+    ]
+
+    for pattern in patterns:
+
+        if re.search(
+            pattern,
+            lower
+        ):
+
+            return True
+
+    return False
+
+# =========================================================
+# 🔥 FOOTER METADATA
+# =========================================================
+
+def is_footer_metadata(line):
+
+    line = line.strip()
+
+    footer_patterns = [
+
+        r"^NEW DELHI[;,\s]*$",
+
+        r"^(JANUARY|FEBRUARY|MARCH|APRIL|MAY|JUNE|JULY|AUGUST|SEPTEMBER|OCTOBER|NOVEMBER|DECEMBER)\s+\d{1,2},\s+\d{4}\.?$",
+
+        r"^\.*J\.$",
+
+        r"^\([A-Z\s\.]+\)$"
+    ]
+
+    for pattern in footer_patterns:
+
+        if re.search(
+            pattern,
+            line,
+            re.I
+        ):
+
+            return True
+
+    return False
+
+# =========================================================
+# 🔥 HEADING DETECTOR
+# =========================================================
+
+def is_heading(line):
+
+    line = line.strip()
+
+    if len(line) > 150:
+
+        return False
+
+    if len(line.split()) > 15:
+
+        return False
+
+    # =====================================================
+    # 🔥 ALL CAPS LEGAL HEADINGS
+    # =====================================================
+
+    if line.isupper():
+
+        return True
+
+    keywords = [
+
+        "JUDGMENT",
+
+        "ORDER",
+
+        "REPORTABLE",
+
+        "NON-REPORTABLE",
+
+        "SUPREME COURT",
+
+        "HIGH COURT",
+
+        "TRIBUNAL"
+    ]
+
+    upper = line.upper()
+
+    for k in keywords:
+
+        if k in upper:
+
+            return True
+
+    return False
+
+# =========================================================
+# 🔥 PARAGRAPH START DETECTOR
+# =========================================================
+
+def starts_new_paragraph(line):
+
+    line = line.strip()
+
+    # =====================================================
+    # 🔥 FOOTER METADATA
+    # =====================================================
+
+    if is_footer_metadata(line):
+
+        return True
+
+    # =====================================================
+    # 🔥 NUMBERED PARAGRAPHS
+    # =====================================================
+
+    if re.match(
+        r"^\d+\.",
+        line
+    ):
+
+        return True
+
+    # =====================================================
+    # 🔥 BULLET STYLE
+    # =====================================================
+
+    if re.match(
+        r"^\(\w+\)",
+        line
+    ):
+
+        return True
+
+    # =====================================================
+    # 🔥 HEADINGS
+    # =====================================================
+
+    if is_heading(line):
+
+        return True
+
+    return False
+
+# =========================================================
+# 🔥 SEMANTIC PARAGRAPH BUILDER
+# =========================================================
+
+def build_semantic_paragraphs(pages):
+
+    try:
+
+        if not pages:
+
+            return {
+
+                "paragraphs": [],
+
+                "headings": [],
+
+                "confidence": 0
+            }
+
+        paragraphs = []
+
+        headings = []
+
+        current_para = ""
+
+        # =================================================
+        # 🔥 FLATTEN PAGES
+        # =================================================
+
+        lines = []
+
+        for page in pages:
+
+            split_lines = page.split("\n")
+
+            for line in split_lines:
+
+                line = normalize_text(line)
+
+                if line:
+
+                    lines.append(line)
+
+        # =================================================
+        # 🔥 PROCESS LINES
+        # =================================================
+
+        for line in lines:
+
+            if is_noise(line):
+
+                continue
+
+            # =============================================
+            # 🔥 FOOTER METADATA ISOLATION
+            # =============================================
+
+            if is_footer_metadata(line):
+
+                if len(current_para.split()) > 8:
+
+                    paragraphs.append(
+
+                        current_para.strip()
+                    )
+
+                current_para = ""
+
+                paragraphs.append(line)
+
+                continue
+
+            # =============================================
+            # 🔥 HEADING
+            # =============================================
+
+            if is_heading(line):
+
+                headings.append(line)
+
+            # =============================================
+            # 🔥 NEW PARAGRAPH
+            # =============================================
+
+            if starts_new_paragraph(line):
+
+                if len(current_para.split()) > 8:
+
+                    paragraphs.append(
+
+                        current_para.strip()
+                    )
+
+                current_para = line
+
+            else:
+
+                # =========================================
+                # 🔥 OCR WORD CONTINUATION
+                # =========================================
+
+                if current_para.endswith("-"):
+
+                    current_para = (
+
+                        current_para[:-1]
+                        + line
+                    )
+
+                else:
+
+                    current_para += " " + line
+
+            # =============================================
+            # 🔥 VERY LARGE SPLIT
+            # =============================================
+
+            if len(current_para) > 2500:
+
+                paragraphs.append(
+
+                    current_para.strip()
+                )
+
+                current_para = ""
+
+        # =================================================
+        # 🔥 LAST PARAGRAPH
+        # =================================================
+
+        if len(current_para.split()) > 8:
+
+            paragraphs.append(
+
+                current_para.strip()
+            )
+
+        # =================================================
+        # 🔥 DEDUPLICATION
+        # =================================================
+
+        cleaned = []
+
+        seen = set()
+
+        for para in paragraphs:
+
+            short = re.sub(
+                r"\s+",
+                " ",
+                para[:300].lower()
+            )
+
+            if short not in seen:
+
+                seen.add(short)
+
+                cleaned.append(para)
+
+        confidence = 60
+
+        if len(cleaned) > 20:
+
+            confidence += 20
+
+        if headings:
+
+            confidence += 10
+
+        confidence = min(
+            confidence,
+            95
+        )
+
+        result = {
+
+            "paragraphs":
+                cleaned,
+
+            "headings":
+                list(dict.fromkeys(headings)),
+
+            "confidence":
+                confidence
+        }
+
+        print(
+
+            "✅ Semantic Paragraphs Built:",
+
+            {
+
+                "paragraphs":
+                    len(cleaned),
+
+                "headings":
+                    len(headings),
+
+                "confidence":
+                    confidence
+            }
+        )
+
+        return result
+
+    except Exception as e:
+
+        print(
+            "❌ SEMANTIC PARAGRAPH ERROR:",
+            e
+        )
+
+        return {
+
+            "paragraphs": [],
+
+            "headings": [],
+
+            "confidence": 0
+        }
+
+# =========================================================
+# 🔥 DIRECT TEST
+# =========================================================
+
+if __name__ == "__main__":
+
+    sample_pages = [
+
+        """
+        IN THE SUPREME COURT OF INDIA
+
+        CIVIL APPEAL NO.7469 OF 2008
+
+        1. The appeal is allowed.
+
+        2. The judgment of the High Court
+        is set aside.
+
+        .............................................J.
+        (ASHOK BHUSHAN)
+
+        NEW DELHI;
+        APRIL 05, 2021.
+        """
+    ]
+
+    result = build_semantic_paragraphs(
+        sample_pages
+    )
+
+    print(result)

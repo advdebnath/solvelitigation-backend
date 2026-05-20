@@ -1,0 +1,126 @@
+# =========================================================
+# 🔥 JUDGE ANALYTICS ENGINE
+# =========================================================
+
+from collections import Counter
+
+
+def extract_judge_analytics(
+    full_text,
+    judges=None
+):
+
+    try:
+
+        if judges is None:
+            judges = []
+
+        if not isinstance(judges, list):
+            judges = []
+
+        traits = []
+
+        lower_text = full_text.lower()
+
+        # =====================================================
+        # 🔥 TRAIT DETECTION
+        # =====================================================
+
+        if any(
+            x in lower_text
+            for x in [
+                "allowed",
+                "set aside",
+                "relief granted"
+            ]
+        ):
+
+            traits.append(
+                "Liberal Relief Approach"
+            )
+
+        if any(
+            x in lower_text
+            for x in [
+                "dismissed",
+                "rejected"
+            ]
+        ):
+
+            traits.append(
+                "Strict Interpretation"
+            )
+
+        # =====================================================
+        # 🔥 TRAIT COUNTS
+        # =====================================================
+
+        trait_scores = dict(
+            Counter(traits)
+        )
+
+        primary_tendency = None
+
+        if trait_scores:
+
+            primary_tendency = max(
+                trait_scores,
+                key=trait_scores.get
+            )
+
+        # =====================================================
+        # 🔥 APPEAL RATE
+        # =====================================================
+
+        appeal_allowance_rate = 50
+
+        if "allowed" in lower_text:
+
+            appeal_allowance_rate = 100
+
+        elif "dismissed" in lower_text:
+
+            appeal_allowance_rate = 0
+
+        # =====================================================
+        # 🔥 RESPONSE
+        # =====================================================
+
+        return {
+
+            "judges":
+                judges,
+
+            "primary_tendency":
+                primary_tendency,
+
+            "judicial_traits":
+                list(trait_scores.keys()),
+
+            "trait_scores":
+                trait_scores,
+
+            "appeal_allowance_rate":
+                appeal_allowance_rate
+        }
+
+    except Exception as e:
+
+        print(
+            "❌ Judge Analytics Error:"
+        )
+
+        print(e)
+
+        return {
+
+            "judges": [],
+
+            "primary_tendency": None,
+
+            "judicial_traits": [],
+
+            "trait_scores": {},
+
+            "appeal_allowance_rate": 50
+        }

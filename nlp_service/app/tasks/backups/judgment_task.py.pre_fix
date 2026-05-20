@@ -1,0 +1,1990 @@
+
+import fitz
+
+fitz.TOOLS.mupdf_display_errors(False)
+
+from app.celery_app import celery_app
+
+from datetime import datetime
+from bson import ObjectId
+from pymongo import MongoClient
+
+import os
+import re
+import unicodedata
+import subprocess
+
+# =========================================================
+# 🔥 CORE EXTRACTORS
+# =========================================================
+
+from app.extractors.case_number_extractor import (
+    extract_case_number
+)
+
+from app.extractors.court_extractor import (
+    extract_court
+)
+
+from app.extractors.party_extractor import (
+    extract_parties
+)
+
+from app.extractors.judge_extractor import (
+    extract_judges
+)
+
+from app.extractors.date_extractor import (
+    extract_judgment_date
+)
+
+# =========================================================
+# 🔥 LEGAL INTELLIGENCE
+# =========================================================
+
+from app.extractors.hybrid_act_extractor import (
+    extract_hybrid_acts
+)
+
+from app.extractors.section_extractor import (
+    extract_sections
+)
+
+from app.extractors.point_of_law_extractor import (
+    extract_points_of_law
+)
+
+from app.extractors.section_act_mapper import (
+    enrich_sections_with_acts
+)
+
+from app.extractors.headnote_engine import (
+    generate_headnote
+)
+
+from app.extractors.ratio_extractor import (
+    extract_ratio
+)
+
+# =========================================================
+# 🔥 HTML / CITATION INTELLIGENCE
+# =========================================================
+
+from app.extractors.html_parser import (
+    parse_html_document
+)
+
+from app.extractors.semantic_paragraph_extractor import (
+    build_semantic_paragraphs
+)
+
+from app.extractors.citation_extractor import (
+    extract_structured_citations
+)
+
+
+from app.extractors.issue_cluster_engine import (
+    cluster_legal_issues
+)
+
+
+from app.extractors.operative_order_engine import (
+    extract_operative_order
+)
+
+# =========================================================
+# 🔥 VALIDATION
+# =========================================================
+
+from app.extractors.validation_engine import (
+    validate_extraction
+)
+
+
+from app.services.legal_object_normalizer import (
+    normalize_legal_objects
+)
+
+from app.services.legal_ontology_service import (
+
+    infer_category_from_act,
+
+    infer_category_from_sections,
+
+    infer_category_from_case_number,
+
+    is_ontology_eligible
+)
+from app.extractors.section_act_mapper import (
+
+    enrich_sections_with_acts,
+
+    extract_act_names
+)
+
+# =====================================================
+# 🔥 CONNECTED LEGAL INTELLIGENCE
+# =====================================================
+
+from app.extractors.cross_case_semantic_memory_engine import (
+    build_cross_case_semantic_memory
+)
+
+from app.extractors.doctrine_evolution_engine import (
+    extract_doctrine_evolution
+)
+
+from app.extractors.multi_case_reasoning_engine import (
+    generate_multi_case_reasoning
+)
+
+from app.extractors.judge_analytics_engine import (
+    extract_judge_analytics
+)
+
+from app.extractors.legal_graph_intelligence_engine import (
+    generate_legal_graph_intelligence
+)
+
+from app.extractors.temporal_legal_analytics_engine import (
+    generate_temporal_legal_analytics
+)
+
+from app.extractors.ai_legal_research_agent import (
+    generate_ai_legal_research
+)
+
+# =========================================================
+# 🔥 PRECEDENT ENGINE
+# =========================================================
+
+from app.services.precedent_engine import (
+    find_similar_cases
+)
+
+# =========================================================
+# 🔥 CONFIG
+# =========================================================
+
+BASE_PATH = "/var/www/solvelitigation/backend"
+
+MONGO_URI = "mongodb://127.0.0.1:27017/solvelitigation"
+
+# =========================================================
+# 🔥 GLOBAL MONGO
+# =========================================================
+
+mongo_client = MongoClient(
+    MONGO_URI,
+    maxPoolSize=50
+)
+
+# =========================================================
+# 🔥 DB
+# =========================================================
+
+def get_db():
+
+    return mongo_client["solvelitigation"]
+
+# =========================================================
+# 🔥 NORMALIZE TEXT
+# =========================================================
+
+def normalize_text(text):
+
+    if not text:
+
+        return ""
+
+    text = unicodedata.normalize(
+        "NFKC",
+        text
+    )
+
+    text = text.replace("\x0c", " ")
+
+    text = text.replace("\r", " ")
+
+    text = text.replace("\t", " ")
+
+    text = re.sub(
+        r"\s+",
+        " ",
+        text
+    )
+
+    return text.strip()
+
+# =========================================================
+# 🔥 PDF → HTML
+# =========================================================
+
+def convert_pdf_to_html(pdf_path):
+
+    try:
+
+        subprocess.run(
+
+            [
+                "pdftohtml",
+                "-noframes",
+                "-stdout",
+                pdf_path
+            ],
+
+            capture_output=True,
+
+            text=True,
+
+            check=True
+        )
+
+        result = subprocess.check_output(
+
+            [
+                "pdftohtml",
+                "-noframes",
+                "-stdout",
+                pdf_path
+            ],
+
+            text=True
+        )
+
+        return result
+
+    except Exception as e:
+
+        print(
+            "❌ HTML CONVERSION ERROR:",
+            e
+        )
+
+        return ""
+
+# =========================================================
+# 🔥 PAGE EXTRACTION
+# =========================================================
+
+def extract_pages(pdf_path):
+
+    try:
+
+        import fitz
+
+        doc = fitz.open(pdf_path)
+
+        pages = []
+
+        max_pages = min(
+            len(doc),
+            30
+        )
+
+        for page_num in range(max_pages):
+
+            page = doc[page_num]
+
+            page_text = page.get_text()
+
+            pages.append(page_text)
+
+        doc.close()
+
+        return pages
+
+    except Exception as e:
+
+        print(
+            "❌ PAGE EXTRACTION ERROR:",
+            e
+        )
+
+        return []
+
+# =========================================================
+# 🔥 MAIN TASK
+# =========================================================
+
+@celery_app.task(
+    name="app.tasks.judgment_task.process_judgment"
+)
+def process_judgment(ingestion_id):
+
+    db = get_db()
+
+    try:
+
+        ingestion = db.judgmentingestions.find_one({
+
+            "_id": ObjectId(
+                ingestion_id
+            )
+        })
+
+        if not ingestion:
+
+            print(
+                "❌ Ingestion not found:",
+                ingestion_id
+            )
+
+            return
+
+        # =====================================================
+        # 🔥 PROCESSING STATUS
+        # =====================================================
+
+        db.judgmentingestions.update_one(
+
+            {
+                "_id": ObjectId(
+                    ingestion_id
+                )
+            },
+
+            {
+                "$set": {
+
+                    "status": "PROCESSING",
+
+                    "stage": "EXTRACTING",
+
+                    "progress": 10,
+
+                    "processingAt":
+                        datetime.utcnow()
+                }
+            }
+        )
+
+        # =====================================================
+        # 🔥 FILE PATH
+        # =====================================================
+
+        file_path = os.path.join(
+
+            BASE_PATH,
+
+            ingestion["file"]["relativePath"]
+        )
+
+        print(
+            "📂 Processing:",
+            file_path
+        )
+
+        if not os.path.exists(file_path):
+
+            raise Exception(
+                f"File not found: {file_path}"
+            )
+
+        # =====================================================
+        # 🔥 HTML CONVERSION
+        # =====================================================
+
+        raw_html = convert_pdf_to_html(
+            file_path
+        )
+
+        html_data = parse_html_document(
+            raw_html
+        )
+
+        # =====================================================
+        # 🔥 PAGE EXTRACTION
+        # =====================================================
+
+        pages = extract_pages(
+            file_path
+        )
+
+        if not pages:
+
+            raise Exception(
+                "No pages extracted"
+            )
+
+        # =====================================================
+        # 🔥 SEMANTIC PARAGRAPH ENGINE
+        # =====================================================
+
+        semantic_data = build_semantic_paragraphs(
+            pages
+        )
+
+        semantic_paragraphs = semantic_data.get(
+            "paragraphs",
+            []
+        )
+
+        semantic_headings = semantic_data.get(
+            "headings",
+            []
+        )
+
+        # =====================================================
+        # 🔥 PRIMARY SEMANTIC TEXT
+        # =====================================================
+
+        if semantic_paragraphs:
+
+            semantic_text = "\n\n".join(
+                semantic_paragraphs
+            )
+
+        else:
+
+            semantic_text = "\n".join(
+                pages
+            )
+
+        # =====================================================
+        # 🔥 RAW MULTILINE TEXT
+        # =====================================================
+
+        raw_full_text = semantic_text
+
+        # =====================================================
+        # 🔥 NORMALIZED SEARCH TEXT
+        # =====================================================
+
+        full_text = normalize_text(
+            semantic_text
+        )
+
+        # =====================================================
+        # 🔥 TEXT ZONES
+        # =====================================================
+
+        header_text = normalize_text(
+            " ".join(pages[:2])
+        )
+
+        ending_text = normalize_text(
+            " ".join(pages[-3:])
+        )
+
+        body_text = normalize_text(
+            semantic_text[:120000]
+        )
+
+        print(
+            "🧠 Semantic Paragraphs:",
+            len(semantic_paragraphs)
+        )
+
+        # =====================================================
+        # 🔥 CORE EXTRACTION
+        # =====================================================
+
+        case_number = extract_case_number(
+            header_text
+        )
+
+        court_data = extract_court(
+            header_text
+        )
+
+        parties = extract_parties(
+            header_text
+        )
+
+        judges = extract_judges(
+            file_path
+        )
+
+        # =============================================
+        # 🔥 RAW MULTILINE DATE EXTRACTION
+        # =============================================
+
+        judgment_date = extract_judgment_date(
+            raw_full_text
+        )
+
+        # =====================================================
+        # 🔥 LEGAL INTELLIGENCE
+        # =====================================================
+
+        sections = extract_sections(
+            body_text
+        )
+
+        acts = extract_hybrid_acts(
+
+            body_text,
+
+            sections
+        )
+
+        # =====================================================
+        # 🔥 CANONICAL ACT NORMALIZATION
+        # =====================================================
+
+        normalized_acts = []
+
+        for act in acts.get("acts", []):
+
+            if isinstance(act, dict):
+
+                value = (
+                    act.get("act_name")
+                    or act.get("act")
+                    or act.get("name")
+                )
+
+                if value:
+
+                    normalized_acts.append(
+                        str(value).strip()
+                    )
+
+            elif isinstance(act, str):
+
+                value = act.strip()
+
+                if value:
+
+                    normalized_acts.append(value)
+
+        acts["acts"] = sorted(
+            list(set(normalized_acts))
+        )
+
+        print("✅ Canonical Acts:")
+        print(acts["acts"])
+
+        print(
+            "✅ Hybrid Acts Extracted:"
+        )
+
+        print(
+            acts
+        )
+
+        # =====================================================
+        # 🔥 SECTION → ACT MAPPING
+        # =====================================================
+
+        section_act_mapping = enrich_sections_with_acts(
+
+            sections.get(
+                "sections",
+                []
+            )
+        )
+
+        print(
+            "✅ Section → Act Mapping:"
+        )
+
+        print(
+            section_act_mapping
+        )
+
+        points_of_law = extract_points_of_law(
+            body_text
+        )
+
+
+        # =====================================================
+        # 🔥 LEGAL ISSUE CLUSTERING
+        # =====================================================
+
+        issue_data = cluster_legal_issues(
+            full_text
+        )
+
+
+        # =====================================================
+        # 🔥 OPERATIVE ORDER EXTRACTION
+        # =====================================================
+
+        operative_data = extract_operative_order(
+            full_text
+        )
+
+        # =====================================================
+        # 🔥 HEADNOTE
+        # =====================================================
+
+        headnote_data = generate_headnote(
+
+            full_text,
+
+            issue_data=issue_data,
+
+            points_data=points_of_law,
+
+            sections_data=sections,
+
+            operative_data=operative_data
+        )
+
+        # =====================================================
+        # 🔥 RATIO
+        # =====================================================
+
+        ratio_data = extract_ratio(
+            full_text
+        )
+
+        # =====================================================
+        # 🔥 CITATIONS
+        # =====================================================
+
+        citation_data = extract_structured_citations(
+            full_text
+        )
+
+        # =====================================================
+        # 🔥 PRECEDENT ENGINE
+        # =====================================================
+
+        existing_cases = list(
+
+            db.judgments.find(
+
+                {},
+
+                {
+
+                    "caseNumber": 1,
+
+                    "category": 1,
+
+                    "pointsOfLaw": 1,
+
+                    "sections": 1,
+
+                    "actReferences": 1,
+
+                    "ratio": 1
+                }
+
+            ).limit(300)
+        )
+
+        precedent_results = find_similar_cases(
+
+            {
+
+                "category":
+                    points_of_law.get(
+                        "category",
+                        "General"
+                    ),
+
+                "points_of_law":
+                    points_of_law.get(
+                        "points_of_law",
+                        []
+                    ),
+
+                "sections":
+                    sections.get(
+                        "sections",
+                        []
+                    ),
+
+                "acts":
+                    acts.get(
+                        "acts",
+                        []
+                    ),
+
+                "ratio":
+                    ratio_data.get(
+                        "ratio",
+                        ""
+                    )
+            },
+
+            existing_cases
+        )
+
+        # =====================================================
+        # 🔥 VALIDATION
+        # =====================================================
+
+
+
+        # =====================================================
+        # 🔥 CONNECTED LEGAL INTELLIGENCE
+        # =====================================================
+
+        semantic_memory_data = build_cross_case_semantic_memory(
+
+            full_text,
+
+            existing_cases
+        )
+
+        doctrine_evolution_data = extract_doctrine_evolution(
+
+            full_text
+        )
+
+        multi_case_reasoning_data = generate_multi_case_reasoning(
+
+            semantic_memory_data.get(
+                "similar_cases",
+                []
+            )
+        )
+
+        try:
+
+            judge_analytics_data = extract_judge_analytics(
+
+                full_text,
+
+                judges
+            )
+
+            print(
+                "✅ Judge Analytics Extracted:"
+            )
+
+            print(
+                judge_analytics_data
+            )
+
+        except Exception as e:
+
+            import traceback
+
+            print(
+                "❌ Judge Analytics Pipeline Error:"
+            )
+
+            print(
+                str(e)
+            )
+
+            traceback.print_exc()
+
+            judge_analytics_data = {
+
+                "judges": [],
+                "primary_tendency": None,
+                "judicial_traits": [],
+                "trait_scores": {},
+                "appeal_allowance_rate": 0,
+                "confidence": 0
+            }
+
+        legal_graph_data = generate_legal_graph_intelligence(
+
+            case_title=case_number.get(
+                "case_number",
+                "Unknown Case"
+            ),
+
+            judges=judge_analytics_data.get(
+                "judges",
+                []
+            ),
+
+            precedent_data=citation_data,
+
+            doctrine_data=doctrine_evolution_data,
+
+            issue_data=issue_data,
+
+            operative_data=operative_data
+        )
+
+        temporal_analytics_data = generate_temporal_legal_analytics(
+
+            doctrine_evolution_data.get(
+                "doctrine_evolution",
+                []
+            )
+        )
+
+        recommendation_data = {
+
+            "recommended_strategy":
+                "Focus on procedural fairness and precedent consistency."
+        }
+
+        ai_research_data = generate_ai_legal_research(
+
+            query=issue_data.get(
+                "dominant_issue",
+                "legal dispute"
+            ),
+
+            semantic_data=semantic_memory_data,
+
+            doctrine_data=doctrine_evolution_data,
+
+            recommendation_data=recommendation_data
+        )
+
+        validation = validate_extraction({
+
+            "court": court_data,
+
+            "case_number": {
+
+                "case_number":
+                    case_number.get(
+                        "case_number",
+                        "Unknown"
+                    )
+            },
+
+            "parties": parties,
+
+            "judges": judges,
+
+            "date": judgment_date
+        })
+
+        # =====================================================
+        # 🔥 CANONICAL POINTS OF LAW
+        # =====================================================
+
+        if isinstance(points_of_law, list):
+
+            points_of_law = {
+
+                "points_of_law":
+                    points_of_law,
+
+                "category":
+                    "General"
+            }
+
+        elif not isinstance(points_of_law, dict):
+
+            points_of_law = {
+
+                "points_of_law": [],
+
+                "category": "General"
+            }
+
+        print("✅ Canonical Points Of Law:")
+        print(points_of_law)
+
+        # =====================================================
+        # 🔥 VALIDATION NORMALIZATION
+        # =====================================================
+
+        if not isinstance(validation, dict):
+
+            validation = {
+
+                "overall_confidence":
+                    float(validation)
+
+                    if isinstance(
+                        validation,
+                        (int, float)
+                    )
+
+                    else 0,
+
+                "status":
+                    "normalized"
+            }
+
+        print("✅ Validation Normalized:")
+        print(validation)
+
+
+        # =====================================================
+        # 🔥 JUDGES NORMALIZATION
+        # =====================================================
+
+        if isinstance(judges, list):
+
+            judges = {
+                "judges": judges,
+                "confidence": 0
+            }
+
+        elif not isinstance(judges, dict):
+
+            judges = {
+                "judges": [],
+                "confidence": 0
+            }
+
+        print("✅ Judges Normalized:")
+        print(judges)
+
+
+
+        # =====================================================
+        # 🔥 FULL LEGAL OBJECT NORMALIZATION
+        # =====================================================
+
+        # ---------------------------------------------
+        # ACTS NORMALIZATION
+        # ---------------------------------------------
+
+        if not isinstance(acts, dict):
+
+            acts = {
+                "acts": [],
+                "directActs": [],
+                "mappedActs": [],
+                "matched_sections": [],
+                "confidence": 0
+            }
+
+        acts.setdefault("acts", [])
+        acts.setdefault("directActs", [])
+        acts.setdefault("mappedActs", [])
+        acts.setdefault("matched_sections", [])
+        acts.setdefault("confidence", 0)
+
+        # ---------------------------------------------
+        # SECTIONS NORMALIZATION
+        # ---------------------------------------------
+
+        if not isinstance(sections, dict):
+
+            sections = {
+                "sections": [],
+                "confidence": 0
+            }
+
+        sections.setdefault("sections", [])
+        sections.setdefault("confidence", 0)
+
+
+        # ---------------------------------------------
+        # SECTION ACT MAPPING NORMALIZATION
+        # ---------------------------------------------
+
+        if not isinstance(section_act_mapping, dict):
+
+            section_act_mapping = {
+                "acts": [],
+                "categories": ["General"],
+                "mapped_sections": [],
+                "confidence": 0
+            }
+
+        section_act_mapping.setdefault("acts", [])
+        section_act_mapping.setdefault("categories", ["General"])
+        section_act_mapping.setdefault("mapped_sections", [])
+        section_act_mapping.setdefault("confidence", 0)
+
+        # ---------------------------------------------
+        # PARTIES NORMALIZATION
+        # ---------------------------------------------
+
+        if not isinstance(parties, dict):
+
+            parties = {
+                "petitioner": "Unknown",
+                "respondent": "Unknown",
+                "confidence": 0
+            }
+
+        parties.setdefault("petitioner", "Unknown")
+        parties.setdefault("respondent", "Unknown")
+        parties.setdefault("confidence", 0)
+
+        # ---------------------------------------------
+        # COURT NORMALIZATION
+        # ---------------------------------------------
+
+        if not isinstance(court_data, dict):
+
+            court_data = {
+                "court_name": "Unknown",
+                "court_type": "Unknown",
+                "court_code": "",
+                "confidence": 0
+            }
+
+        # ---------------------------------------------
+        # CASE NUMBER NORMALIZATION
+        # ---------------------------------------------
+
+        if not isinstance(case_number, dict):
+
+            case_number = {
+                "case_number": "Unknown",
+                "confidence": 0
+            }
+
+        # ---------------------------------------------
+        # DATE NORMALIZATION
+        # ---------------------------------------------
+
+        if not isinstance(judgment_date, dict):
+
+            judgment_date = {
+                "date": "",
+                "confidence": 0
+            }
+
+        # ---------------------------------------------
+        # HEADNOTE NORMALIZATION
+        # ---------------------------------------------
+
+        if not isinstance(headnote_data, dict):
+
+            headnote_data = {
+                "headnote": "",
+                "confidence": 0
+            }
+
+        # ---------------------------------------------
+        # RATIO NORMALIZATION
+        # ---------------------------------------------
+
+        if not isinstance(ratio_data, dict):
+
+            ratio_data = {
+                "ratio": "",
+                "para": "",
+                "confidence": 0
+            }
+
+        # ---------------------------------------------
+        # CITATION NORMALIZATION
+        # ---------------------------------------------
+
+        if not isinstance(citation_data, dict):
+
+            citation_data = {
+                "citations": [],
+                "confidence": 0
+            }
+
+        citation_data.setdefault("citations", [])
+
+        # ---------------------------------------------
+        # ISSUE NORMALIZATION
+        # ---------------------------------------------
+
+        if not isinstance(issue_data, dict):
+
+            issue_data = {
+                "issues": [],
+                "dominant_issue": "General",
+                "confidence": 0
+            }
+
+        issue_data.setdefault("issues", [])
+        issue_data.setdefault("dominant_issue", "General")
+
+        # ---------------------------------------------
+        # OPERATIVE ORDER NORMALIZATION
+        # ---------------------------------------------
+
+        if not isinstance(operative_data, dict):
+
+            operative_data = {
+                "operative_order": [],
+                "final_holding": "",
+                "operative_para": "",
+                "confidence": 0
+            }
+
+        operative_data.setdefault("operative_order", [])
+
+        # ---------------------------------------------
+        # PRECEDENT NORMALIZATION
+        # ---------------------------------------------
+
+        if not isinstance(precedent_results, list):
+
+            precedent_results = []
+
+        # ---------------------------------------------
+        # HTML DATA NORMALIZATION
+        # ---------------------------------------------
+
+        if not isinstance(html_data, dict):
+
+            html_data = {}
+
+        html_data.setdefault("paragraphs", [])
+        html_data.setdefault("headings", [])
+        html_data.setdefault("footnotes", [])
+        html_data.setdefault("tables", [])
+        html_data.setdefault("clean_text", "")
+
+        # ---------------------------------------------
+        # SEMANTIC MEMORY NORMALIZATION
+        # ---------------------------------------------
+
+        if not isinstance(semantic_memory_data, dict):
+
+            semantic_memory_data = {
+                "similar_cases": [],
+                "confidence": 0
+            }
+
+        # ---------------------------------------------
+        # DOCTRINE NORMALIZATION
+        # ---------------------------------------------
+
+        if not isinstance(doctrine_evolution_data, dict):
+
+            doctrine_evolution_data = {
+                "doctrine_evolution": [],
+                "confidence": 0
+            }
+
+        # ---------------------------------------------
+        # MULTI CASE NORMALIZATION
+        # ---------------------------------------------
+
+        if not isinstance(multi_case_reasoning_data, dict):
+
+            multi_case_reasoning_data = {
+                "multi_case_reasoning": "",
+                "comparative_analysis": [],
+                "confidence": 0
+            }
+
+        # ---------------------------------------------
+        # LEGAL GRAPH NORMALIZATION
+        # ---------------------------------------------
+
+        if not isinstance(legal_graph_data, dict):
+
+            legal_graph_data = {
+                "legal_graph": {},
+                "confidence": 0
+            }
+
+        # ---------------------------------------------
+        # TEMPORAL ANALYTICS NORMALIZATION
+        # ---------------------------------------------
+
+        if not isinstance(temporal_analytics_data, dict):
+
+            temporal_analytics_data = {
+                "timeline": [],
+                "confidence": 0
+            }
+
+        # ---------------------------------------------
+        # AI RESEARCH NORMALIZATION
+        # ---------------------------------------------
+
+        if not isinstance(ai_research_data, dict):
+
+            ai_research_data = {
+                "research_query": "",
+                "answer": "",
+                "confidence": 0
+            }
+
+        print("✅ FULL LEGAL OBJECT NORMALIZATION COMPLETE")
+
+        # =====================================================
+        # 🔥 FINAL CATEGORY ENGINE
+        # =====================================================
+
+    # =====================================================
+    # 🔥 CANONICAL CATEGORY ARBITRATION
+    # =====================================================
+
+    point_category = points_of_law.get(
+        "category",
+        ""
+    )
+
+    if point_category == "Service":
+
+        final_category = "Service Law"
+
+    elif point_category == "Service Law":
+
+        final_category = "Service Law"
+
+    elif point_category == "Taxation & Corporate":
+
+        final_category = "Taxation & Corporate"
+
+    elif point_category == "Criminal":
+
+        final_category = "Criminal"
+
+    elif point_category == "Civil":
+
+        final_category = "Civil"
+
+    else:
+
+        final_category = "Unknown"
+# =====================================================
+# 🔥 CANONICAL CATEGORY ARBITRATION
+# =====================================================
+
+point_category = points_of_law.get(
+    "category",
+    ""
+)
+
+if point_category == "Service":
+
+    final_category = "Service Law"
+
+elif point_category == "Service Law":
+
+    final_category = "Service Law"
+
+elif point_category == "Taxation & Corporate":
+
+    final_category = "Taxation & Corporate"
+
+elif point_category == "Criminal":
+
+    final_category = "Criminal"
+
+elif point_category == "Civil":
+
+    final_category = "Civil"
+
+else:
+
+    final_category = "Unknown"# =====================================================
+# 🔥 CANONICAL CATEGORY ARBITRATION
+# =====================================================
+
+point_category = points_of_law.get(
+    "category",
+    ""
+)
+
+if point_category == "Service":
+
+    final_category = "Service Law"
+
+elif point_category == "Service Law":
+
+    final_category = "Service Law"
+
+elif point_category == "Taxation & Corporate":
+
+    final_category = "Taxation & Corporate"
+
+elif point_category == "Criminal":
+
+    final_category = "Criminal"
+
+elif point_category == "Civil":
+
+    final_category = "Civil"
+
+else:
+
+    final_category = "Unknown"
+
+        # -----------------------------------------------------
+        # 🔥 ACT BASED
+        # -----------------------------------------------------
+
+        try:
+
+            final_category = infer_category_from_act(
+
+                acts.get(
+                    "acts",
+                    []
+                )
+            )
+
+        except Exception as e:
+
+            print(
+                "❌ ACT CATEGORY ERROR:",
+                e
+            )
+
+        # -----------------------------------------------------
+        # 🔥 SECTION BASED
+        # -----------------------------------------------------
+
+        if final_category in [
+
+            None,
+            "",
+            "Unknown",
+            "General"
+
+        ]:
+
+            try:
+
+                final_category = infer_category_from_sections(
+
+                    sections.get(
+                        "sections",
+                        []
+                    )
+                )
+
+            except Exception as e:
+
+                print(
+                    "❌ SECTION CATEGORY ERROR:",
+                    e
+                )
+
+        # -----------------------------------------------------
+        # 🔥 POINT OF LAW BASED
+        # -----------------------------------------------------
+
+        if final_category in [
+
+            None,
+            "",
+            "Unknown",
+            "General"
+
+        ]:
+
+            point_category = points_of_law.get(
+                "category",
+                "Unknown"
+            )
+
+            if point_category not in [
+
+                None,
+                "",
+                "Unknown",
+                "General"
+
+            ]:
+
+                final_category = point_category
+
+        # -----------------------------------------------------
+        # 🔥 CASE NUMBER BASED
+        # -----------------------------------------------------
+
+        if final_category in [
+
+            None,
+            "",
+            "Unknown",
+            "General"
+
+        ]:
+
+            try:
+
+                final_category = infer_category_from_case_number(
+
+                    case_number.get(
+                        "case_number",
+                        ""
+                    )
+                )
+
+            except Exception as e:
+
+                print(
+                    "❌ CASE CATEGORY ERROR:",
+                    e
+                )
+
+        # -----------------------------------------------------
+        # 🔥 FINAL FALLBACK
+        # -----------------------------------------------------
+
+        if not final_category:
+
+            final_category = "Unknown"
+
+        print(
+            "✅ FINAL CATEGORY:",
+            final_category
+        )
+
+        # =====================================================
+        # 🔥 ONTOLOGY ELIGIBILITY
+        # =====================================================
+
+        ontology_eligible = is_ontology_eligible({
+
+            "caseNumber":
+                case_number.get(
+                    "case_number",
+                    ""
+                )
+        })
+
+        print(
+            "✅ ONTOLOGY ELIGIBLE:",
+            ontology_eligible
+        )
+
+
+        # =====================================================
+    # 🔥 DATE NORMALIZATION
+    # =====================================================
+
+    parsed_judgment_date = None
+
+    try:
+
+        raw_date = judgment_date.get(
+            "date",
+            ""
+        )
+
+        if raw_date:
+
+            parsed_judgment_date = datetime.strptime(
+
+                raw_date,
+
+                "%d-%m-%Y"
+            )
+
+    except Exception:
+
+        parsed_judgment_date = None
+# =====================================================
+# 🔥 DATE NORMALIZATION
+# =====================================================
+
+parsed_judgment_date = None
+
+try:
+
+    raw_date = judgment_date.get(
+        "date",
+        ""
+    )
+
+    if raw_date:
+
+        parsed_judgment_date = datetime.strptime(
+
+            raw_date,
+
+            "%d-%m-%Y"
+        )
+
+except Exception:
+
+    parsed_judgment_date = None
+
+        # =====================================================
+        # 🔥 FINAL DOCUMENT
+        # =====================================================
+
+        judgment_doc = {
+
+            "ingestionId":
+                str(ingestion_id),
+
+            "caseNumber":
+                case_number.get(
+                    "case_number",
+                    "Unknown"
+                ),
+
+            "court":
+                court_data.get(
+                    "court_name",
+                    "Unknown"
+                ),
+
+            "courtType":
+                court_data.get(
+                    "court_type",
+                    "Unknown"
+                ),
+
+            "petitioner":
+                parties.get(
+                    "petitioner",
+                    "Unknown"
+                ),
+
+            "respondent":
+                parties.get(
+                    "respondent",
+                    "Unknown"
+                ),
+
+            "judges":
+                judges.get(
+                    "judges",
+                    []
+                ),
+
+
+            "judgmentDate":
+                parsed_judgment_date,
+
+            "category":
+
+                 "Service Law"
+
+                 if final_category == "Service"
+
+                 else final_category,
+
+            "actReferences":
+                list(set(
+
+                    acts.get(
+                        "acts",
+                        []
+                    )
+
+                    +
+
+                    section_act_mapping.get(
+                        "acts",
+                        []
+                    )
+                )),
+
+            "sections":
+                acts.get(
+                    "matched_sections",
+                    sections.get(
+                        "sections",
+                        []
+                    )
+                ),
+
+            "pointsOfLaw":
+                points_of_law.get(
+                    "points_of_law",
+                    []
+                ),
+
+
+            "issueClusters":
+                issue_data.get(
+                    "issues",
+                    []
+                ),
+
+            "dominantIssue":
+                issue_data.get(
+                    "dominant_issue"
+                ),
+
+
+            "operativeOrder":
+                operative_data.get(
+                    "operative_order",
+                    []
+                ),
+
+            "finalHolding":
+                operative_data.get(
+                    "final_holding"
+                ),
+
+            "operativePara":
+                operative_data.get(
+                    "operative_para"
+                ),
+
+            "headnote":
+                headnote_data.get(
+                    "headnote",
+                    ""
+                ),
+
+            "ratio":
+                ratio_data.get(
+                    "ratio",
+                    ""
+                ),
+
+            "ratioPara":
+                ratio_data.get(
+                    "para",
+                    ""
+                ),
+
+            "citations":
+                citation_data.get(
+                    "citations",
+                    []
+                ),
+
+            "precedents":
+                precedent_results,
+
+            "rawHtml":
+                raw_html,
+
+            "paragraphs":
+                html_data.get(
+                    "paragraphs",
+                    []
+                ),
+
+            "headings":
+                html_data.get(
+                    "headings",
+                    []
+                ),
+
+            "footnotes":
+                html_data.get(
+                    "footnotes",
+                    []
+                ),
+
+            "tables":
+                html_data.get(
+                    "tables",
+                    []
+                ),
+
+            "cleanText":
+                html_data.get(
+                    "clean_text",
+                    ""
+                ),
+
+            "fullText":
+                full_text[:200000],
+
+            "validation":
+                validation,
+
+            "overallConfidence":
+                validation.get(
+                    "overall_confidence",
+                    0
+                ),
+
+            # =====================================================
+            # 🔥 CONNECTED LEGAL INTELLIGENCE
+            # =====================================================
+
+            "semanticMemory":
+                semantic_memory_data,
+
+            "doctrineEvolution":
+                doctrine_evolution_data,
+
+            "multiCaseReasoning":
+                multi_case_reasoning_data,
+
+            "legalGraph":
+                legal_graph_data,
+
+            "temporalLegalAnalytics":
+                temporal_analytics_data,
+
+            "aiLegalResearch":
+                ai_research_data,
+
+            "isOntologyEligible":
+                ontology_eligible,
+
+            "updatedAt":
+                datetime.utcnow()
+        }
+
+        # =====================================================
+        # 🔥 ENRICH SECTIONS WITH ACTS
+        # =====================================================
+
+        section_enrichment = enrich_sections_with_acts(
+
+            judgment_doc.get(
+                "sections",
+                []
+            )
+        )
+
+        judgment_doc["sections"] = (
+
+            section_enrichment.get(
+                "mapped_sections",
+                judgment_doc.get(
+                    "sections",
+                    []
+                )
+            )
+        )
+
+        # =====================================================
+        # 🔥 AUTO EXTRACT ACT NAMES
+        # =====================================================
+
+        judgment_doc["actNames"] = (
+
+            extract_act_names(
+
+                judgment_doc.get(
+                    "sections",
+                    []
+                )
+            )
+        )
+
+        print(
+            "✅ Dynamic act enrichment complete"
+        )
+
+        print({
+
+            "acts":
+                judgment_doc.get(
+                    "actNames",
+                    []
+                )
+        })
+
+        # =====================================================
+        # 🔥 NORMALIZE LEGAL OBJECTS
+        # =====================================================
+
+        judgment_doc = normalize_legal_objects(
+            judgment_doc
+        )
+
+        print(
+            "✅ Legal objects normalized"
+        )
+
+        print({
+
+            "acts":
+                judgment_doc.get(
+                    "actNames",
+                    []
+                ),
+
+            "sections":
+                len(
+                    judgment_doc.get(
+                        "sections",
+                        []
+                    )
+                ),
+
+            "points":
+                len(
+                    judgment_doc.get(
+                        "pointsOfLaw",
+                        []
+                    )
+                )
+        })
+
+        # =====================================================
+        # 🔥 FINAL SAVE OBJECT DEBUG
+        # =====================================================
+
+        print("\n🔥 FINAL JUDGMENT DOC:")
+        print({
+
+            "caseNumber":
+                judgment_doc.get(
+                    "caseNumber"
+                ),
+
+            "actNames":
+                judgment_doc.get(
+                    "actNames"
+                ),
+
+            "sections":
+                judgment_doc.get(
+                    "sections"
+                )
+        })
+
+        # =====================================================
+        # 🔥 SAVE JUDGMENT
+        # =====================================================
+
+        db.judgments.update_one(
+
+            {
+                "ingestionId":
+                    str(ingestion_id)
+            },
+
+            {
+                "$set":
+                    judgment_doc,
+
+                "$setOnInsert": {
+
+                    "createdAt":
+                        datetime.utcnow()
+                }
+            },
+
+            upsert=True
+        )
+
+        # =====================================================
+        # 🔥 COMPLETE INGESTION
+        # =====================================================
+
+        # =====================================================
+        # 🔥 DOCUMENT QUALITY ENGINE
+        # =====================================================
+
+        document_quality = "HIGH_QUALITY"
+
+        if (
+
+            final_category == "Unknown"
+
+            or (
+
+            len(
+
+                judgment_doc.get(
+                     "actNames",
+                     []
+                )
+            ) == 0
+            final_category == "Unknown"
+        )
+
+            or
+
+            judgment_doc.get(
+                "caseNumber",
+                ""
+            ) in [
+
+                "",
+
+                "Unknown",
+
+                "Unknown Case"
+            ]
+        ):
+
+            document_quality = "LOW_QUALITY"
+
+        # =====================================================
+        # 🔥 REVIEW STATUS
+        # =====================================================
+
+        review_status = "APPROVED"
+
+        if document_quality == "LOW_QUALITY":
+
+            review_status = "REVIEW_REQUIRED"
+
+        # =====================================================
+        # 🔥 COMPLETE INGESTION
+        # =====================================================
+
+        db.judgmentingestions.update_one(
+
+            {
+                "_id":
+                    ObjectId(ingestion_id)
+            },
+
+            {
+                "$set": {
+
+                    # -----------------------------------------
+                    # STATUS
+                    # -----------------------------------------
+
+                    "status":
+                        "COMPLETED",
+
+                    "progress":
+                        100,
+
+                    "stage":
+                        "COMPLETED",
+
+                    "completedAt":
+                        datetime.utcnow(),
+
+                    "nlpProcessed":
+                        True,
+            # -----------------------------------------
+            # DASHBOARD SYNC
+            # -----------------------------------------
+
+            "caseNumber":
+                judgment_doc.get(
+                    "caseNumber",
+                    "Unknown"
+                ),
+
+            "category":
+                final_category,
+
+            "actNames":
+                judgment_doc.get(
+                    "actNames",
+                    []
+                ),
+
+            "documentQuality":
+                document_quality,
+
+            "reviewStatus":
+                review_status,
+
+            # -----------------------------------------
+            # SEARCH FLAGS
+            # -----------------------------------------
+
+            "isPublished":
+                document_quality
+                == "HIGH_QUALITY",
+
+            "isVerified":
+                document_quality
+                == "HIGH_QUALITY"
+        }
+    }
+)
+        print(
+            "✅ FULL LEGAL INTELLIGENCE PIPELINE COMPLETE:",
+            ingestion_id
+        )
+
+    except Exception as e:
+
+        print(
+            "❌ PIPELINE ERROR:",
+            str(e)
+        )
+
+        db.judgmentingestions.update_one(
+
+            {
+                "_id":
+                    ObjectId(ingestion_id)
+            },
+
+            {
+                "$set": {
+
+                    "status":
+                        "FAILED",
+
+                    "error":
+                        str(e)
+                }
+            }
+        )

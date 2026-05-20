@@ -1,0 +1,31 @@
+import re
+
+# ============================================
+# 🔥 SECTION DETECTION
+# ============================================
+def extract_sections(text):
+    sections = re.findall(r"Section\s+\d+[A-Za-z\-]*", text, re.IGNORECASE)
+    return list(set(sections))
+
+# ============================================
+# 🔥 BASIC LAW CLASSIFICATION
+# ============================================
+def classify_points(text):
+    points = []
+
+    if re.search(r"contract|agreement|offer|acceptance", text, re.I):
+        points.append("Contract Law – Offer and Acceptance")
+
+    if re.search(r"conditional offer", text, re.I):
+        points.append("Conditional Acceptance – Validity")
+
+    if re.search(r"murder|homicide", text, re.I):
+        points.append("Criminal Law – Murder")
+
+    if re.search(r"dowry|498A", text, re.I):
+        points.append("Criminal Law – Cruelty")
+
+    if re.search(r"service|termination|reinstatement", text, re.I):
+        points.append("Service Law – Termination")
+
+    return list(set(points))

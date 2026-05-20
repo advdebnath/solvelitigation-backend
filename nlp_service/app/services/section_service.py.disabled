@@ -1,0 +1,119 @@
+import re
+
+# ============================================
+# 🔥 NORMALIZE
+# ============================================
+def normalize(text):
+    return re.sub(r"\s+", " ", text).strip()
+
+
+# ============================================
+# 🔥 STRICT SECTION PATTERNS
+# ============================================
+SECTION_PATTERNS = [
+    r"\bSection\s+\d+[A-Za-z]?\b",
+    r"\bSec\.?\s+\d+[A-Za-z]?\b",
+    r"\bS\.?\s+\d+[A-Za-z]?\b",
+    r"\bU\/S\s+\d+[A-Za-z]?\b",
+    r"\bu\/s\s+\d+[A-Za-z]?\b"
+]
+
+
+# ============================================
+# 🔥 VALID SECTION FILTER
+# ============================================
+def is_valid_section(num):
+    return re.fullmatch(r"\d{1,3}[A-Za-z]?", num) is not None
+
+
+# ============================================
+# 🔥 EXTRACT SECTIONS (IMPROVED)
+# ============================================
+def extract_sections(text):
+    sections = set()
+    text_lower = text.lower()
+
+    # ============================================
+    # 🔥 STEP 1 — STRICT EXTRACTION
+    # ============================================
+    for pattern in SECTION_PATTERNS:
+        matches = re.findall(pattern, text, re.IGNORECASE)
+
+        for m in matches:
+            num_match = re.findall(r"\d+[A-Za-z]?", m)
+
+            if not num_match:
+                continue
+
+            num = num_match[0]
+
+            if not is_valid_section(num):
+                continue
+
+            sections.add(f"Section {num}")
+
+    # ============================================
+    # 🔥 STEP 2 — MULTI-SECTION BLOCK (e.g., Sections 73, 74)
+    # ============================================
+    multi_blocks = re.findall(r"Sections?\s*([\d,\sA-Za-z\-]+)", text, re.IGNORECASE)
+
+    for block in multi_blocks:
+        nums = re.findall(r"\d+[A-Za-z]?", block)
+
+        for n in nums:
+            if is_valid_section(n):
+                sections.add(f"Section {n}")
+
+    # ============================================
+    # 🔥 STEP 3 — FALLBACK (CRITICAL FOR EXPLORER)
+    # ============================================
+    if not sections:
+        if "provision" in text_lower:
+            sections.add("General Provision")
+
+        elif "clause" in text_lower:
+            sections.add("General Clause")
+
+        elif "rule" in text_lower:
+            sections.add("General Rule")
+
+    return sorted(list(sections))
+
+
+# ============================================
+# 🔥 MAP SECTION → ACT
+# ============================================
+def map_section_to_act(text, acts, sections):
+    mapping = {}
+
+    if not acts or not sections:
+        return mapping
+
+    text_lower = text.lower()
+
+    for sec in sections:
+        sec_num = sec.replace("Section ", "").lower()
+
+        pattern = re.compile(
+            rf"(section\s*{sec_num}.*?)(\.|\n|\;)",
+            re.IGNORECASE
+        )
+
+        match = pattern.search(text_lower)
+        context = match.group(1) if match else text_lower[:2000]
+
+        assigned = None
+
+        for act in acts:
+            act_name = act.lower().split(",")[0]
+
+            if act_name in context:
+                assigned = act
+                break
+
+        if not assigned:
+            assigned = acts[0]
+
+        mapping[sec] = assigned
+
+    return mapping

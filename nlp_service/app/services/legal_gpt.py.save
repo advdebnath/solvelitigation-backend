@@ -1,0 +1,115 @@
+from pymongo import MongoClient
+from sentence_transformers import SentenceTransformer
+import numpy as np
+
+MONGO_URI = "mongodb://sl_app:Debnath%401966@127.0.0.1:27017/solvelitigation"
+
+model = SentenceTransformer("all-MiniLM-L6-v2")
+
+
+def get_db():
+    return MongoClient(MONGO_URI)["solvelitigation"]
+
+
+def cosine_similarity(a, b):
+    a = np.array(a)
+    b = np.array(b)
+    denom = (np.linalg.norm(a) * np.linalg.norm(b))
+    if denom == 0:
+        return 0
+    return np.dot(a, b) / denom
+
+
+# =========================================
+# 🔥 IMPROVED SEARCH ENGINE
+# =========================================
+def search_similar_cases(query_embedding, limit=3):
+    db = get_db()
+
+    judgments = list(db.judgments.find({
+        "embedding": {"$exists": True},
+        "pointsOfLaw": {"$ne": ["General Legal Issue"]},
+        "category": {"$ne": "Taxation & Corporate"}
+    }).limit(200))
+
+    unique_cases = {}
+    results = []
+
+    for j in judgments:
+        case_no = re.sub(r"\s+", " ", j.get("caseNumber", "")).strip()
+
+        if case_no in unique_cases:
+            continue
+
+        sim = cosine_similarity(query_embedding, j["embedding"])
+
+        # 🔥 QUALITY BOOST
+        score = sim
+
+        if j.get("ratio"):
+            score += 0.05
+
+        if j.get("reasoning"):
+            score += 0.05
+
+        unique_cases[case_no] = True
+        results.append((score, j))
+
+    results.sort(key=lambda x: x[0], reverse=True)
+
+    return [r[1] for r in results[:limit]]
+
+
+# =========================================
+# 🔥 LEGAL GPT ENGINE
+# =========================================
+def generate_legal_answer(query: str):
+    query_embedding = model.encode(query).tolist()
+
+    cases = search_similar_cases(query_embedding)
+
+    if not cases:
+        return "No relevant cases found."
+
+    answer = "\n⚖️ LEGAL ANALYSIS:\n\n"
+
+    categories = []
+
+    for case in cases:
+        categories.append(case.get("category"))
+
+        answer += f"\n🔹 Case: {case.get('caseNumber')}\n"
+        answer += f"   Category: {case.get('category')}\n"
+        answer += f"   Points: {case.get('pointsOfLaw')}\n"
+        answer += f"   Headnote: {case.get('headnote')}\n"
+
+        ratio = case.get("ratio")
+        if ratio and isinstance(ratio, list) and len(ratio) > 0:
+            answer += f"   Ratio: {', '.join(ratio)}\n"
+
+        if case.get("reasoning"):
+            reasoning = case.get("reasoning")
+            if isinstance(reasoning, list) and len(reasoning) > 0:
+                first = reasoning[0]
+                if isinstance(first, dict):
+                    answer += f"   Key Reasoning: {first.get('text')}\n"
+                
+
+                    answer += f"   Key Reasoning: {first.get('text')}\n"
+                answer += f"   Key Reasoning: {reasoning[0]}\n"
+
+        answer += "\n"
+
+    # =========================================
+    # 🔥 SMART CONCLUSION
+    # =========================================
+    if categories:
+        dominant = max(set(categories), key=categories.count)
+    else:
+        dominant = "Civil"
+
+    answer += "\n📌 CONCLUSION:\n"
+    answer += f"The issue primarily relates to {dominant} law.\n"
+    answer += "Courts consistently apply principles of statutory interpretation, ensuring that the law is read harmoniously and in line with legislative intent.\n"
+
+    return answer

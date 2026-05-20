@@ -1,0 +1,346 @@
+import re
+
+# =========================================================
+# 🔥 CASE NUMBER PATTERNS
+# =========================================================
+
+CASE_PATTERNS = [
+
+    # =====================================================
+    # 🔥 SUPREME COURT
+    # =====================================================
+
+    r"(CIVIL\s+APPEAL\s+NOS?\.?\s*[\dA-Z\-\/ ,.&()]+?\s+OF\s+\d{4})",
+
+    r"(CRIMINAL\s+APPEAL\s+NOS?\.?\s*[\dA-Z\-\/ ,.&()]+?\s+OF\s+\d{4})",
+
+    r"(SPECIAL\s+LEAVE\s+PETITION\s*\(.*?\)\s*NOS?\.?\s*[\dA-Z\-\/ ,.&()]+?\s+OF\s+\d{4})",
+
+    r"(SLP\s*\(.*?\)\s*NOS?\.?\s*[\dA-Z\-\/ ,.&()]+?\s+OF\s+\d{4})",
+
+    r"(WRIT\s+PETITION\s*\(.*?\)\s*NOS?\.?\s*[\dA-Z\-\/ ,.&()]+?\s+OF\s+\d{4})",
+
+    r"(TRANSFER\s+PETITION\s+NOS?\.?\s*[\dA-Z\-\/ ,.&()]+?\s+OF\s+\d{4})",
+
+    r"(REVIEW\s+PETITION\s+NOS?\.?\s*[\dA-Z\-\/ ,.&()]+?\s+OF\s+\d{4})",
+
+    # =====================================================
+    # 🔥 HIGH COURT
+    # =====================================================
+
+    r"(WP\s*\(C\)\s*NO\.?\s*[\dA-Z\-\/]+(?:\s+OF\s+\d{4})?)",
+
+    r"(WP\s*\(CRL\)\s*NO\.?\s*[\dA-Z\-\/]+(?:\s+OF\s+\d{4})?)",
+
+    r"(CRL\.?A\.?\s*NO\.?\s*[\dA-Z\-\/]+(?:\s+OF\s+\d{4})?)",
+
+    r"(C\.?R\.?P\.?\s*NO\.?\s*[\dA-Z\-\/]+(?:\s+OF\s+\d{4})?)",
+
+    r"(RSA\s+NO\.?\s*[\dA-Z\-\/]+(?:\s+OF\s+\d{4})?)",
+
+    # =====================================================
+    # 🔥 TRIBUNAL
+    # =====================================================
+
+    r"(OA\s+NO\.?\s*[\dA-Z\-\/]+(?:\s+OF\s+\d{4})?)",
+
+    r"(TA\s+NO\.?\s*[\dA-Z\-\/]+(?:\s+OF\s+\d{4})?)",
+
+    r"(MA\s+NO\.?\s*[\dA-Z\-\/]+(?:\s+OF\s+\d{4})?)",
+
+    r"(CP\s*\(IB\)\s*NO\.?\s*[\dA-Z\-\/]+(?:\s+OF\s+\d{4})?)",
+
+    # =====================================================
+    # 🔥 COMPANY / TAX
+    # =====================================================
+
+    r"(COMPANY\s+APPEAL\s+NOS?\.?\s*[\dA-Z\-\/ ,.&()]+?\s+OF\s+\d{4})",
+
+    r"(TAX\s+APPEAL\s+NOS?\.?\s*[\dA-Z\-\/ ,.&()]+?\s+OF\s+\d{4})",
+
+    # =====================================================
+    # 🔥 GENERIC
+    # =====================================================
+
+    r"([A-Z ]+APPEAL\s+NOS?\.?\s*[\dA-Z\-\/ ,.&()]+?\s+OF\s+\d{4})",
+]
+
+# =========================================================
+# 🔥 BAD VALUES
+# =========================================================
+
+BAD_PATTERNS = [
+
+    ".pdf",
+    "judgement_",
+    "judgment_",
+    "uploads/",
+    "download",
+    "scanned",
+    "document",
+    "file",
+    ".doc",
+    ".docx"
+]
+
+# =========================================================
+# 🔥 SAFE OCR NORMALIZATION
+# =========================================================
+
+def normalize_ocr(text):
+
+    # =====================================================
+    # 🔥 SAFE OCR FIXES
+    # =====================================================
+
+    text = text.replace("|", "1")
+
+    text = text.replace("—", "-")
+
+    text = text.replace("–", "-")
+
+    # =====================================================
+    # 🔥 FIX OCR INSIDE NUMBERS ONLY
+    # =====================================================
+
+    text = re.sub(
+        r"(?<=\d)O(?=\d)",
+        "0",
+        text
+    )
+
+    text = re.sub(
+        r"(?<=\d)I(?=\d)",
+        "1",
+        text
+    )
+
+    text = re.sub(
+        r"(?<=\d)l(?=\d)",
+        "1",
+        text
+    )
+
+    return text
+
+# =========================================================
+# 🔥 CLEAN CASE NUMBER
+# =========================================================
+
+def clean_case_number(value):
+
+    value = value.replace(
+        "\n",
+        " "
+    )
+
+    value = re.sub(
+        r"\s+",
+        " ",
+        value
+    )
+
+    # =====================================================
+    # 🔥 FIX OCR STYLE
+    # =====================================================
+
+    value = re.sub(
+        r"\bNOS\s+\.",
+        "NOS.",
+        value
+    )
+
+    value = re.sub(
+        r"\bNO\s+\.",
+        "NO.",
+        value
+    )
+
+    value = re.sub(
+        r"\.{2,}",
+        ".",
+        value
+    )
+
+    # =====================================================
+    # 🔥 FIX SLASH SPACING
+    # =====================================================
+
+    value = re.sub(
+        r"\s*/\s*",
+        "/",
+        value
+    )
+
+    value = value.strip(
+        " :-.," 
+    )
+
+    return value
+
+# =========================================================
+# 🔥 VALIDATION
+# =========================================================
+
+def is_valid_case_number(value):
+
+    if not value:
+
+        return False
+
+    lower = value.lower()
+
+    for bad in BAD_PATTERNS:
+
+        if bad in lower:
+
+            return False
+
+    if len(value) < 8:
+
+        return False
+
+    # =====================================================
+    # 🔥 MUST CONTAIN DIGIT
+    # =====================================================
+
+    if not re.search(
+        r"\d",
+        value
+    ):
+
+        return False
+
+    return True
+
+# =========================================================
+# 🔥 MAIN EXTRACTION
+# =========================================================
+
+def extract_case_number(
+
+    text,
+
+    fallback="Unknown Case"
+):
+
+    try:
+
+        if not text:
+
+            return {
+
+                "case_number": fallback,
+
+                "confidence": 0
+            }
+
+        # =====================================================
+        # 🔥 HEADER ONLY
+        # =====================================================
+
+        header = text[:20000]
+
+        header = normalize_ocr(header)
+
+        header = re.sub(
+            r"\s+",
+            " ",
+            header
+        )
+
+        # =====================================================
+        # 🔥 MAIN PATTERN SEARCH
+        # =====================================================
+
+        for pattern in CASE_PATTERNS:
+
+            matches = re.findall(
+
+                pattern,
+
+                header,
+
+                flags=re.I
+            )
+
+            for match in matches:
+
+                value = clean_case_number(match)
+
+                if is_valid_case_number(value):
+
+                    result = {
+
+                        "case_number": value,
+
+                        "confidence": 95
+                    }
+
+                    print(
+
+                        "✅ Case Number Extracted:",
+
+                        result
+                    )
+
+                    return result
+
+        # =====================================================
+        # 🔥 GENERIC FALLBACK
+        # =====================================================
+
+        generic_match = re.search(
+
+            r"([A-Z ]+NO\S*\s*[\dA-Z\-\/ ,.&()]+?(?:OF\s+\d{4})?)",
+
+            header,
+
+            flags=re.I
+        )
+
+        if generic_match:
+
+            value = clean_case_number(
+
+                generic_match.group(1)
+            )
+
+            if is_valid_case_number(value):
+
+                result = {
+
+                    "case_number": value,
+
+                    "confidence": 70
+                }
+
+                print(
+
+                    "✅ Case Number Extracted:",
+
+                    result
+                )
+
+                return result
+
+        return {
+
+            "case_number": fallback,
+
+            "confidence": 0
+        }
+
+    except Exception as e:
+
+        print(
+            "❌ CASE NUMBER EXTRACTION ERROR:",
+            e
+        )
+
+        return {
+
+            "case_number": fallback,
+
+            "confidence": 0
+        }

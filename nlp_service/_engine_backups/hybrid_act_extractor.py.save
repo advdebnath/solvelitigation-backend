@@ -1,0 +1,262 @@
+# =========================================================
+# 🔥 HYBRID ACT EXTRACTOR (PRODUCTION SAFE)
+# =========================================================
+
+from app.extractors.act_extractor import (
+    extract_acts
+)
+
+from app.extractors.section_act_mapper import (
+    enrich_sections_with_acts
+)
+
+# =========================================================
+# 🔥 SAFE HELPERS
+# =========================================================
+
+def safe_get(obj, key, default=None):
+
+    if isinstance(obj, dict):
+        return obj.get(key, default)
+
+    return default
+
+
+def normalize_sections_input(sections_data):
+
+    # =====================================================
+    # 🔥 CASE 1 → ALREADY LIST
+    # =====================================================
+
+    if isinstance(sections_data, list):
+
+        return sections_data
+
+    # =====================================================
+    # 🔥 CASE 2 → DICT
+    # =====================================================
+
+    if isinstance(sections_data, dict):
+
+        return sections_data.get(
+            "sections",
+            []
+        )
+
+    # =====================================================
+    # 🔥 FALLBACK
+    # =====================================================
+
+    return []
+
+
+def normalize_act_names(acts):
+
+    normalized = []
+
+    for act in acts:
+
+        # =================================================
+        # 🔥 STRING
+        # =================================================
+
+        if isinstance(act, str):
+
+            value = act.strip()
+
+            if value:
+                normalized.append(value)
+
+        # =================================================
+        # 🔥 DICT
+        # =================================================
+
+        elif isinstance(act, dict):
+
+            value = (
+                act.get("act_name")
+                or
+                act.get("act")
+                or
+                act.get("name")
+            )
+
+            if value:
+
+                normalized.append(
+                    str(value).strip()
+                )
+
+    # =====================================================
+    # 🔥 UNIQUE
+    # =====================================================
+
+    return sorted(list(set(normalized)))
+
+
+# =========================================================
+# 🔥 MAIN HYBRID EXTRACTOR
+# =========================================================
+
+def extract_hybrid_acts(
+    text,
+    sections_data
+):
+
+    try:
+
+        # =====================================================
+        # 🔥 DIRECT ACT EXTRACTION
+        # =====================================================
+
+        direct = extract_acts(text)
+
+        direct_acts_raw = safe_get(
+            direct,
+            "acts",
+            []
+        )
+
+        direct_acts = normalize_act_names(
+            direct_acts_raw
+        )
+
+        # =====================================================
+        # 🔥 NORMALIZE SECTIONS INPUT
+        # =====================================================
+
+        
+normalized_sections = normalize_sections_input(
+            sections_data
+        )
+ox
+        # =====================================================
+        # 🔥 SECTION → ACT MAPPING
+        # =====================================================
+
+        section_mapping = enrich_sections_with_acts(
+            normalized_sections
+        )
+
+        mapped_acts_raw = safe_get(
+            section_mapping,
+            "acts",
+            []
+        )
+
+        mapped_acts = normalize_act_names(
+            mapped_acts_raw
+        )
+
+        # =====================================================
+        # 🔥 MERGE ACTS
+        # =====================================================
+
+        merged = []
+
+        for act in direct_acts + mapped_acts:
+
+            if act not in merged:
+
+                merged.append(act)
+
+        # =====================================================
+        # 🔥 DEBUG
+        # =====================================================
+
+        print("✅ Hybrid Acts Extracted:")
+
+        print({
+
+            "acts":
+                merged,
+
+            "directActs":
+                direct_acts,
+
+            "mappedActs":
+                mapped_acts,
+
+            "matched_sections":
+                safe_get(
+                    section_mapping,
+                    "mapped_sections",
+                    []
+                ),
+
+            "confidence":
+                max(
+
+                    safe_get(
+                        direct,
+                        "confidence",
+                        0
+                    ),
+
+                    safe_get(
+                        section_mapping,
+                        "confidence",
+                        0
+                    )
+                )
+        })
+
+        # =====================================================
+        # 🔥 RESPONSE
+        # =====================================================
+
+        return {
+
+            "acts":
+                merged,
+
+            "directActs":
+                direct_acts,
+
+            "mappedActs":
+                mapped_acts,
+
+            "matched_sections":
+                safe_get(
+                    section_mapping,
+                    "mapped_sections",
+/var/www/solvelitigation/nlp_service/app/extractors/hybrid_act_extractor.py                    []
+                ),
+
+            "confidence":
+                max(
+
+                    safe_get(
+                        direct,
+                        "confidence",
+                        0
+                    ),
+
+                    safe_get(
+                        section_mapping,
+                        "confidence",
+                        0
+                    )
+                )
+        }
+
+    except Exception as e:
+
+        print(
+            "❌ Hybrid Act Extractor Error:"
+        )
+
+        print(e)
+
+        return {
+
+            "acts": [],
+
+            "directActs": [],
+
+            "mappedActs": [],
+
+            "matched_sections": [],
+
+            "confidence": 40
+        }

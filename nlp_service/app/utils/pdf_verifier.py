@@ -1,4 +1,5 @@
 import fitz
+fitz.TOOLS.mupdf_display_errors(False)
 import difflib
 from gridfs import GridFS
 from bson import ObjectId

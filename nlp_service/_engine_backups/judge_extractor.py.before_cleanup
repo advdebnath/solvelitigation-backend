@@ -1,0 +1,363 @@
+# =========================================================
+# 🔥 FINAL PRODUCTION JUDGE EXTRACTOR
+# =========================================================
+
+import fitz
+import re
+import pytesseract
+
+from PIL import Image
+
+# =========================================================
+# 🔥 INVALID TERMS
+# =========================================================
+
+INVALID_JUDGE_TERMS = [
+
+    "O R D E R",
+    "ORDER",
+    "JUDGMENT",
+    "Facts",
+    "Issue",
+    "Held",
+    "Conclusion",
+    "Background",
+    "Analysis",
+    "Legislative History",
+    "The Challenge",
+    "Be Done To The Complainant",
+]
+
+# =========================================================
+# 🔥 CLEAN NAME
+# =========================================================
+
+def clean_name(name):
+
+    if not isinstance(name, str):
+
+        return ""
+
+    name = re.sub(
+        r"\s+",
+        " ",
+        name
+    ).strip()
+
+    # =============================================
+    # REMOVE HONORIFICS
+    # =============================================
+
+    name = re.sub(
+        r"HON'?BLE",
+        "",
+        name,
+        flags=re.I
+    )
+
+    name = re.sub(
+        r"\bMR\b\.?|\bMS\b\.?|\bMRS\b\.?",
+        "",
+        name,
+        flags=re.I
+    )
+
+    name = re.sub(
+        r"\bJUSTICE\b",
+        "",
+        name,
+        flags=re.I
+    )
+
+    name = re.sub(
+        r",?\s*J\.?$",
+        "",
+        name,
+        flags=re.I
+    )
+
+    name = re.sub(
+        r"^\W+|\W+$",
+        "",
+        name
+    )
+
+    return name.strip()
+
+# =========================================================
+# 🔥 VALIDATION
+# =========================================================
+
+def valid_name(name):
+
+    if not name:
+
+        return False
+
+    upper = name.upper()
+
+    bad_words = [
+
+        "SUPREME COURT",
+        "HIGH COURT",
+        "APPEAL",
+        "PETITION",
+        "RESPONDENT",
+        "APPELLANT",
+        "ORDER",
+        "JUDGMENT",
+        "PAGE",
+        "VERSUS",
+        "CIVIL",
+        "CRIMINAL",
+        "SPECIAL LEAVE",
+        "TRIBUNAL",
+        "SECTION",
+        "ACT",
+        "ARTICLE",
+        "LIMITED",
+        "COMMISSIONER"
+    ]
+
+    for word in bad_words:
+
+        if word in upper:
+
+            return False
+
+    # =============================================
+    # HUMAN NAME STRUCTURE
+    # =============================================
+
+    tokens = name.split()
+
+    if len(tokens) < 1:
+        return False
+
+    if len(tokens) > 8:
+
+        return False
+
+    # =============================================
+    # NO NUMBERS
+    # =============================================
+
+    if re.search(r"\d", name):
+
+        return False
+
+    # =============================================
+    # ALPHABETIC STRUCTURE
+    # =============================================
+
+    if not re.fullmatch(
+        r"[A-Za-z\.\s\-]+",
+        name
+    ):
+
+        return False
+
+    return True
+
+# =========================================================
+# 🔥 OCR PAGE
+# =========================================================
+
+def ocr_page(page):
+
+    try:
+
+        pix = page.get_pixmap(dpi=300)
+
+        img = Image.frombytes(
+            "RGB",
+            [pix.width, pix.height],
+            pix.samples
+        )
+
+        text = pytesseract.image_to_string(img)
+
+        return text
+
+    except Exception:
+
+        return ""
+
+# =========================================================
+# 🔥 EXTRACT FROM TEXT
+# =========================================================
+
+def extract_names_from_text(full_text):
+
+    judges = set()
+
+    patterns = [
+
+        # =============================================
+        # HON'BLE PATTERNS
+        # =============================================
+
+        r"HON'?BLE\s+MR\.?\s+JUSTICE\s+([A-Z][A-Z\.\s]{3,80})",
+
+        r"HON'?BLE\s+MS\.?\s+JUSTICE\s+([A-Z][A-Z\.\s]{3,80})",
+
+        r"HON'?BLE\s+MRS\.?\s+JUSTICE\s+([A-Z][A-Z\.\s]{3,80})",
+
+        # =============================================
+        # JUSTICE PATTERNS
+        # =============================================
+
+        r"JUSTICE\s+([A-Z][A-Z\.\s]{3,80})",
+
+        # =============================================
+        # R.F. Nariman, J.
+        # =============================================
+
+        r"([A-Z][A-Za-z\.\s]{3,80}),\s*J\.",
+
+        # =============================================
+        # CORAM BLOCK
+        # =============================================
+
+        r"CORAM\s*[:\-]?\s*(.+?)(?:For Appellant|For Petitioner|JUDGMENT|ORDER)"
+    ]
+
+    for pattern in patterns:
+
+        matches = re.findall(
+            pattern,
+            full_text,
+            flags=re.I | re.S
+        )
+
+        for match in matches:
+
+            if isinstance(match, tuple):
+
+                match = " ".join(match)
+
+            parts = re.split(
+                r"\n|,|AND|&",
+                str(match)
+            )
+
+            for part in parts:
+
+                name = clean_name(part)
+
+                candidate_clean = name.strip()
+
+                # =====================================
+                # INVALID TERM FILTER
+                # =====================================
+
+                if candidate_clean.upper() in [
+
+                    item.upper()
+                    for item in INVALID_JUDGE_TERMS
+                ]:
+                    continue
+
+                # =====================================
+                # REJECT FRAGMENTS
+                # =====================================
+
+                fragment_terms = [
+
+                    "DONE TO",
+                    "COMPLAINANT",
+                    "APPELLANT",
+                    "RESPONDENT",
+                    "PETITIONER",
+                    "ORDER",
+                    "JUDGMENT",
+                    "VERSUS",
+                ]
+
+                upper_candidate = candidate_clean.upper()
+
+                if any(
+
+                    term in upper_candidate
+
+                    for term in fragment_terms
+                ):
+                    continue
+
+                # =====================================
+                # VALID HUMAN NAME
+                # =====================================
+
+                if valid_name(candidate_clean):
+
+                    judges.add(
+                        candidate_clean.title()
+                    )
+
+    return sorted(list(judges))
+
+# =========================================================
+# 🔥 MAIN
+# =========================================================
+
+def extract_judges(pdf_path):
+
+    try:
+
+        fitz.TOOLS.mupdf_display_errors(False)
+
+        doc = fitz.open(pdf_path)
+
+        collected = []
+
+        # =====================================================
+        # FIRST 5 PAGES
+        # =====================================================
+
+        max_pages = min(5, len(doc))
+
+        for i in range(max_pages):
+
+            page = doc.load_page(i)
+
+            text = page.get_text()
+
+            if not text or len(text.strip()) < 50:
+
+                text = ocr_page(page)
+
+            if text:
+
+                collected.append(text)
+
+        # =====================================================
+        # LAST 2 PAGES
+        # =====================================================
+
+        start = max(0, len(doc) - 2)
+
+        for i in range(start, len(doc)):
+
+            page = doc.load_page(i)
+
+            text = page.get_text()
+
+            if text:
+
+                collected.append(text)
+
+        full_text = "\n".join(collected)
+
+        judges = extract_names_from_text(full_text)
+
+        print("✅ Extracted Judges:")
+        print(judges)
+
+        return judges
+
+    except Exception as e:
+
+        print("❌ Judge Extraction Error:")
+        print(e)
+
+        return []

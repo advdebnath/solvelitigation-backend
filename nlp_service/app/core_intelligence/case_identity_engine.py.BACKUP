@@ -1,0 +1,95 @@
+# =========================================================
+# 🔥 SOLVELITIGATION CORE INTELLIGENCE ENGINE
+# =========================================================
+#
+# ENGINE:
+# CASE IDENTITY ENGINE
+#
+# PURPOSE:
+# Canonical legal identity resolution.
+#
+# RESPONSIBILITIES:
+# - Case Number Resolution
+# - Court Resolution
+# - Party Resolution
+# - Judge Resolution
+# - Judgment Date Resolution
+# - Citation Identity
+#
+# AUTHORITATIVE OUTPUT:
+# canonical_case_object
+#
+# =========================================================
+
+import re
+
+# =========================================================
+# 🔥 CANONICAL CASE PATTERNS
+# =========================================================
+
+CASE_PATTERNS = [
+    r'(CRIMINAL\s+APPEAL\s+NO\.?\s*[\w\-\/]+\s*OF\s*\d{4})',
+    r'(CIVIL\s+APPEAL\s+NO\.?\s*[\w\-\/]+\s*OF\s*\d{4})',
+    r'(WRIT\s+PETITION\s*\(.*?\)\s*NO\.?\s*[\w\-\/]+\s*OF\s*\d{4})',
+    r'(SPECIAL\s+LEAVE\s+PETITION\s*\(.*?\)\s*NO\.?\s*[\w\-\/]+\s*OF\s*\d{4})',
+]
+
+# =========================================================
+# 🔥 EXTRACT CASE NUMBER
+# =========================================================
+
+def extract_case_number(text):
+
+    if not text:
+        return {
+            "value": "Unknown Case",
+            "confidence": 0,
+            "source": "case_identity_engine"
+        }
+
+    header_text = text[:15000]
+
+    for pattern in CASE_PATTERNS:
+
+        match = re.search(
+            pattern,
+            header_text,
+            re.IGNORECASE
+        )
+
+        if match:
+
+            value = re.sub(
+                r'\s+',
+                ' ',
+                match.group(1)
+            ).strip().upper()
+
+            return {
+                "value": value,
+                "confidence": 95,
+                "source": "case_identity_engine"
+            }
+
+    return {
+        "value": "Unknown Case",
+        "confidence": 10,
+        "source": "case_identity_engine"
+    }
+
+# =========================================================
+# 🔥 BUILD CANONICAL CASE OBJECT
+# =========================================================
+
+def build_canonical_case_object(full_text=""):
+
+    case_number = extract_case_number(full_text)
+
+    return {
+        "canonical_case_id": case_number.get("value"),
+        "case_number": case_number,
+        "confidence": case_number.get("confidence", 0),
+        "validation": {},
+        "contradictions": []
+    }
+

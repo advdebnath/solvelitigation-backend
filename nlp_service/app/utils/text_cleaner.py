@@ -1,0 +1,20 @@
+import re
+import unicodedata
+
+
+def clean_text(text: str) -> str:
+    if not text:
+        return ""
+
+    text = unicodedata.normalize("NFKC", text)
+
+    text = text.replace("\x0c", " ")
+    text = text.replace("\r", " ")
+    text = text.replace("\t", " ")
+    text = re.sub(r"[ \t]+", " ", text)
+
+    text = re.sub(r"Page\s+\d+\s+of\s+\d+", " ", text, flags=re.I)
+
+    text = re.sub(r"Downloaded on.*?\d{4}", " ", text, flags=re.I)
+
+    return text.strip()

@@ -1,0 +1,458 @@
+import re
+
+# =========================================================
+# 🔥 CLEAN
+# =========================================================
+
+def clean_text(text):
+
+    if not text:
+
+        return ""
+
+    # =====================================================
+    # 🔥 PRESERVE PARAGRAPHS
+    # =====================================================
+
+    text = text.replace(
+        "\r",
+        "\n"
+    )
+
+    # normalize spaces only
+    text = re.sub(
+        r"[ \t]+",
+        " ",
+        text
+    )
+
+    # preserve paragraph structure
+    text = re.sub(
+        r"\n{3,}",
+        "\n\n",
+        text
+    )
+
+    return text.strip()
+
+# =========================================================
+# 🔥 SPLIT PARAGRAPHS
+# =========================================================
+
+def split_paragraphs(text):
+
+    parts = re.split(
+        r"\n\s*\n",
+        text
+    )
+
+    cleaned = []
+
+    for p in parts:
+
+        para = p.strip()
+
+        if len(para) > 20:
+
+            cleaned.append(para)
+
+    return cleaned
+
+# =========================================================
+# 🔥 INVALID OPERATIVE TERMS
+# =========================================================
+
+INVALID_OPERATIVE_TERMS = [
+
+    "learned counsel",
+    "facts of the case",
+    "brief facts",
+    "arguments advanced",
+    "submission of",
+    "evidence on record",
+    "cross examination",
+    "pw-",
+    "exhibit",
+    "appearance",
+    "advocate",
+]
+
+# =========================================================
+# 🔥 OPERATIVE PATTERNS
+# =========================================================
+
+OPERATIVE_PATTERNS = {
+
+    "Appeal Allowed": [
+
+        r"appeal\s+is\s+allowed",
+        r"appeal\s+stands\s+allowed",
+        r"appeals\s+stand\s+allowed",
+        r"appeals\s+are\s+allowed",
+        r"appeal\s+allowed",
+        r"appeal\s+succeeds",
+        r"appeals\s+succeed",
+    ],
+
+    "Appeal Dismissed": [
+
+        r"appeal\s+is\s+dismissed",
+        r"appeal\s+stands\s+dismissed",
+        r"appeals\s+stand\s+dismissed",
+        r"appeals\s+are\s+dismissed",
+        r"appeal\s+dismissed",
+        r"appeal\s+fails",
+        r"appeals\s+fail",
+    ],
+
+    "Petition Allowed": [
+
+        r"petition\s+is\s+allowed",
+        r"petition\s+stands\s+allowed",
+        r"writ\s+petition\s+allowed",
+    ],
+
+    "Petition Dismissed": [
+
+        r"petition\s+is\s+dismissed",
+        r"petition\s+stands\s+dismissed",
+        r"petition\s+dismissed",
+        r"slp\s+stands\s+disposed",
+        r"special\s+leave\s+petition\s+dismissed",
+    ],
+
+    "High Court Set Aside": [
+
+        r"high\s+court.*set\s+aside",
+        r"impugned\s+judgment.*set\s+aside",
+        r"impugned\s+order.*set\s+aside",
+        r"judgment.*set\s+aside",
+    ],
+
+    "Judgment Affirmed": [
+
+        r"judgment\s+affirmed",
+        r"order\s+affirmed",
+        r"conviction\s+affirmed",
+    ],
+
+    "Tribunal Restored": [
+
+        r"tribunal.*restored",
+        r"order.*restored",
+    ],
+
+    "Matter Remanded": [
+
+        r"matter\s+is\s+remanded",
+        r"case\s+is\s+remanded",
+        r"remanded\s+back",
+    ],
+
+    "Conviction Upheld": [
+
+        r"conviction\s+is\s+upheld",
+        r"conviction\s+upheld",
+        r"conviction\s+affirmed",
+    ],
+
+    "Conviction Set Aside": [
+
+        r"conviction\s+set\s+aside",
+    ],
+
+    "Sentence Modified": [
+
+        r"sentence\s+modified",
+        r"sentence\s+reduced",
+    ],
+
+    "Acquittal": [
+
+        r"accused\s+is\s+acquitted",
+        r"stands\s+acquitted",
+        r"acquitted",
+    ],
+
+    "Bail Granted": [
+
+        r"bail\s+is\s+granted",
+        r"released\s+on\s+bail",
+    ],
+
+    "Bail Rejected": [
+
+        r"bail\s+application\s+is\s+rejected",
+        r"bail\s+rejected",
+    ],
+}
+
+# =========================================================
+# 🔥 SCORE PARAGRAPH
+# =========================================================
+
+def score_operational_paragraph(para):
+
+    lower = para.lower()
+
+    # =====================================================
+    # 🔥 INVALID FILTER
+    # =====================================================
+
+    for term in INVALID_OPERATIVE_TERMS:
+
+        if term in lower:
+
+            return 0, []
+
+    score = 0
+
+    findings = []
+
+    # =====================================================
+    # 🔥 PATTERN MATCHING
+    # =====================================================
+
+    for label, patterns in OPERATIVE_PATTERNS.items():
+
+        for pattern in patterns:
+
+            if re.search(
+                pattern,
+                lower,
+                re.I
+            ):
+
+                score += 25
+
+                findings.append(label)
+
+    # =====================================================
+    # 🔥 DISPOSAL BOOST
+    # =====================================================
+
+    disposal_terms = [
+
+        "accordingly",
+        "therefore",
+        "hence",
+        "resultantly",
+        "ordered accordingly",
+        "disposed of",
+        "stands disposed",
+        "in view of",
+    ]
+
+    if any(
+
+        word in lower
+
+        for word in disposal_terms
+    ):
+
+        score += 15
+
+    # =====================================================
+    # 🔥 FINAL SHORT PARA BOOST
+    # =====================================================
+
+    if len(lower) < 1200:
+
+        score += 5
+
+    return score, findings
+
+# =========================================================
+# 🔥 EXTRACT PARA NUMBER
+# =========================================================
+
+def extract_para_number(para):
+
+    patterns = [
+
+        r"\b(\d{1,3})\.\s",
+        r"\((\d{1,3})\)",
+        r"paragraph\s+(\d{1,3})",
+    ]
+
+    for pattern in patterns:
+
+        match = re.search(
+            pattern,
+            para,
+            re.I
+        )
+
+        if match:
+
+            return f"para-{match.group(1)}"
+
+    return "para-unknown"
+
+# =========================================================
+# 🔥 MAIN ENGINE
+# =========================================================
+
+def extract_operative_order(text):
+
+    try:
+
+        if not text:
+
+            return {
+
+                "operative_order": [],
+                "final_holding": None,
+                "operative_para": None,
+                "paragraph": None,
+                "confidence": 0,
+            }
+
+        text = clean_text(text)
+
+        paragraphs = split_paragraphs(text)
+
+        if not paragraphs:
+
+            return {
+
+                "operative_order": [],
+                "final_holding": None,
+                "operative_para": None,
+                "paragraph": None,
+                "confidence": 0,
+            }
+
+        # =================================================
+        # 🔥 PRIORITIZE LAST 35%
+        # =================================================
+
+        start_index = int(
+            len(paragraphs) * 0.65
+        )
+
+        target_paragraphs = paragraphs[
+            start_index:
+        ]
+
+        best_score = 0
+
+        best_para = None
+
+        best_findings = []
+
+        # =================================================
+        # 🔥 BOTTOM-UP SEARCH
+        # =================================================
+
+        for para in reversed(target_paragraphs):
+
+            score, findings = score_operational_paragraph(
+                para
+            )
+
+            if score > best_score:
+
+                best_score = score
+
+                best_para = para
+
+                best_findings = findings
+
+        # =================================================
+        # 🔥 FINAL HOLDING
+        # =================================================
+
+        final_holding = "Disposition Unknown"
+
+        if best_findings:
+
+            final_holding = ", ".join(
+
+                list(
+                    dict.fromkeys(
+                        best_findings
+                    )
+                )
+            )
+
+        # =================================================
+        # 🔥 OPERATIVE PARA
+        # =================================================
+
+        operative_para = None
+
+        if best_para:
+
+            operative_para = extract_para_number(
+                best_para
+            )
+
+        # =================================================
+        # 🔥 RESULT
+        # =================================================
+
+        result = {
+
+            "operative_order":
+                best_findings,
+
+            "final_holding":
+                final_holding,
+
+            "operative_para":
+                operative_para,
+
+            "paragraph":
+                best_para[:2000]
+                if best_para else None,
+
+            "confidence":
+                min(
+                    99,
+                    best_score
+                ),
+        }
+
+        print(
+            "✅ Operative Order Extracted:"
+        )
+
+        print(result)
+
+        return result
+
+    except Exception as e:
+
+        print(
+            "❌ OPERATIVE ORDER ERROR:",
+            e
+        )
+
+        return {
+
+            "operative_order": [],
+            "final_holding": None,
+            "operative_para": None,
+            "paragraph": None,
+            "confidence": 0,
+        }
+
+# =========================================================
+# 🔥 DIRECT TEST
+# =========================================================
+
+if __name__ == "__main__":
+
+    sample = '''
+
+    38. Accordingly, the appeals are dismissed.
+
+    The conviction is affirmed.
+
+    The impugned judgment stands affirmed.
+    '''
+
+    print(
+        extract_operative_order(sample)
+    )

@@ -1,28 +1,24 @@
 from pymongo import MongoClient
-from gridfs import GridFS
-from app.config import settings
+from typing import Optional
 
-_client = None
-_db = None
-_fs = None
+MONGO_URI = "mongodb://sl_app:Debnath%401966@127.0.0.1:27017/solvelitigation"
+
+_client: Optional[MongoClient] = None
 
 
 def get_client() -> MongoClient:
     global _client
     if _client is None:
-        _client = MongoClient(settings.MONGO_URI)
+        _client = MongoClient(MONGO_URI)
     return _client
 
 
 def get_db():
-    global _db
-    if _db is None:
-        _db = get_client()[settings.MONGO_DB]
-    return _db
+    return get_client()["solvelitigation"]
 
 
-def get_gridfs() -> GridFS:
-    global _fs
-    if _fs is None:
-        _fs = GridFS(get_db())
-    return _fs
+def close_client():
+    global _client
+    if _client:
+        _client.close()
+        _client = None
