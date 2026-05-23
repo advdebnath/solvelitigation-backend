@@ -36,6 +36,45 @@ INVALID_JUDGE_TERMS = [
 
 def clean_name(name):
 
+    # =============================================
+    # 🔒 OCR JUDGE NORMALIZATION LOCK
+    # =============================================
+
+    if isinstance(name, str):
+
+        name = re.sub(
+            r"H\s*O\s*N\s*'?\s*B\s*L\s*E",
+            "HONBLE",
+            name,
+            flags=re.I
+        )
+
+        name = re.sub(
+            r"J\s*U\s*S\s*T\s*I\s*C\s*E",
+            "JUSTICE",
+            name,
+            flags=re.I
+        )
+
+        name = re.sub(
+            r"C\s*O\s*R\s*A\s*M",
+            "CORAM",
+            name,
+            flags=re.I
+        )
+
+        name = re.sub(
+            r"\n+",
+            " ",
+            name
+        )
+
+        name = re.sub(
+            r"\s{2,}",
+            " ",
+            name
+        ).strip()
+
     if not isinstance(name, str):
 
         return ""
@@ -448,6 +487,14 @@ def extract_names_from_text(full_text):
         # =============================================
         # CORAM BLOCK
         # =============================================
+
+        # =============================================
+        # 🔒 OCR-SAFE MULTILINE CORAM LOCK
+        # =============================================
+
+        r"CORAM\s*[:\-]?\s*((?:.|\n){0,1200}?)(?:For Appellant|For Petitioner|For Respondent|Appearance|JUDGMENT|ORDER)",
+
+        r"BEFORE\s*[:\-]?\s*((?:.|\n){0,1200}?)(?:For Appellant|For Petitioner|For Respondent|Appearance|JUDGMENT|ORDER)",
 
         r"CORAM\s*[:\-]?\s*(.+?)(?:For Appellant|For Petitioner|JUDGMENT|ORDER)",
 

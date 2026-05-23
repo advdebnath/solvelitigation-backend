@@ -143,6 +143,35 @@ def normalize_any_date(raw):
 
 
 # =========================================================
+# 🔒 AUTHORITATIVE JUDGMENT YEAR LOCK
+# =========================================================
+
+def build_authoritative_year(date_value):
+
+    try:
+
+        if not date_value:
+            return None
+
+        dt = parser.parse(
+            str(date_value),
+            fuzzy=True,
+            dayfirst=True
+        )
+
+        year = dt.year
+
+        if year < 1950 or year > 2050:
+            return None
+
+        return str(year)
+
+    except Exception:
+
+        return None
+
+
+# =========================================================
 # 🔥 EXTRACT JUDGMENT DATE
 # =========================================================
 
