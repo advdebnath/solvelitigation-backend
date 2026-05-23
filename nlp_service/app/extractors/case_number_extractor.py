@@ -1426,6 +1426,123 @@ def extract_case_number(
             print("BEST CASE NUMBER:")
             print(best)
 
+            # =====================================================
+            # 🔥 SEMANTIC PROCEEDING RESOLUTION ENGINE
+            # =====================================================
+
+            best_value = str(
+                best.get(
+                    "case_number",
+                    ""
+                )
+            ).upper()
+
+            normalized_header_upper = header.upper()
+
+            case_type = "UNKNOWN"
+
+            court_type = "UNKNOWN"
+
+            jurisdiction = "UNKNOWN"
+
+            proceeding_family = "PRIMARY"
+
+            # -----------------------------------------------------
+            # 🔥 CASE TYPE RESOLUTION
+            # -----------------------------------------------------
+
+            if (
+                "CRIMINAL APPEAL" in best_value
+                or "CRL.A" in best_value
+                or "CRL." in best_value
+            ):
+                case_type = "CRIMINAL"
+
+            elif (
+                "CIVIL APPEAL" in best_value
+                or "C.A." in best_value
+            ):
+                case_type = "CIVIL"
+
+            elif (
+                "WRIT PETITION" in best_value
+                or "WP(" in best_value
+            ):
+                case_type = "WRIT"
+
+            elif "SLP" in best_value:
+                case_type = "SPECIAL_LEAVE"
+
+            elif "REVIEW" in best_value:
+                case_type = "REVIEW"
+
+            elif "CONTEMPT" in best_value:
+                case_type = "CONTEMPT"
+
+            # -----------------------------------------------------
+            # 🔥 COURT RESOLUTION
+            # -----------------------------------------------------
+
+            if "SUPREME COURT" in normalized_header_upper:
+                court_type = "SUPREME_COURT"
+
+            elif "HIGH COURT" in normalized_header_upper:
+                court_type = "HIGH_COURT"
+
+            elif (
+                "TRIBUNAL" in normalized_header_upper
+                or "APPELLATE TRIBUNAL" in normalized_header_upper
+            ):
+                court_type = "TRIBUNAL"
+
+            # -----------------------------------------------------
+            # 🔥 JURISDICTION RESOLUTION
+            # -----------------------------------------------------
+
+            if case_type == "CRIMINAL":
+                jurisdiction = "CRIMINAL"
+
+            elif case_type == "CIVIL":
+                jurisdiction = "CIVIL"
+
+            elif case_type == "WRIT":
+                jurisdiction = "CONSTITUTIONAL"
+
+            elif case_type == "SPECIAL_LEAVE":
+                jurisdiction = "APPELLATE"
+
+            # -----------------------------------------------------
+            # 🔥 PROCEEDING FAMILY
+            # -----------------------------------------------------
+
+            if (
+                "INTERLOCUTORY" in best_value
+                or "IA" in best_value
+            ):
+                proceeding_family = "INTERLOCUTORY"
+
+            elif "REVIEW" in best_value:
+                proceeding_family = "REVIEW"
+
+            elif "CURATIVE" in best_value:
+                proceeding_family = "CURATIVE"
+
+            elif "CONTEMPT" in best_value:
+                proceeding_family = "CONTEMPT"
+
+            best["case_type"] = case_type
+
+            best["court_type"] = court_type
+
+            best["jurisdiction"] = jurisdiction
+
+            best["proceeding_family"] = proceeding_family
+
+            best["normalized_case_number"] = best_value
+
+            print("🔥 SEMANTIC CASE RESOLUTION:")
+            print(best)
+
             return best
 
         # =====================================================

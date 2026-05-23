@@ -77,6 +77,35 @@ def normalize_case_number_object(case_data):
     )
 
     # =====================================================
+    # 🔥 PRESERVE EXTRACTOR SEMANTIC METADATA
+    # =====================================================
+
+    normalized["case_type"] = case_data.get(
+        "case_type",
+        normalized["case_type"]
+    )
+
+    normalized["court_type"] = case_data.get(
+        "court_type",
+        normalized["court_type"]
+    )
+
+    normalized["jurisdiction"] = case_data.get(
+        "jurisdiction",
+        normalized["jurisdiction"]
+    )
+
+    normalized["proceeding_family"] = case_data.get(
+        "proceeding_family",
+        normalized["proceeding_family"]
+    )
+
+    normalized["source"] = case_data.get(
+        "source",
+        normalized["source"]
+    )
+
+    # =====================================================
     # 🔥 YEAR EXTRACTION
     # =====================================================
 
@@ -90,6 +119,14 @@ def normalize_case_number_object(case_data):
 
     upper = raw_case.upper()
 
+    if (
+        "CRL.A" in upper
+        or "SLP" in upper
+        or "CIVIL APPEAL" in upper
+        or "CRIMINAL APPEAL" in upper
+    ):
+        normalized["court_type"] = "SUPREME_COURT"
+
     # =====================================================
     # 🔥 CASE NUMBER ONTOLOGY ENGINE
     # =====================================================
@@ -99,6 +136,29 @@ def normalize_case_number_object(case_data):
 
     elif "CRIMINAL APPEAL" in upper:
         normalized["jurisdiction"] = "CRIMINAL"
+        normalized["case_type"] = "CRIMINAL"
+
+    elif (
+        "CRL.A" in upper
+        or "CRL." in upper
+    ):
+        normalized["jurisdiction"] = "CRIMINAL"
+        normalized["case_type"] = "CRIMINAL"
+
+    elif (
+        "C.A." in upper
+        or "CIV.A" in upper
+    ):
+        normalized["jurisdiction"] = "CIVIL"
+        normalized["case_type"] = "CIVIL"
+
+    elif "WP(" in upper:
+        normalized["jurisdiction"] = "CONSTITUTIONAL"
+        normalized["case_type"] = "WRIT"
+
+    elif "SLP" in upper:
+        normalized["jurisdiction"] = "SPECIAL_LEAVE"
+        normalized["case_type"] = "SPECIAL_LEAVE"
 
     elif "WRIT PETITION" in upper:
         normalized["jurisdiction"] = "CONSTITUTIONAL"

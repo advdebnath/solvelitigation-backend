@@ -1820,22 +1820,21 @@ def stitch_broken_tokens(text):
     # ======================================================
     # 🔥 TOKEN WINDOW STITCHING
     # ======================================================
+    # ======================================================
+    # 🔒 RECURSIVE TOKEN DUPLICATION ENGINE DISABLED
+    # ======================================================
+    #
+    # Previous heuristic caused irreversible OCR corruption:
+    #
+    #   codecode
+    #   court court
+    #   ofof
+    #
+    # The engine duplicated token fragments recursively.
+    #
+    # Permanently disabled for semantic stability.
+    # ======================================================
 
-    repaired = re.sub(
-        r'\b([a-z]{2,})\s+([a-z]{1,3})\s+([a-z]{2,})\b',
-        lambda m: (
-            m.group(1) +
-            m.group(1) +
-            m.group(2)
-        )
-        if len(
-            m.group(1) +
-            m.group(2)
-        ) <= 15
-        else m.group(0),
-        repaired,
-        flags=re.I
-    )
 
     return repaired.strip()
 
@@ -2118,6 +2117,60 @@ def normalize_legal_text(text):
 
         r"\bcorrup\s+ion\b":
             "corruption",
+
+        r"\bjurisdic\s+ion\b":
+            "jurisdiction",
+
+        r"\binforma\s+ion\b":
+            "information",
+
+        r"\bprohibi\s+ion\b":
+            "prohibition",
+
+        r"\bappella\s+e\b":
+            "appellate",
+
+        r"\bapplica\s+ion\b":
+            "application",
+
+        r"\bconstitu\s+ional\b":
+            "constitutional",
+
+        r"\bmiscellaneous\s+bail\s+applica\s+ion\b":
+            "miscellaneous bail application",
+
+        r"\bproce\s+dure\b":
+            "procedure",
+
+        r"\btribu\s+nal\b":
+            "tribunal",
+
+        r"\bevide\s+nce\b":
+            "evidence",
+
+        r"\boffe\s+nce\b":
+            "offence",
+
+        r"\bpeti\s+ion\b":
+            "petition",
+
+        r"\bsec\s+ions\b":
+            "sections",
+
+        r"\bargu\s+ment\b":
+            "argument",
+
+        r"\bjudicia\s+l\b":
+            "judicial",
+
+        r"\bgovern\s+ment\b":
+            "government",
+
+        r"\bdepart\s+ment\b":
+            "department",
+
+        r"\badjudica\s+ion\b":
+            "adjudication",
 
         r"\bincorpora\s+ion\b":
             "incorporation"
