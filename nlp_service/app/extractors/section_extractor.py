@@ -160,6 +160,65 @@ def calculate_context_score(
     return score
 
 # =========================================================
+# 🔒 OCR-SAFE SECTION NORMALIZATION LOCK
+# =========================================================
+
+def normalize_section_text(text):
+
+    if not text:
+        return ""
+
+    text = str(text)
+
+    # -----------------------------------------------------
+    # 🔥 OCR RECONSTRUCTION
+    # -----------------------------------------------------
+
+    text = re.sub(
+        r"u\s*/\s*s\.?",
+        "u/s",
+        text,
+        flags=re.I
+    )
+
+    text = re.sub(
+        r"S\s*E\s*C\s*T\s*I\s*O\s*N",
+        "Section",
+        text,
+        flags=re.I
+    )
+
+    text = re.sub(
+        r"A\s*R\s*T\s*I\s*C\s*L\s*E",
+        "Article",
+        text,
+        flags=re.I
+    )
+
+    text = re.sub(
+        r"Cr\s*P\s*C",
+        "CrPC",
+        text,
+        flags=re.I
+    )
+
+    text = re.sub(
+        r"I\s*P\s*C",
+        "IPC",
+        text,
+        flags=re.I
+    )
+
+    text = re.sub(
+        r"\s{2,}",
+        " ",
+        text
+    )
+
+    return text.strip()
+
+
+# =========================================================
 # 🔥 MAIN EXTRACTOR
 # =========================================================
 
@@ -179,7 +238,7 @@ def extract_sections(
             "confidence": 0
         }
 
-    text = str(full_text)
+    text = normalize_section_text(full_text)
 
     extracted = []
 
@@ -350,6 +409,91 @@ def extract_sections(
                     "context_score":
                         context_score
                 })
+
+    # =====================================================
+    # 🔒 CONTEXTUAL CRIMINAL LAW ENRICHMENT LOCK
+    # =====================================================
+
+    lower_text = text.lower()
+
+    if not extracted:
+
+        # -------------------------------------------------
+        # 🔥 CrPC CONTEXT
+        # -------------------------------------------------
+
+        if any(
+            token in lower_text
+            for token in [
+                "fir",
+                "charge sheet",
+                "criminal appeal",
+                "bail",
+                "trial court",
+                "accused",
+                "investigation",
+                "conviction",
+                "sentence"
+            ]
+        ):
+
+            extracted.append({
+
+                "type":
+                    "Contextual",
+
+                "section":
+                    "Procedural",
+
+                "act":
+                    "Code Of Criminal Procedure, 1973",
+
+                "canonical_act_object":
+                    build_canonical_legal_object(
+                        "Code Of Criminal Procedure, 1973",
+                        "ACT"
+                    ),
+
+                "context_score":
+                    40
+            })
+
+        # -------------------------------------------------
+        # 🔥 IPC CONTEXT
+        # -------------------------------------------------
+
+        if any(
+            token in lower_text
+            for token in [
+                "murder",
+                "assault",
+                "homicide",
+                "weapon",
+                "offence",
+                "crime"
+            ]
+        ):
+
+            extracted.append({
+
+                "type":
+                    "Contextual",
+
+                "section":
+                    "Substantive",
+
+                "act":
+                    "Indian Penal Code, 1860",
+
+                "canonical_act_object":
+                    build_canonical_legal_object(
+                        "Indian Penal Code, 1860",
+                        "ACT"
+                    ),
+
+                "context_score":
+                    40
+            })
 
     # -----------------------------------------------------
     # 🔥 SORTING
