@@ -75,6 +75,65 @@ def clean_name(name):
             name
         ).strip()
 
+        # =============================================
+        # 🔒 OCR HEADING STRIPPING LOCK
+        # =============================================
+
+        name = re.sub(
+            r"\bJUDGMENT\b",
+            "",
+            name,
+            flags=re.I
+        )
+
+        name = re.sub(
+            r"\bORDER\b",
+            "",
+            name,
+            flags=re.I
+        )
+
+        name = re.sub(
+            r"Digitally signed by.*",
+            "",
+            name,
+            flags=re.I
+        )
+
+        name = re.sub(
+            r"Date\s*:.*",
+            "",
+            name,
+            flags=re.I
+        )
+
+        name = re.sub(
+            r"Reason\s*:.*",
+            "",
+            name,
+            flags=re.I
+        )
+
+        name = re.sub(
+            r"\bCrl\.?A\.?\b.*",
+            "",
+            name,
+            flags=re.I
+        )
+
+        name = re.sub(
+            r"\bAppellant\b|\bRespondent\b",
+            "",
+            name,
+            flags=re.I
+        )
+
+        name = re.sub(
+            r"\s{2,}",
+            " ",
+            name
+        ).strip()
+
     if not isinstance(name, str):
 
         return ""
@@ -1207,6 +1266,81 @@ def extract_judges(pdf_path):
 
 
         judges.extend(list(early_judge_pool))
+
+        # =====================================================
+        # 🔒 FINAL JUDGE VALIDATION LOCK
+        # =====================================================
+
+        validated_judges = []
+
+        for judge in judges:
+
+            if not isinstance(judge, str):
+                continue
+
+            candidate = judge.strip()
+
+            # -------------------------------------------------
+            # 🔥 LENGTH FILTER
+            # -------------------------------------------------
+
+            if len(candidate) < 5:
+                continue
+
+            if len(candidate) > 120:
+                continue
+
+            # -------------------------------------------------
+            # 🔥 BODY TEXT REJECTION
+            # -------------------------------------------------
+
+            lower_candidate = candidate.lower()
+
+            rejection_terms = [
+
+                "offence",
+                "evidence",
+                "trial court",
+                "high court",
+                "bail",
+                "accused",
+                "appellant",
+                "respondent",
+                "petition",
+                "conviction",
+                "sentence",
+                "prima facie",
+                "criminal appeal",
+                "order dated"
+            ]
+
+            if any(
+                term in lower_candidate
+                for term in rejection_terms
+            ):
+                continue
+
+            # -------------------------------------------------
+            # 🔥 VALID NAME STRUCTURE
+            # -------------------------------------------------
+
+            if not re.search(
+                r"(justice|judge|chief justice|cj|dr\.?|mr\.?|ms\.?|mrs\.?)",
+                candidate,
+                flags=re.I
+            ):
+
+                capital_words = re.findall(
+                    r"\b[A-Z][a-z]+\b",
+                    candidate
+                )
+
+                if len(capital_words) < 2:
+                    continue
+
+            validated_judges.append(candidate)
+
+        judges = validated_judges
 
         judges = sorted(list(set(judges)))
 
