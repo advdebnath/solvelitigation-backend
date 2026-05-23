@@ -1844,109 +1844,9 @@ def stitch_broken_tokens(text):
 # 🔥 MAIN NORMALIZER
 # =========================================================
 
-
-# =========================================================
-# 🔥 ENTERPRISE HEADER FIREWALL ENGINE
-# =========================================================
-
-HEADER_NOISE_PATTERNS = [
-
-    r"http://JUDIS\.NIC\.IN",
-
-    r"SUPREME COURT OF INDIA",
-
-    r"HIGH COURT OF [A-Z ]+",
-
-    r"Page\s+\d+\s+of\s+\d+",
-
-    r"PETITIONER:",
-
-    r"RESPONDENT:",
-
-    r"DATE OF JUDGMENT:.*",
-
-    r"BENCH:",
-
-    r"CORAM:",
-
-    r"JUDGMENT:?$",
-
-    r"ORDER:?$",
-
-    r"Downloaded\s+on",
-
-    r"\bRESPONDENT\b",
-
-    r"\bPETITIONER\b",
-
-]
-
-
-def remove_header_noise(text):
-
-    """
-    Non-destructive enterprise header firewall.
-
-    Preserves:
-    - semantic paragraphs
-    - legal reasoning
-    - citations
-    - doctrinal analysis
-
-    Removes:
-    - page markers
-    - OCR header pollution
-    - caption metadata
-    - court banners
-    """
-
-    if not text:
-        return ""
-
-    cleaned_lines = []
-
-    for line in text.splitlines():
-
-        original_line = line
-
-        line = line.strip()
-
-        if not line:
-            continue
-
-        skip = False
-
-        for pattern in HEADER_NOISE_PATTERNS:
-
-            if re.search(
-                pattern,
-                line,
-                flags=re.I
-            ):
-                skip = True
-                break
-
-        if skip:
-            continue
-
-        cleaned_lines.append(original_line)
-
-    return "\\n".join(cleaned_lines)
-
-
-
-
 def normalize_legal_text(text):
 
     text = remove_header_footer_pollution(text)
-
-    # =========================================================
-    # 🔥 ENTERPRISE HEADER FIREWALL
-    # =========================================================
-
-    text = remove_header_noise(text)
-
-    print("✅ ENTERPRISE HEADER FIREWALL COMPLETE")
 
     # =========================================================
     # 🔥 CONTEXTUAL OCR REPAIR ENGINE
@@ -2132,7 +2032,7 @@ def normalize_legal_text(text):
             flags=re.I
         )
 
-    text = stitch_broken_tokens(text)
+    # text = stitch_broken_tokens(text)
 
     text = normalize_legal_citations(text)
 

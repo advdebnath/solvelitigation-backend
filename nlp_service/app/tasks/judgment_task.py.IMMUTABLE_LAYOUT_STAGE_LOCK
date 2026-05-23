@@ -1088,11 +1088,11 @@ def process_judgment(ingestion_id):
         # =====================================================
         # 🔥 CORE EXTRACTION
         # =====================================================
-        print("🚨 RAW HEADER TEXT TRACE 🚨", flush=True)
+        print("🚨 RAW HEADER TEXT TRACE 🚨")
         print(raw_header_text[:3000])
-        print("🚨 END RAW HEADER TEXT TRACE 🚨", flush=True)
+        print("🚨 END RAW HEADER TEXT TRACE 🚨")
 
-        print("🚨 ENTERING LIVE CASE EXTRACTION PIPELINE 🚨", flush=True)
+        print("🚨 ENTERING LIVE CASE EXTRACTION PIPELINE 🚨")
 
 
         case_number = extract_case_number(
@@ -1103,7 +1103,7 @@ def process_judgment(ingestion_id):
             case_number
         )
 
-        print("🔥 NORMALIZED CASE NUMBER OBJECT:", flush=True)
+        print("🔥 NORMALIZED CASE NUMBER OBJECT:")
         print(case_number)
 
         court_data = extract_court(
@@ -1618,8 +1618,6 @@ def process_judgment(ingestion_id):
         # =====================================================
         # 🔥 IMMUTABLE PAGE LAYOUT ENGINE
         # =====================================================
-
-        doc = fitz.open(file_path)
 
         immutable_page_objects = (
             build_page_objects(doc)

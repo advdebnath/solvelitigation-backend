@@ -7,8 +7,13 @@ import re
 VALID_COURTS = [
 
     "SUPREME",
-    "HIGH_COURT",
-    "TRIBUNAL"
+    "HIGH",
+    "TRIBUNAL",
+    "DISTRICT",
+    "SPECIAL",
+    "CONSUMER",
+    "TAX",
+    "UNKNOWN"
 ]
 
 # =========================================================

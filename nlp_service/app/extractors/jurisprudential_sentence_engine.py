@@ -329,6 +329,36 @@ def split_into_sentences(text: str) -> List[str]:
             para_sentences
         )
 
+    # =====================================================
+    # 🔥 FALLBACK LEGAL SENTENCE RESCUE ENGINE
+    # =====================================================
+
+    if len(raw_sentences) <= 1:
+
+        fallback_sentences = re.split(
+            r'(?:(?<=\.)|(?<=;)|(?<=:))\s+|\n+|(?=\d+\.)',
+            protected_text
+        )
+
+        fallback_sentences = [
+            x.strip()
+            for x in fallback_sentences
+            if isinstance(x, str)
+            and len(x.strip()) > 20
+        ]
+
+        if len(fallback_sentences) > len(raw_sentences):
+
+            raw_sentences = fallback_sentences
+
+            print(
+                "✅ FALLBACK SENTENCE RESCUE ACTIVATED"
+            )
+
+            print(
+                f"✅ FALLBACK SENTENCE COUNT: {len(raw_sentences)}"
+            )
+
     sentences = []
 
     for sent in raw_sentences:
@@ -353,7 +383,12 @@ def split_into_sentences(text: str) -> List[str]:
 
         sent = sent.strip()
 
-        if len(sent) < 15:
+        word_count = len(sent.split())
+
+        if (
+            len(sent) < 15
+            and word_count < 4
+        ):
             continue
 
         sentences.append(sent)

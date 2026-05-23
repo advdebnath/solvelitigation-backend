@@ -192,6 +192,41 @@ def normalize_points(points):
                             "category",
                             "Unknown"
                         )
+                    ),
+
+                "confidence":
+                    p.get(
+                        "confidence",
+                        60
+                    ),
+
+                "sources":
+                    ensure_list(
+                        p.get(
+                            "sources",
+                            []
+                        )
+                    ),
+
+                "supporting_section":
+                    clean_string(
+                        p.get(
+                            "supporting_section"
+                        )
+                    ),
+
+                "supporting_act":
+                    clean_string(
+                        p.get(
+                            "supporting_act"
+                        )
+                    ),
+
+                "lineage":
+                    clean_string(
+                        p.get(
+                            "lineage"
+                        )
                     )
             }
 

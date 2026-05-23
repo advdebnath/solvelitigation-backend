@@ -1,0 +1,194 @@
+# =========================================================
+# 🔥 LEGAL OCR RECONSTRUCTION ENGINE
+# =========================================================
+
+import re
+
+
+# =========================================================
+# 🔥 LEGAL RECONSTRUCTION DICTIONARY
+# =========================================================
+
+LEGAL_RECONSTRUCTIONS = {
+
+    "con inued": "continued",
+    "de en ion": "detention",
+    "convic s": "convicts",
+    "convic ": "convict ",
+    "Governmen": "Government",
+    "prema ure": "premature",
+    "Cons itu ion": "Constitution",
+    "cons itu ion": "constitution",
+    "au hori ies": "authorities",
+    "frui ful": "fruitful",
+    "consi er": "consider",
+    "po en iali y": "potentiality",
+    "socie y": "society",
+    "rejec ed": "rejected",
+    "objec ions": "objections",
+    "sufficien a en ion": "sufficient attention",
+    "conduc -record": "conduct-record",
+    "re-consider": "reconsider",
+    "rema ining": "remaining",
+    "depriva ion": "deprivation",
+    "fundamen al": "fundamental",
+    "cons i u ional": "constitutional",
+    "parliamen ": "parliament",
+    "judgmen ": "judgment",
+    "pe i ioner": "petitioner",
+    "responden ": "respondent",
+    "depar men ": "department",
+    "argumen ": "argument",
+    "ma eri al": "material",
+    "governmen ": "government",
+    "adminis ra ion": "administration",
+    "impugned judgmen ": "impugned judgment",
+    "cons idered": "considered",
+    "de enue": "detenue",
+    "cons i u ion bench": "constitution bench"
+}
+
+
+# =========================================================
+# 🔥 SEMANTIC OCR COLLAPSE ENGINE
+# =========================================================
+
+def repair_fragmented_legal_terms(text):
+
+    if not text:
+        return ""
+
+    repaired = str(text)
+
+    # -----------------------------------------------------
+    # 🔥 DICTIONARY RECONSTRUCTION
+    # -----------------------------------------------------
+
+    for wrong, correct in LEGAL_RECONSTRUCTIONS.items():
+
+        repaired = re.sub(
+            re.escape(wrong),
+            correct,
+            repaired,
+            flags=re.I
+        )
+
+    # -----------------------------------------------------
+    # 🔥 SAFE LEGAL TOKEN RECONSTRUCTION
+    # -----------------------------------------------------
+
+    SAFE_FRAGMENT_PATTERNS = [
+
+        (r'\bhe\s+convic\s+has\s+los\b',
+         'the convict has lost'),
+
+        (r'\bprema\s+ure\s+release\b',
+         'premature release'),
+
+        (r'\bmaybe\b',
+         'may be'),
+
+        (r'\bconsi\s+dered\b',
+         'considered'),
+
+        (r'\bpo\s+en\s+iali\s+y\b',
+         'potentiality'),
+
+        (r'\bfrui\s+ful\b',
+         'fruitful'),
+
+        (r'\bsocie\s+y\b',
+         'society'),
+
+        (r'\bau\s+hori\s+ies\b',
+         'authorities'),
+
+        (r'\bhe\s+convict\b',
+         'the convict'),
+
+        (r'\blos\s+his\b',
+         'lost his')
+    ]
+
+    for pattern, replacement in SAFE_FRAGMENT_PATTERNS:
+
+        repaired = re.sub(
+            pattern,
+            replacement,
+            repaired,
+            flags=re.I
+        )
+
+
+    # -----------------------------------------------------
+    # 🔥 OCR LINE BREAK REPAIR
+    # -----------------------------------------------------
+
+    repaired = re.sub(
+        r'([a-z])\n([a-z])',
+        r'\1\2',
+        repaired
+    )
+
+    # -----------------------------------------------------
+    # 🔥 MULTISPACE COLLAPSE
+    # -----------------------------------------------------
+
+    repaired = re.sub(
+        r'[ \t]+',
+        ' ',
+        repaired
+    )
+
+    repaired = re.sub(
+        r'\n{3,}',
+        '\n\n',
+        repaired
+    )
+
+    return repaired.strip()
+
+
+# =========================================================
+# 🔥 MAIN ENGINE
+# =========================================================
+
+def reconstruct_legal_ocr_text(text):
+
+    try:
+
+        repaired = repair_fragmented_legal_terms(
+            text
+        )
+
+        print(
+            "✅ LEGAL OCR RECONSTRUCTION COMPLETE"
+        )
+
+        return repaired
+
+    except Exception as e:
+
+        print(
+            "❌ LEGAL OCR RECONSTRUCTION ERROR:"
+        )
+
+        print(str(e))
+
+        return text
+
+
+# =========================================================
+# 🔥 TEST
+# =========================================================
+
+if __name__ == "__main__":
+
+    sample = """
+    he convic has los his po en iali y for frui ful purpose in socie y.
+    prema ure release may be cons idered by Governmen au hori ies.
+    """
+
+    print(
+        reconstruct_legal_ocr_text(sample)
+    )

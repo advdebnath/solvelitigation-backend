@@ -1224,7 +1224,7 @@ def extract_case_number(
             header
         )
 
-        candidate_results = []
+candidate_results = []
 
         for pattern in CASE_PATTERNS:
 

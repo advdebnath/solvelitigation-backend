@@ -815,7 +815,7 @@ def extract_case_number(
 
         header = re.sub(
             r"(?i)(CRIMINAL|CIVIL|SPECIAL|WRIT|TRANSFER|REVIEW|COMPANY|TAX)\s*\s*(APPEAL|PETITION)",
-            r" ",
+            r" \1 \2",
             header
         )
 
@@ -825,7 +825,7 @@ def extract_case_number(
 
         header = re.sub(
             r"(?i)(NO\.?|NOS\.?)\s*\s*(\d)",
-            r" ",
+            r" \1 \2",
             header
         )
         # ð¥ JOIN BROKEN OF YEAR LINES
@@ -833,13 +833,13 @@ def extract_case_number(
 
         header = re.sub(
             r"(?i)(\d)\s*\s*OF\s*\s*(\d{4})",
-            r" ",
+            r" \1 OF \2",
             header
         )
 
         header = re.sub(
             r"(?i)(\d)\s*\s*OF\s+(\d{4})",
-            r" ",
+            r" \1 OF \2",
             header
         )
 
@@ -892,7 +892,7 @@ def extract_case_number(
 
         header = re.sub(
             r"(PETITION|APPEAL|APPLICATION|CASE)\s*\s*(NO\.?|NOS\.?)",
-            r" ",
+            r" \1 \2",
             header,
             flags=re.I
         )
@@ -1191,7 +1191,7 @@ def extract_case_number(
                     print("🔥 LOCKED COURT MATCH:")
                     print(direct_case)
 
-                    authoritative_result = {
+                    return {
                         "case_number": direct_case,
                         "canonical_case_number": direct_case,
                         "normalized_case_number": direct_case,
@@ -1202,27 +1202,11 @@ def extract_case_number(
                         "validation_passed": True
                     }
 
-                    print("🔒 AUTHORITATIVE EXTRACTION LOCKED")
-                    print(authoritative_result)
-
-                    return authoritative_result
-
             except Exception as locked_error:
 
                 print("❌ LOCKED PATTERN ERROR:")
                 print(locked_pattern)
                 print(str(locked_error))
-
-        
-        # =====================================================
-        # 🔒 SAFE DIGIT RECONSTRUCTION LOCK
-        # =====================================================
-
-        header = re.sub(
-            r"(?<=\d)\s+(?=\d)",
-            "",
-            header
-        )
 
         candidate_results = []
 

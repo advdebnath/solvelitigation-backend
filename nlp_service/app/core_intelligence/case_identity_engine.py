@@ -23,6 +23,11 @@
 
 import re
 
+from app.extractors.case_number_extractor import (
+    extract_case_number as authoritative_extract_case_number
+)
+
+
 # =========================================================
 # 🔥 CANONICAL CASE PATTERNS
 # =========================================================
@@ -99,57 +104,37 @@ def extract_case_number(text):
 
     if not text:
         return {
+            "case_number": "Unknown Case",
             "value": "Unknown Case",
             "confidence": 0,
             "source": "case_identity_engine"
         }
 
-    header_text = text[:15000]
+    # =====================================================
+    # 🔒 AUTHORITATIVE CASE NUMBER EXTRACTION
+    # =====================================================
 
-    header_text = re.sub(
-        r"\s+",
-        " ",
-        header_text
+    extracted = authoritative_extract_case_number(
+        text
     )
 
-    header_text = re.sub(
-        r"[^A-Za-z0-9\-\/\(\)\.,:\s]",
-        " ",
-
-
-        header_text
+    extracted_case_number = extracted.get(
+        "case_number",
+        "Unknown Case"
     )
 
+    confidence = extracted.get(
+        "confidence",
+        0
+    )
 
-    for pattern in CASE_PATTERNS:
-
-        match = re.search(
-            pattern,
-            header_text,
-            re.IGNORECASE
-        )
-
-        if match:
-
-            print("✅ CASE NUMBER MATCH FOUND:")
-            print(match.group(1))
-
-
-            value = re.sub(
-                r'\s+',
-                ' ',
-                match.group(1)
-            ).strip().upper()
-
-            return {
-                "value": value,
-                "confidence": 95,
-                "source": "case_identity_engine"
-            }
+    print("🔥 AUTHORITATIVE CASE NUMBER:")
+    print(extracted)
 
     return {
-        "value": "Unknown Case",
-        "confidence": 10,
+        "case_number": extracted_case_number,
+        "value": extracted_case_number,
+        "confidence": confidence,
         "source": "case_identity_engine"
     }
 
@@ -162,7 +147,7 @@ def build_canonical_case_object(full_text=""):
     case_number = extract_case_number(full_text)
 
     return {
-        "canonical_case_id": case_number.get("value"),
+        "canonical_case_id": case_number.get("case_number", "Unknown Case"),
         "case_number": case_number,
         "confidence": case_number.get("confidence", 0),
         "validation": {},

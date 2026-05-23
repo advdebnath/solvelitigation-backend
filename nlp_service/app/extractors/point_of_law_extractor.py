@@ -234,15 +234,113 @@ LEGAL_POINT_PATTERNS = {
     },
 
 
-    "Evidentiary Insufficiency": {
+
+    "Article 32 Remedy": {
         "patterns": [
-            "lack of evidence",
-            "evidence insufficient",
-            "material contradiction",
-            "improvements in testimony",
-            "prosecution failed to establish"
+            "article 32",
+            "writ petition under article 32",
+            "constitutional remedy",
+            "enforcement of fundamental rights"
+        ],
+        "category": "Constitutional"
+    },
+
+    "Fundamental Rights Enforcement": {
+        "patterns": [
+            "article 14",
+            "article 19",
+            "article 21",
+            "fundamental rights",
+            "constitutional protection"
+        ],
+        "category": "Constitutional"
+    },
+
+    "Natural Justice": {
+        "patterns": [
+            "natural justice",
+            "audi alteram partem",
+            "fair hearing",
+            "principles of natural justice",
+            "opportunity of hearing"
+        ],
+        "category": "Procedural"
+    },
+
+    "Judicial Review": {
+        "patterns": [
+            "judicial review",
+            "constitutional validity",
+            "ultra vires",
+            "arbitrary state action"
+        ],
+        "category": "Constitutional"
+    },
+
+    "Reinstatement In Service": {
+        "patterns": [
+            "reinstated in service",
+            "reinstatement",
+            "continuity of service",
+            "back wages",
+            "termination set aside"
+        ],
+        "category": "Service"
+    },
+
+    "Departmental Proceeding": {
+        "patterns": [
+            "departmental proceeding",
+            "disciplinary authority",
+            "charge memorandum",
+            "misconduct",
+            "service rules"
+        ],
+        "category": "Service"
+    },
+
+    "FIR Quashing": {
+        "patterns": [
+            "quashing of fir",
+            "section 482",
+            "criminal proceedings quashed",
+            "abuse of process of law",
+            "charge sheet quashed"
         ],
         "category": "Criminal"
+    },
+
+    "NDPS Recovery": {
+        "patterns": [
+            "ndps act",
+            "contraband",
+            "ganja",
+            "heroin",
+            "psychotropic substances",
+            "commercial quantity"
+        ],
+        "category": "Criminal"
+    },
+
+    "GST Input Tax Credit": {
+        "patterns": [
+            "input tax credit",
+            "itc",
+            "gst",
+            "fake invoices",
+            "tax credit"
+        ],
+        "category": "Taxation"
+    },
+
+    "Reassessment": {
+        "patterns": [
+            "escaped assessment",
+            "reassessment",
+            "reopening of assessment",
+            "income escaped assessment"
+        ],
+        "category": "Taxation"
     },
 
 }
@@ -767,6 +865,53 @@ def extract_points_of_law(
             )
 
             if evidence_hits < 2:
+                semantic_reject = True
+
+
+        # -----------------------------------------------------
+        # 🔥 SERVICE LAW FALSE POSITIVE FIREWALL
+        # -----------------------------------------------------
+
+        if normalized == "Departmental Proceeding":
+
+            service_evidence = [
+                "departmental proceeding",
+                "disciplinary authority",
+                "departmental enquiry",
+                "service rules",
+                "conduct rules",
+                "suspension",
+                "dismissal from service",
+                "termination from service",
+                "enquiry officer",
+                "service jurisprudence"
+            ]
+
+            service_hits = sum(
+                1
+                for ev in service_evidence
+                if ev in text
+            )
+
+            criminal_conflict = any(
+                keyword in text
+                for keyword in [
+                    "ipc",
+                    "crpc",
+                    "murder",
+                    "accused",
+                    "conviction",
+                    "prosecution",
+                    "chargesheet",
+                    "charge sheet",
+                    "trial court"
+                ]
+            )
+
+            if (
+                service_hits < 2
+                or criminal_conflict
+            ):
                 semantic_reject = True
 
 

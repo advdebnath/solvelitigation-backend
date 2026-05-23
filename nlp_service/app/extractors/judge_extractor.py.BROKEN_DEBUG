@@ -179,8 +179,6 @@ def valid_name(name):
         "CASE NUMBER",
         "DIARY NO",
         "SLP",
-        "WPC",
-        "CRL",
         "WP(C)",
         "WPCRL",
         "NO.",
@@ -224,10 +222,7 @@ def valid_name(name):
             word.upper()
         )
 
-        if (
-            upper.strip() == word
-            or normalized_word in compact_upper
-        ):
+        if upper.strip() == word:
             return False
 
     # =============================================
@@ -405,6 +400,84 @@ def extract_names_from_text(full_text):
 
     judges = set()
 
+    # =====================================================
+    # 🔥 AUTHORITATIVE CORAM-FIRST EXTRACTION
+    # =====================================================
+
+    authoritative_patterns = [
+
+        r"CORAM\s*[:\-]?\s*(.+?)(?:For Appellant|For Petitioner|JUDGMENT|ORDER)",
+
+        r"HON'?BLE\s+MR\.?\s+JUSTICE\s+([A-Z][A-Za-z\.\s]{3,80})",
+
+        r"HON'?BLE\s+MS\.?\s+JUSTICE\s+([A-Z][A-Za-z\.\s]{3,80})",
+
+        r"HON'?BLE\s+MRS\.?\s+JUSTICE\s+([A-Z][A-Za-z\.\s]{3,80})"
+    ]
+
+    for pattern in authoritative_patterns:
+
+        try:
+
+            matches = re.findall(
+                pattern,
+                full_text,
+                flags=re.I | re.S
+            )
+
+        except Exception:
+            continue
+
+        for match in matches:
+
+            if isinstance(match, tuple):
+                match = " ".join(
+                    str(x).strip()
+                    for x in match
+                    if x
+                )
+
+            candidate = clean_judge_name(
+                str(match)
+            )
+
+            if not candidate:
+                continue
+
+            if not is_valid_judge_name(candidate):
+                continue
+
+            print("✅ AUTHORITATIVE JUDGE:")
+            print(candidate)
+
+            judges.add(candidate)
+
+
+    # =====================================================
+    # 🔥 RAW OCR SIGNATURE RECOVERY
+    # =====================================================
+
+    raw_signature_matches = re.findall(
+        r'([A-Za-z\.\s]{4,80})\s*,\s*J\.',
+        full_text,
+        flags=re.I
+    )
+
+    print("🔥 RAW SIGNATURE MATCHES:")
+    print(raw_signature_matches)
+
+    for sig in raw_signature_matches:
+
+        sig = clean_name(sig)
+
+        if len(sig.split()) >= 2:
+
+            print("✅ RAW OCR JUDGE:")
+            print(sig)
+
+            judges.add(sig.title())
+
+
     patterns = [
 
         # =============================================
@@ -446,6 +519,26 @@ def extract_names_from_text(full_text):
         r"([A-Z][A-Za-z\.\s]{3,80}),\s*J\.",
 
         # =============================================
+        # 🔥 OCR DAMAGED SIGNATURE RECOVERY
+        # =============================================
+
+        r"([A-Z][a-z]+(?:\s+[A-Z][a-z]+){0,3})\s*,\s*[Jj]\.?",
+
+
+        r"([A-Za-z][A-Za-z\.\s]{3,80})\s*,\s*[Jj]\.?",
+
+        r"([A-Z]\.\s*[A-Z][a-z]+(?:\s+[A-Z][a-z]+){0,3})\s*,\s*[Jj]\.?",
+
+        # =============================================
+        # 🔥 SIGNATURE STYLE JUDGE PATTERNS
+        # =============================================
+
+        r"\b([A-Z]\.\s*[A-Z][A-Za-z\.\s]{2,80})\s*,\s*J\.?\b",
+
+        r"\b([A-Z][A-Za-z\.\s]{3,80})\s*,\s*J\.?\b",
+
+
+        # =============================================
         # CORAM BLOCK
         # =============================================
 
@@ -478,7 +571,7 @@ def extract_names_from_text(full_text):
                 match = " ".join(match)
 
             parts = re.split(
-                  r"\\n|,|AND|&",
+                  r"\\n|AND|&",
                 str(match)
             )
 
@@ -486,10 +579,17 @@ def extract_names_from_text(full_text):
 
                 name = clean_name(part)
 
+
+
                 candidate_clean = name.strip()
 
                 # =====================================
                 # INVALID TERM FILTER
+
+                print("\n🧪 RAW PART:", repr(part))
+                print("🧪 CLEANED NAME:", repr(name))
+                print("🧪 CANDIDATE:", repr(candidate_clean))
+
                 # =====================================
 
                 if candidate_clean.upper() in [
@@ -614,6 +714,67 @@ def extract_names_from_text(full_text):
                     ):
                         continue
 
+                    # ============================================
+                    # 🚫 OCR / SEMANTIC NOISE REJECTION
+                    # ============================================
+
+                    BAD_JUDGE_WORDS = {
+
+                        "Demand",
+                        "That",
+                        "Section",
+                        "Court",
+                        "India",
+                        "Order",
+                        "Judgment",
+                        "Petitioner",
+                        "Respondent",
+                        "Appellant",
+                        "Appeal",
+                        "Civil",
+                        "Criminal",
+                        "Versus",
+                        "Vs",
+                        "Record",
+                        "Proceedings",
+                        "Case"
+                    }
+
+                    if any(
+                        token.title() in BAD_JUDGE_WORDS
+                        for token in tokens
+                    ):
+                        continue
+
+                    # ============================================
+                    # 🚫 TRAILING OCR CONTEXT CLEANUP
+                    # ============================================
+
+                    TRAILING_NOISE = {
+
+                        "Former",
+                        "Present",
+                        "Since",
+                        "Advocate",
+                        "Senior",
+                        "Counsel",
+                        "Justice",
+                        "Court"
+                    }
+
+                    cleaned_tokens = [
+                        token
+                        for token in tokens
+                        if token.title() not in TRAILING_NOISE
+                    ]
+
+                    if len(cleaned_tokens) < 2:
+                        continue
+
+                    candidate_clean = " ".join(
+                        cleaned_tokens
+                    )
+
                     advocate_context = [
                         "learned counsel",
                         "appearing on behalf",
@@ -626,18 +787,12 @@ def extract_names_from_text(full_text):
 
                     reject_candidate = False
 
-                    if candidate_clean.lower() in nearby_window:
+                    # ============================================
+                    # 🔥 RELAXED ADVOCATE FIREWALL
+                    # ============================================
 
-                        for ctx in advocate_context:
+                    reject_candidate = False
 
-                            if ctx in nearby_window:
-
-                                if candidate_clean.startswith("V.") or candidate_clean.startswith("M."):
-
-                                    reject_candidate = True
-
-                    if reject_candidate:
-                        continue
 
 
 
@@ -668,20 +823,6 @@ def extract_judges(pdf_path):
 
         fitz.TOOLS.mupdf_display_errors(False)
 
-        if (
-            not isinstance(pdf_path, str)
-            or "\n" in pdf_path
-            or len(pdf_path) > 300
-        ):
-
-            print(
-                "⚠️ INVALID PDF PATH RECEIVED IN JUDGE EXTRACTOR"
-            )
-
-            print(str(pdf_path)[:500])
-
-            return []
-
         doc = fitz.open(pdf_path)
 
         collected = []
@@ -708,6 +849,14 @@ def extract_judges(pdf_path):
             page = doc.load_page(i)
 
             text = page.get_text()
+
+            ocr_text = ocr_page(page)
+
+            if ocr_text and len(ocr_text) > len(text):
+                text = ocr_text
+
+
+
 
             # ================================================
             # 🔥 EARLY JUDGE HEADER EXTRACTION
@@ -1068,6 +1217,18 @@ def extract_judges(pdf_path):
             page = doc.load_page(i)
 
             text = page.get_text()
+
+            ocr_text = ocr_page(page)
+
+            if ocr_text and len(ocr_text) > len(text):
+                text = ocr_text
+
+
+            ocr_text = ocr_page(page)
+
+            if ocr_text and len(ocr_text) > len(text):
+                text = ocr_text
+
 
             # ================================================
             # 🔥 EARLY JUDGE HEADER EXTRACTION
