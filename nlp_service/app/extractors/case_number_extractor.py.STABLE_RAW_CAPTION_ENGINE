@@ -5,8 +5,6 @@ from app.utils.legal_header_normalizer import (
 
 import re
 
-from app.extractors.caption_preservation import preserve_raw_caption
-
 # =========================================================
 # ð¥ CASE NUMBER PATTERNS
 # =========================================================
@@ -46,9 +44,7 @@ SUPREME_COURT_CASE_PATTERNS = [
     # REVIEW / CURATIVE / TRANSFER
     # -----------------------------------------------------
 
-    r"(REVIEW\s+PETITION\s*\((?:CRL\.?|CIVIL|CRIMINAL|C)\)\s*NO(?:S|\.\(S\)|\(S\)|S\.)?\.?\s*(?:[\dA-Z\-\/ ,.&()]+)?\s*OF\s+\d{4})",
-
-    r"(REVIEW\s+PETITION.*?DIARY\s+NO\.?\s*\d+\s*OF\s*\d{4})",
+    r"(REVIEW\s+PETITION\s*\((?:CRL\.?|CIVIL|CRIMINAL|C)\)\s*NOS?\.?\s*[\dA-Z\-\/ ,.&()]+?\s+OF\s+\d{4})",
 
     r"(CURATIVE\s+PETITION\s*\((?:CRL\.?|CIVIL|CRIMINAL|C)\)\s*NOS?\.?\s*[\dA-Z\-\/ ,.&()]+?\s+OF\s+\d{4})",
 
@@ -810,20 +806,43 @@ def extract_case_number(
 
         header = text[:12000]
 
-        
-        preserved = preserve_raw_caption(header)
+        # =====================================================
+        # 🔥 RAW CAPTION PRESERVATION ENGINE
+        # =====================================================
 
-        if preserved:
+        raw_caption_match = re.search(
+            r'(Appeal\s*\((?:civil|criminal)\)\s*'
+            r'[\d\-\/]+\s*of\s*\d{4})',
+            header,
+            flags=re.I
+        )
+
+        if raw_caption_match:
+
+            preserved_caption = re.sub(
+                r'\s+',
+                ' ',
+                raw_caption_match.group(0)
+            ).strip().upper()
 
             print("🔥 PRESERVED RAW CAPTION:")
-            print(
-                preserved.get(
-                    "case_number"
-                )
-            )
+            print(preserved_caption)
 
-            return preserved
-
+            return {
+                "case_number": preserved_caption,
+                "canonical_case_number": preserved_caption,
+                "normalized_case_number": preserved_caption,
+                "case_type": (
+                    "CRIMINAL"
+                    if "CRIMINAL" in preserved_caption
+                    else "CIVIL"
+                ),
+                "court_type": "SUPREME COURT",
+                "jurisdiction": "INDIA",
+                "source": "RAW_CAPTION_ENGINE",
+                "confidence": 100,
+                "validation_passed": True
+            }
 
         normalized_header = normalize_legal_header(
             header
@@ -934,23 +953,6 @@ def extract_case_number(
 
         header = header[:12000]
 
-        # =====================================================
-        # 🔒 EARLY HEADER BODY CUT-OFF LOCK
-        # =====================================================
-
-        header = re.split(
-
-            r'(?:\bJUDGMENT\b|\bORDER\b|O\s*R\s*D\s*E\s*R|J\s*U\s*D\s*G\s*M\s*E\s*N\s*T)',
-
-            header,
-
-            maxsplit=1,
-
-            flags=re.I
-
-        )[0][:3500]
-
-
         # normalize_ocr temporarily bypassed
 
         print("\nð¥ SEMANTIC HEADER ISOLATION ð¥")
@@ -989,7 +991,7 @@ def extract_case_number(
 
         header = re.sub(
             r"(?i)(CRIMINAL|CIVIL|SPECIAL|WRIT|TRANSFER|REVIEW|COMPANY|TAX)\s*\s*(APPEAL|PETITION)",
-            r"\1 \2",
+            r" ",
             header
         )
 
@@ -999,7 +1001,7 @@ def extract_case_number(
 
         header = re.sub(
             r"(?i)(NO\.?|NOS\.?)\s*\s*(\d)",
-            r"\1 \2",
+            r" ",
             header
         )
         # ð¥ JOIN BROKEN OF YEAR LINES
@@ -1007,13 +1009,13 @@ def extract_case_number(
 
         header = re.sub(
             r"(?i)(\d)\s*\s*OF\s*\s*(\d{4})",
-            r"\1 OF \2",
+            r" ",
             header
         )
 
         header = re.sub(
             r"(?i)(\d)\s*\s*OF\s+(\d{4})",
-            r"\1 OF \2",
+            r" ",
             header
         )
 
@@ -1066,7 +1068,7 @@ def extract_case_number(
 
         header = re.sub(
             r"(PETITION|APPEAL|APPLICATION|CASE)\s*\s*(NO\.?|NOS\.?)",
-              r"\1 \2",
+            r" ",
             header,
             flags=re.I
         )
@@ -1706,15 +1708,6 @@ r"O\s*F\s+\d{4})",
             header
         )
 
-        search_text = re.sub(
-            r'\s+',
-            ' ',
-            header
-        ).strip()
-
-        print("🔥 EARLY SEARCH TEXT:")
-        print(search_text[:3000])
-
         candidate_results = []
 
         for pattern in CASE_PATTERNS:
@@ -2193,42 +2186,6 @@ r"O\s*F\s+\d{4})",
                 " ",
                 title_case
             ).strip()
-
-            invalid_caption_tokens = [
-
-                "DATE OF",
-
-                "DATE OF JUDGMENT",
-
-                "BENCH",
-
-                "JUDGMENT",
-
-                "RESPONDENT:",
-
-                "PETITIONER:"
-            ]
-
-            if any(
-
-                token in title_case.upper()
-
-                for token in invalid_caption_tokens
-            ):
-
-                print("❌ INVALID PARTY TITLE FALLBACK BLOCKED")
-                print(title_case)
-
-                return {
-                    "case_number": "Unknown Case",
-                    "canonical_case_number": "Unknown Case",
-                    "normalized_case_number": "Unknown Case",
-                    "case_type": None,
-                    "source": None,
-                    "court": None,
-                    "confidence": 0,
-                    "validation_passed": False
-                }
 
             print("🔥 AUTHORITATIVE PARTY TITLE FALLBACK:")
             print(title_case)

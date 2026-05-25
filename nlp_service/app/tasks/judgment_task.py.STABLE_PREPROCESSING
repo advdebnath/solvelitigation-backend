@@ -4,7 +4,6 @@ import fitz
 fitz.TOOLS.mupdf_display_errors(False)
 
 
-from app.core_intelligence.legal_context_builder import build_validated_legal_context
 from app.core_intelligence.headnote_jurisprudential_engine import (
     build_headnote_jurisprudence
 )
@@ -1224,48 +1223,6 @@ def process_judgment(ingestion_id):
             header_text
         )
 
-
-        authoritative_petitioner = parties.get(
-            "petitioner",
-            "Unknown"
-        )
-
-        authoritative_respondent = parties.get(
-            "respondent",
-            "Unknown"
-        )
-
-        invalid_party_tokens = [
-            "page",
-            "judis.nic.in",
-            "http",
-            "section",
-            "article",
-            "judgment",
-            "//",
-            ".....",
-            "petitioner(s)",
-            "respondent(s)"
-        ]
-
-        if any(
-            token in authoritative_petitioner.lower()
-            for token in invalid_party_tokens
-        ):
-            authoritative_petitioner = "Unknown"
-
-        if any(
-            token in authoritative_respondent.lower()
-            for token in invalid_party_tokens
-        ):
-            authoritative_respondent = "Unknown"
-
-        print("✅ AUTHORITATIVE PETITIONER:")
-        print(authoritative_petitioner)
-
-        print("✅ AUTHORITATIVE RESPONDENT:")
-        print(authoritative_respondent)
-
         print("\n🔥 RAW HEADER FOR JUDGE EXTRACTION:")
         print(raw_header_text[:3000])
 
@@ -1572,21 +1529,21 @@ def process_judgment(ingestion_id):
         if isinstance(ratio_data, list):
 
             ratio_data = {
-              "ratio": " ".join([str(x) for x in ratio_data]),
+                "ratio": " ".join([str(x) for x in ratio_data]),
                 "confidence": 70
             }
 
         elif ratio_data is None:
 
             ratio_data = {
-              "ratio": "",
+                "ratio": "",
                 "confidence": 0
             }
 
         elif not isinstance(ratio_data, dict):
 
             ratio_data = {
-              "ratio": str(ratio_data),
+                "ratio": str(ratio_data),
                 "confidence": 50
             }
 
@@ -2018,7 +1975,7 @@ def process_judgment(ingestion_id):
                     signal,
                     normalized_detection_text,
                     flags=re.I
-              ):
+                ):
 
                     judgment_signal_count += 1
 
@@ -3808,7 +3765,7 @@ def process_judgment(ingestion_id):
                 if (
                     constitutional_success_probability >= 0.7
                     and litigation_risk_score < 0.4
-              ):
+                ):
 
                     predicted_outcome = (
                         "LIKELY_ALLOWED"
@@ -4839,7 +4796,7 @@ def process_judgment(ingestion_id):
                 if re.match(
                     r"^[a-z]\.\s+(on|to|of|in|at|by|for|with|from)$",
                     judge_name.lower()
-              ):
+                ):
                     continue
 
                 cleaned_judges.append(
@@ -4910,7 +4867,7 @@ def process_judgment(ingestion_id):
                 if re.match(
                     r"^[a-z]\.\s+(on|to|of|in|at|by|for|with|from)$",
                     judge_name.lower()
-              ):
+                ):
                     continue
 
                 cleaned_judges.append(
@@ -5019,8 +4976,8 @@ def process_judgment(ingestion_id):
         if not isinstance(parties, dict):
 
             parties = {
-              "petitioner": "Unknown",
-              "respondent": "Unknown",
+                "petitioner": "Unknown",
+                "respondent": "Unknown",
                 "confidence": 0
             }
 
@@ -5106,7 +5063,7 @@ def process_judgment(ingestion_id):
         if not isinstance(ratio_data, dict):
 
             ratio_data = {
-              "ratio": "",
+                "ratio": "",
                 "para": "",
                 "confidence": 0
             }
@@ -5435,22 +5392,22 @@ def process_judgment(ingestion_id):
                     "UNKNOWN"
                 ),
 
-              "petitioner": locals().get(
+                "petitioner": locals().get(
                     "petitioner",
                     ""
                 ),
 
-              "respondent": locals().get(
+                "respondent": locals().get(
                     "respondent",
                     ""
                 ),
 
-              "issue": locals().get(
+                "issue": locals().get(
                     "dominant_doctrine",
                     "UNKNOWN"
                 ),
 
-              "judge": (
+                "judge": (
                     locals().get(
                         "judges",
                         ["UNKNOWN"]
@@ -6123,7 +6080,7 @@ def process_judgment(ingestion_id):
                 for point in headnote_jurisprudence.get(
                     "primary",
                     []
-              ):
+                ):
 
                     if isinstance(point, dict):
 
@@ -6189,9 +6146,9 @@ def process_judgment(ingestion_id):
 
                 deduped_points.append(item)
 
-                authoritative_points_of_law = (
-                    deduped_points
-                )
+            authoritative_points_of_law = (
+                deduped_points
+            )
 
         except Exception as e:
 
@@ -6423,13 +6380,6 @@ def process_judgment(ingestion_id):
 
             "validation":
                 validation,
-
-            # =====================================================
-            # 🔥 AUTHORITATIVE LEGAL CONTEXT
-            # =====================================================
-
-            "validatedLegalContext":
-                validated_legal_context,
 
             "overallConfidence":
                 validation.get(

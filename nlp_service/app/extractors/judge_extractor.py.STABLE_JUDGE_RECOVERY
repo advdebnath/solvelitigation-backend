@@ -718,22 +718,6 @@ def extract_names_from_text(full_text):
 
                 candidate_clean = name.strip()
 
-                # -----------------------------------------
-                # 🔥 SAFE JUDICIAL INITIAL NORMALIZATION
-                # -----------------------------------------
-
-                candidate_clean = re.sub(
-                    r"\b([A-Z])\.([A-Z])\.([A-Z][a-z]+)",
-                    r"\1.\2. \3",
-                    candidate_clean
-                )
-
-                candidate_clean = re.sub(
-                    r"\b([A-Z])\.([A-Z][a-z]+)",
-                    r"\1. \2",
-                    candidate_clean
-                )
-
                 candidate_clean = re.sub(
                     r"\b([A-Z])\.([A-Z])\.([A-Z][a-z]+)",
                     r"\1.\2. \3",
@@ -1488,21 +1472,6 @@ def extract_judges(pdf_path):
 
             lower_candidate = candidate.lower()
 
-            # -------------------------------------------------
-            # 🔥 BENCH FAST-PATH PRESERVATION ENGINE
-            # -------------------------------------------------
-
-            if re.fullmatch(
-                r"[A-Za-z\.\s]+",
-                candidate
-            ) and (
-                "." in candidate
-                or len(candidate.split()) >= 2
-            ):
-
-                validated_judges.append(candidate.strip())
-                continue
-
             rejection_terms = [
 
                 "offence",
@@ -1565,6 +1534,12 @@ def extract_judges(pdf_path):
                 lambda m: f"{m.group(1).upper()}.{m.group(2).upper()}. {m.group(3).title()}",
                 candidate,
                 flags=re.I
+            )
+
+            candidate = re.sub(
+                r"\b([a-z]+)\s+([a-z]+)\b",
+                lambda m: f"{m.group(1).title()} {m.group(2).title()}",
+                candidate
             )
 
             candidate = re.sub(
@@ -1702,9 +1677,6 @@ def extract_judges(pdf_path):
             canonical_judges.add(j)
 
         judges = list(canonical_judges)
-
-        print("🔥 FINAL VALIDATED JUDGES:")
-        print(judges)
 
 
         judges = sorted(list(set(judges)))

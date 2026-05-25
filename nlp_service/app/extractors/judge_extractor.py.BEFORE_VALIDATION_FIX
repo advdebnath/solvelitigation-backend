@@ -1703,9 +1703,6 @@ def extract_judges(pdf_path):
 
         judges = list(canonical_judges)
 
-        print("🔥 FINAL VALIDATED JUDGES:")
-        print(judges)
-
 
         judges = sorted(list(set(judges)))
 
