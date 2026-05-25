@@ -129,7 +129,28 @@ DISPOSITION_PATTERNS = {
         r"\bjudgment\s+calls\s+for\s+no\s+interference\b",
 
         r"\bappeal\s+fails\s+and\s+is\s+dismissed\b",
+
         r"\bfindings\s+of\s+the\s+courts\s+below\b",
+
+        # ====================================================
+        # 🔥 ADVANCED SUPREME COURT DISMISSAL SEMANTICS
+        # ====================================================
+
+        r"\bdoes\s+not\s+warrant\s+interference\b",
+
+        r"\bfindings\s+do\s+not\s+call\s+for\s+interference\b",
+
+        r"\bwe\s+find\s+no\s+merit\s+in\s+the\s+appeal\b",
+
+        r"\bappeal\s+is\s+without\s+merit\b",
+
+        r"\bthe\s+appeal\s+deserves\s+to\s+be\s+dismissed\b",
+
+        r"\bwe\s+do\s+not\s+find\s+any\s+ground\s+to\s+interfere\b",
+
+        r"\bno\s+interference\s+is\s+called\s+for\b",
+
+        r"\bjudgment\s+does\s+not\s+suffer\s+from\s+any\s+infirmity\b",
     ],
 
     "Conviction Upheld": [
@@ -213,7 +234,31 @@ def normalize_text(text):
 
 def build_paragraphs(text):
 
+    # ====================================================
+    # 🔥 PRIMARY PARAGRAPH SPLIT
+    # ====================================================
+
     paras = re.split(r"\n\s*\n", text)
+
+    # ====================================================
+    # 🔥 OCR COLLAPSE RECOVERY
+    # ====================================================
+
+    if len(paras) <= 3:
+
+        paras = re.split(
+
+            r'(?<=[\.!?])\s+(?='
+            r'(?:we|therefore|thus|hence|accordingly|'
+            r'in view of|for the foregoing|appeal|petition|'
+            r'the appeal|the petition|ordered accordingly|'
+            r'consequently|resultantly|henceforth)'
+            r')',
+
+            text,
+
+            flags=re.I
+        )
 
     cleaned = []
 
@@ -225,8 +270,85 @@ def build_paragraphs(text):
 
             cleaned.append(para)
 
-    return cleaned
+    # ====================================================
+    # 🔥 FALLBACK SENTENCE WINDOWS
+    # ====================================================
 
+    if len(cleaned) <= 2:
+
+        sentences = re.split(
+            r'(?<=[\.!?])\s+',
+            text
+        )
+
+        window = []
+
+        rebuilt = []
+
+        for sent in sentences:
+
+            sent = normalize_text(sent)
+
+            if not sent:
+                continue
+
+            window.append(sent)
+
+            if len(window) >= 4:
+
+                rebuilt.append(
+                    " ".join(window)
+                )
+
+                window = []
+
+        if rebuilt:
+
+            cleaned = rebuilt
+
+
+    # ====================================================
+    # 🔥 HARD FALLBACK PARAGRAPH GUARANTEE
+    # ====================================================
+
+    if not cleaned:
+
+        emergency_sentences = re.split(
+            r'(?<=[\.\!\?])\s+',
+            text
+        )
+
+        emergency_sentences = [
+
+            normalize_text(x)
+
+            for x in emergency_sentences
+
+            if normalize_text(x)
+        ]
+
+        if emergency_sentences:
+
+            cleaned = [
+
+                " ".join(
+                    emergency_sentences[i:i+5]
+                )
+
+                for i in range(
+                    0,
+                    len(emergency_sentences),
+                    5
+                )
+            ]
+
+        print("🔥 EMERGENCY PARAGRAPH FALLBACK ACTIVATED")
+
+        print(len(cleaned))
+
+
+
+    return cleaned
 
 # ============================================================
 # 🔥 WINNING PARTY INFERENCE
@@ -254,6 +376,8 @@ def infer_winning_party(disposition):
 # ============================================================
 # 🔥 MAIN EXTRACTION ENGINE
 # ============================================================
+
+print("🔥🔥🔥 OPERATIVE ENGINE VERSION: MAY24_RUNTIME_SYNC_V1 🔥🔥🔥")
 
 def extract_operative_order(
 
@@ -292,9 +416,21 @@ def extract_operative_order(
 
             paragraphs = semantic_paragraphs
 
+            print("🔥 USING SEMANTIC PARAGRAPHS")
+
+            print("🔥 SEMANTIC PARAGRAPH COUNT:")
+
+            print(len(paragraphs))
+
         else:
 
             paragraphs = build_paragraphs(full_text)
+
+            print("🔥 USING REBUILT PARAGRAPHS")
+
+            print("🔥 REBUILT PARAGRAPH COUNT:")
+
+            print(len(paragraphs))
 
         # ====================================================
         # 🔥 ENDING TEXT PRIORITY
@@ -519,6 +655,62 @@ def extract_operative_order(
 
                     paragraph_score += 10
 
+
+            # --------------------------------------------
+            # 🔥 DISPOSITION SEMANTIC NORMALIZATION
+            # --------------------------------------------
+
+            para_lower = re.sub(
+                r"\bstand\s+dismissed\b",
+                "stands dismissed",
+                para_lower
+            )
+
+            para_lower = re.sub(
+                r"\bappeal\s+dismissed\b",
+                "appeal is dismissed",
+                para_lower
+            )
+
+            para_lower = re.sub(
+                r"\bpetition\s+dismissed\b",
+                "petition is dismissed",
+                para_lower
+            )
+
+            para_lower = re.sub(
+                r"\bstand\s+allowed\b",
+                "stands allowed",
+                para_lower
+            )
+
+            para_lower = re.sub(
+                r"\bappeal\s+allowed\b",
+                "appeal is allowed",
+                para_lower
+            )
+
+            para_lower = re.sub(
+                r"\bpetition\s+allowed\b",
+                "petition is allowed",
+                para_lower
+            )
+
+            para_lower = re.sub(
+                r"\bno\s+interference\s+called\s+for\b",
+                "no interference is called for",
+                para_lower
+            )
+
+            para_lower = re.sub(
+                r"\bdeserve\s+dismissal\b",
+                "deserves to be dismissed",
+                para_lower
+            )
+
+
+
+
             # --------------------------------------------
             # PATTERN MATCHING
             # --------------------------------------------
@@ -564,7 +756,32 @@ def extract_operative_order(
                         # TAIL TEXT BONUS
                         # --------------------------------
 
-                        if para_lower in tail_text.lower():
+                        tail_window = tail_text.lower()
+
+                        normalized_para = re.sub(
+                            r"\s+",
+                            " ",
+                            para_lower
+                        ).strip()
+
+                        normalized_tail = re.sub(
+                            r"\s+",
+                            " ",
+                            tail_window
+                        )
+
+                        if (
+
+                            normalized_para[:250] in normalized_tail
+
+                            or
+
+                            any(
+                                phrase in normalized_tail
+                                for phrase in normalized_para.split(".")[:3]
+                                if len(phrase.strip()) > 25
+                            )
+                        ):
 
                             score += 30
 
@@ -875,6 +1092,12 @@ def extract_operative_order(
 
                     for indicator in history_indicators
                 ):
+
+                    print(
+                        "❌ OPERATIVE CANDIDATE SUPPRESSED:"
+                    )
+
+                    print(candidate_text[:800])
 
                     continue
 

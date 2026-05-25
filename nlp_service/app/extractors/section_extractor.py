@@ -416,7 +416,22 @@ def extract_sections(
 
     lower_text = text.lower()
 
-    if not extracted:
+    low_confidence_extraction = (
+
+        len(extracted) == 0
+
+        or
+
+        max(
+            [
+                x.get("context_score", 0)
+                for x in extracted
+            ],
+            default=0
+        ) < 30
+    )
+
+    if low_confidence_extraction:
 
         # -------------------------------------------------
         # 🔥 CrPC CONTEXT

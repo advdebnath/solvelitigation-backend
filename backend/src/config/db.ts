@@ -1,28 +1,15 @@
 import mongoose from "mongoose";
 
-let isConnecting: Promise<typeof mongoose> | null = null;
+export const connectDB = async () => {
+  try {
+    await mongoose.connect(process.env.MONGO_URI as string, {
+      autoIndex: false,   // 🔥 THIS IS THE REAL FIX
+    });
 
-export async function connectDB() {
-  const uri = process.env.MONGODB_URI;
+    console.log("✅ Connected to MongoDB");
 
-  if (!uri) {
-    throw new Error("❌ MONGODB_URI missing");
+  } catch (err) {
+    console.error("❌ MongoDB Error:", err);
+    process.exit(1);
   }
-
-  if (mongoose.connection.readyState === 1) {
-    return mongoose.connection;
-  }
-
-  if (isConnecting) {
-    return isConnecting;
-  }
-
-  console.log("⏳ Connecting to MongoDB...");
-  isConnecting = mongoose.connect(uri);
-
-  await isConnecting;
-
-  console.log("✅ Connected to MongoDB");
-
-  return mongoose.connection;
-}
+};

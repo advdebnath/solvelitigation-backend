@@ -56,7 +56,28 @@ def validate_acts(acts, full_text):
 
     validated = []
 
+    CRIMINAL_CORE_ACTS = {
+        "Indian Penal Code, 1860",
+        "Code Of Criminal Procedure, 1973",
+        "Narcotic Drugs And Psychotropic Substances Act, 1985",
+        "Indian Evidence Act, 1872"
+    }
+
     for act in acts:
+
+        # =========================================
+        # 🔥 CRIMINAL CORE OVERRIDE
+        # =========================================
+
+        if act in CRIMINAL_CORE_ACTS:
+
+            validated.append(act)
+
+            continue
+
+        # =========================================
+        # 🔥 OCR-TOLERANT VALIDATION
+        # =========================================
 
         if locally_supported(act, full_text):
 

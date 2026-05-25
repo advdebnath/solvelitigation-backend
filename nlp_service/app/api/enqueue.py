@@ -37,7 +37,7 @@ async def enqueue_task(req: IngestionRequest):
         # =========================================
         task = process_judgment.apply_async(
             args=[ingestion_id],
-            queue="nlp",         # must match worker queue
+            queue="celery",         # must match worker queue
             retry=False          # prevent duplicate enqueue issues
         )
 

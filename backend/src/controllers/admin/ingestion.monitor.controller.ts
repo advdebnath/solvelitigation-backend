@@ -1,8 +1,12 @@
 import { Request, Response } from "express";
 import JudgmentIngestion from "../../models/JudgmentIngestion";
 
+// ============================================
+// 🔥 GET FAILED INGESTIONS
+// ============================================
+
 export const getFailedIngestions = async (
-  req: Request,
+  _req: Request,
   res: Response
 ) => {
   try {
@@ -23,10 +27,14 @@ export const getFailedIngestions = async (
     });
 
   } catch (err) {
-    console.error("Failed ingestion fetch error:", err);
+    console.error("❌ Failed ingestion fetch error:", err);
     res.status(500).json({ success: false });
   }
 };
+
+// ============================================
+// 🔥 RETRY FAILED INGESTION (FIXED)
+// ============================================
 
 export const retryFailedIngestion = async (
   req: Request,
@@ -48,25 +56,38 @@ export const retryFailedIngestion = async (
       });
     }
 
-    ingestion.status = "PENDING";
-    ingestion.retryCount = 0;
+    // 🔥 CLEAN RESET (PERMANENT FIX)
+    ingestion.status = "QUEUED";
+    ingestion.progress = 0;
+    ingestion.stage = "QUEUED";
+
     ingestion.error = undefined;
+    ingestion.lastErrorAt = undefined;
+
+    ingestion.retryCount = 0;
+    ingestion.isLocked = false;
+
+    ingestion.queuedAt = new Date();
 
     await ingestion.save();
 
     res.json({
       success: true,
-      message: "Ingestion moved to PENDING",
+      message: "Ingestion requeued successfully",
     });
 
   } catch (err) {
-    console.error("Retry error:", err);
+    console.error("❌ Retry error:", err);
     res.status(500).json({ success: false });
   }
 };
 
+// ============================================
+// 🔥 GET INGESTION STATS (UPDATED)
+// ============================================
+
 export const getIngestionStats = async (
-  req: Request,
+  _req: Request,
   res: Response
 ) => {
   try {
@@ -79,9 +100,10 @@ export const getIngestionStats = async (
       },
     ]);
 
+    // 🔥 UPDATED STATUS STRUCTURE
     const result: any = {
       UPLOADED: 0,
-      PENDING: 0,
+      QUEUED: 0,
       PROCESSING: 0,
       COMPLETED: 0,
       FAILED: 0,
@@ -90,7 +112,9 @@ export const getIngestionStats = async (
     };
 
     for (const item of stats) {
-      result[item._id] = item.count;
+      if (result[item._id] !== undefined) {
+        result[item._id] = item.count;
+      }
       result.TOTAL += item.count;
     }
 
@@ -100,7 +124,7 @@ export const getIngestionStats = async (
     });
 
   } catch (err) {
-    console.error("Ingestion stats error:", err);
+    console.error("❌ Ingestion stats error:", err);
     res.status(500).json({ success: false });
   }
 };

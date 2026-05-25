@@ -1,15 +1,120 @@
 import mongoose, { Schema, Types } from "mongoose";
 
 export interface IJudgment {
-  ingestionId?: Types.ObjectId; // optional for legacy records
+  ingestionId?: Types.ObjectId;
+
+  caseNumber?: string;
+  slscCitation?: string;
+
+  judgmentDate?: Date;
+
+  category: string;
+  subCategory?: string;
+
+  acts?: string[];
+  sections?: string[];
+  sectionActMap?: Record<string, string>;
+
+  pointOfLaw?: string[];
+
+  // 🔥 NEW STRUCTURED HEADNOTES
+  headnotes?: {
+    topic: string;
+    issue: string;
+    rule: string;
+    application: string;
+    conclusion: string;
+    para?: string;
+  }[];
+
+  headnote?: string; // keep for backward compatibility
+
+  // 🔥 PARTIES (IMPORTANT)
+  parties?: {
+    petitioner?: string;
+    respondent?: string;
+  };
+
+  fullText: string;
+  embedding?: number[];
 
   summary?: string;
-  category?: string;
-  subCategory?: string;
-  pointsOfLaw?: string[];
+
+  // ============================================
+  // 🔥 SEMANTIC INTELLIGENCE
+  // ============================================
+
+  semanticIssues?: string[];
+
+  dominantIssue?: string;
+
+  finalHolding?: string;
+
+  ratio?: {
+    text?: string;
+    confidence?: number;
+  };
+
+  semanticConfidence?: number;
+
+  semanticRisk?: "LOW" | "MODERATE" | "HIGH" | "CRITICAL";
+
+  qualityFlags?: string[];
+
+  reviewRecommended?: boolean;
+
   confidence?: number;
 
-createdBy?: Types.ObjectId;
+  // ============================================
+  // 🔥 DOCUMENT QUALITY
+  // ============================================
+
+  documentQuality?: string;
+
+  reviewStatus?: string;
+
+  reviewedBy?: Types.ObjectId;
+
+  reviewedAt?: Date;
+
+  // ============================================
+  // 🔥 PUBLICATION CONTROL
+  // ============================================
+
+  isPublished?: boolean;
+
+  publishedAt?: Date;
+
+
+    // ============================================
+  // 🔥 ONTOLOGY SIGNALS
+  // ============================================
+
+  ontologySignals?: string[];
+
+  ontologyConfidence?: number;
+
+  // ============================================
+  // 🔥 REVIEWER CORRECTIONS
+  // ============================================
+
+  reviewerCorrections?: {
+    field?: string;
+    oldValue?: any;
+    newValue?: any;
+    correctedBy?: Types.ObjectId;
+    correctedAt?: Date;
+  }[];
+
+  // 🔥 SLSC / PAGINATION
+  startPage?: number;
+  endPage?: number;
+  pageCount?: number;
+
+  // 🔥 NLP STATUS
+  nlpStatus?: string;
+
+  createdBy?: Types.ObjectId;
 
   createdAt: Date;
   updatedAt: Date;
@@ -20,27 +125,139 @@ const JudgmentSchema = new Schema<IJudgment>(
     ingestionId: {
       type: Schema.Types.ObjectId,
       ref: "JudgmentIngestion",
-      required: false, // ⚠️ legacy-safe
     },
 
-    summary: {
-      type: String,
-      trim: true,
+    caseNumber: String,
+
+    slscCitation: String,
+
+    judgmentDate: {
+      type: Date,
+      index: true,
     },
 
     category: {
       type: String,
+      required: true,
       index: true,
     },
 
-    subCategory: {
-      type: String,
+    subCategory: String,
+
+    // ============================================
+    // LEGAL STRUCTURE
+    // ============================================
+
+    acts: {
+      type: [String],
+      default: [],
+      index: true,
     },
 
-    pointsOfLaw: {
+    sections: {
+      type: [String],
+      default: [],
+      index: true,
+    },
+
+    sectionActMap: {
+      type: Map,
+      of: String,
+      default: {},
+    },
+
+    pointOfLaw: {
       type: [String],
       default: [],
     },
+
+    // 🔥 STRUCTURED HEADNOTES
+    headnotes: [
+      {
+        topic: String,
+        issue: String,
+        rule: String,
+        application: String,
+        conclusion: String,
+        para: String,
+      },
+    ],
+
+    headnote: {
+      type: String,
+      trim: true,
+    },
+
+    // 🔥 PARTIES
+    parties: {
+      petitioner: String,
+      respondent: String,
+    },
+
+    // ============================================
+    // CORE TEXT
+    // ============================================
+
+    fullText: {
+      type: String,
+      required: true,
+    },
+
+    embedding: {
+      type: [Number],
+      default: [],
+    },
+
+    // ============================================
+    // ANALYTICS
+    // ============================================
+
+    summary: String,
+
+    // ============================================
+    // 🔥 SEMANTIC INTELLIGENCE
+    // ============================================
+
+    semanticIssues: {
+      type: [String],
+      default: [],
+    },
+
+    dominantIssue: {
+      type: String,
+      index: true,
+    },
+
+    finalHolding: {
+      type: String,
+    },
+
+    ratio: {
+      text: String,
+      confidence: Number,
+    },
+
+    semanticConfidence: {
+      type: Number,
+      default: 0,
+    },
+
+    semanticRisk: {
+      type: String,
+      enum: ["LOW", "MODERATE", "HIGH", "CRITICAL"],
+      default: "MODERATE",
+    },
+
+    qualityFlags: {
+      type: [String],
+      default: [],
+    },
+
+    reviewRecommended: {
+      type: Boolean,
+      default: false,
+    },
+
 
     confidence: {
       type: Number,
@@ -48,11 +265,26 @@ const JudgmentSchema = new Schema<IJudgment>(
       max: 1,
     },
 
+    // ============================================
+    // SLSC PAGINATION
+    // ============================================
+
+    startPage: Number,
+    endPage: Number,
+    pageCount: Number,
+
+    // ============================================
+    // NLP STATUS
+    // ============================================
+
+    nlpStatus: {
+      type: String,
+      index: true,
+    },
+
     createdBy: {
       type: Schema.Types.ObjectId,
       ref: "User",
-      required: false,
-      index: true,
     },
   },
   {
@@ -60,16 +292,64 @@ const JudgmentSchema = new Schema<IJudgment>(
   }
 );
 
-/**
- * ✅ ONE judgment per ingestion
- * ✅ sparse allows old records without ingestionId
- */
+// ============================================
+// 🔥 INDEXES (CLEAN)
+// ============================================
+
+// Unique ingestion
 JudgmentSchema.index(
   { ingestionId: 1 },
   { unique: true, sparse: true }
 );
 
-// ✅ SAFE MODEL DEFINITION (prevents OverwriteModelError)
+// TEXT SEARCH
+JudgmentSchema.index(
+  {
+    pointOfLaw: "text",
+    headnote: "text",
+    caseNumber: "text",
+    fullText: "text",
+  },
+  {
+    weights: {
+      pointOfLaw: 5,
+      headnote: 4,
+      caseNumber: 2,
+      fullText: 1,
+    },
+    name: "legal_text_index",
+  }
+);
+
+// Explorer
+JudgmentSchema.index({ category: 1, acts: 1, pointOfLaw: 1 });
+
+// ============================================
+// 🔥 SEMANTIC INDEXES
+// ============================================
+
+
+JudgmentSchema.index({ semanticIssues: 1 });
+
+JudgmentSchema.index({
+  dominantIssue: "text",
+  semanticIssues: "text",
+});
+
+
+// Citation lookup
+JudgmentSchema.index({ caseNumber: 1, slscCitation: 1 });
+
+// Unique SLSC
+JudgmentSchema.index(
+  { slscCitation: 1 },
+  { unique: true, sparse: true }
+);
+
+// ============================================
+// SAFE EXPORT
+// ============================================
+
 const Judgment =
   mongoose.models.Judgment ||
   mongoose.model<IJudgment>("Judgment", JudgmentSchema);

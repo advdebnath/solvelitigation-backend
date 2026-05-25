@@ -23,8 +23,8 @@
 
 import re
 
-from app.extractors.case_number_extractor import (
-    extract_case_number as authoritative_extract_case_number
+from app.extractors.case_number_bridge import (
+    extract_case_number_bridge as authoritative_extract_case_number
 )
 
 
@@ -117,6 +117,9 @@ def extract_case_number(text):
     extracted = authoritative_extract_case_number(
         text
     )
+
+    print("🔥 RAW AUTHORITATIVE EXTRACTOR OUTPUT 🔥")
+    print(extracted)
 
     extracted_case_number = extracted.get(
         "case_number",

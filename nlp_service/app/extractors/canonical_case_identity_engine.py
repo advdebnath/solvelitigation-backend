@@ -1,6 +1,6 @@
 import re
 
-from app.extractors.case_number_extractor import (
+from app.extractors.case_number_bridge import (
     extract_case_number
 )
 

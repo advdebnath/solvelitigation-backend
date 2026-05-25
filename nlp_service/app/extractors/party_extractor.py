@@ -410,6 +410,43 @@ def extract_parties(text):
         # 🔥 FINAL SAFETY
         # =====================================================
 
+
+        # =====================================================
+        # 🔒 INVALID PARTY DEFENSE
+        # =====================================================
+
+        INVALID_PARTY_PATTERNS = [
+
+            r'(?i)^appeal\s*\(',
+            r'(?i)^civil\s+appeal',
+            r'(?i)^criminal\s+appeal',
+            r'(?i)^special\s+leave\s+petition',
+            r'(?i)^writ\s+petition',
+            r'(?i)^transfer\s+petition',
+            r'(?i)^review\s+petition',
+            r'(?i)^case\s+no',
+        ]
+
+        for pattern in INVALID_PARTY_PATTERNS:
+
+            if re.search(pattern, result["petitioner"]):
+
+                print("❌ INVALID PETITIONER BLOCKED:")
+                print(result["petitioner"])
+
+                result["petitioner"] = "Unknown"
+
+                result["confidence"] -= 25
+
+            if re.search(pattern, result["respondent"]):
+
+                print("❌ INVALID RESPONDENT BLOCKED:")
+                print(result["respondent"])
+
+                result["respondent"] = "Unknown"
+
+                result["confidence"] -= 25
+
         if result["petitioner"] == result["respondent"]:
 
             result["confidence"] -= 20

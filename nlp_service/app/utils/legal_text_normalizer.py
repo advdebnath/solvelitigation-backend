@@ -1727,6 +1727,92 @@ def stitch_broken_tokens(text):
         repaired
     )
 
+
+    # ======================================================
+    # 🔥 MID-WORD FRACTURE RECOVERY ENGINE
+    # ======================================================
+
+    MID_WORD_RECOVERY = {
+
+        # -------------------------------------------------
+        # LEGAL TERMS
+        # -------------------------------------------------
+
+        r"\binforma\s+ion\b":
+            "information",
+
+        r"\bapplica\s+ion\b":
+            "application",
+
+        r"\bprohibi\s+ion\b":
+            "prohibition",
+
+        r"\bconvic\s+ion\b":
+            "conviction",
+
+        r"\bpeti\s+ion\b":
+            "petition",
+
+        r"\bappea\s+l\b":
+            "appeal",
+
+        r"\binterfere\s+nce\b":
+            "interference",
+
+        r"\bjudg\s+ment\b":
+            "judgment",
+
+        r"\bargu\s+ment\b":
+            "argument",
+
+        r"\bdocu\s+ment\b":
+            "document",
+
+        # -------------------------------------------------
+        # LEGAL PHRASES
+        # -------------------------------------------------
+
+        r"\bsec\s+ions\b":
+            "sections",
+
+        r"\bchar\s+ge\s+sheet\b":
+            "charge-sheet",
+
+        r"\bbail\s+applica\s+ion\b":
+            "bail application",
+
+        r"\bfirst\s+informa\s+ion\s+report\b":
+            "first information report",
+
+        # -------------------------------------------------
+        # CRIMINAL SECTIONS
+        # -------------------------------------------------
+
+        r"\b498[\-\s]?a\b":
+            "498A",
+
+        r"\b304[\-\s]?b\b":
+            "304B",
+
+        r"\b120[\-\s]?b\b":
+            "120B",
+
+        r"\b34\b":
+            "34",
+    }
+
+    for pattern, replacement in MID_WORD_RECOVERY.items():
+
+        repaired = re.sub(
+            pattern,
+            replacement,
+            repaired,
+            flags=re.I
+        )
+
+
+
+
     # ======================================================
     # 🔥 PERMANENT LEGAL TOKEN RECONSTRUCTION ENGINE
     # ======================================================

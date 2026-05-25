@@ -50,6 +50,60 @@ def normalize_case_number_object(case_data):
     if not isinstance(case_data, dict):
         return normalized
 
+    # =====================================================
+    # 🔒 AUTHORITATIVE EXTRACTION PRESERVATION FIREWALL
+    # =====================================================
+
+    authoritative_sources = [
+
+        "LOCKED_JUDICIARY_ENGINE",
+
+        "ULTRA_PRIORITY_SC_LOCK",
+
+        "PETITIONER_RESPONDENT_CAPTION",
+
+        "HIGH_CONFIDENCE_HEADER_ENGINE",
+
+        "CANONICAL_CAPTION_ENGINE"
+    ]
+
+    incoming_source = str(
+        case_data.get("source", "")
+    )
+
+    incoming_confidence = int(
+        case_data.get("confidence", 0)
+    )
+
+    incoming_case = str(
+        case_data.get("case_number", "")
+    ).strip()
+
+    if (
+        incoming_source in authoritative_sources
+        and incoming_confidence >= 90
+        and re.search(r'\d{2,}', incoming_case)
+    ):
+
+        print("🔒 AUTHORITATIVE CASE PRESERVATION LOCK")
+        print(case_data)
+
+        preserved = dict(case_data)
+
+        preserved["validation_status"] = "VALID"
+
+        if not preserved.get("normalized_case_number"):
+
+            preserved["normalized_case_number"] = (
+                incoming_case.upper()
+            )
+
+        if not preserved.get("case_number"):
+
+            preserved["case_number"] = incoming_case
+
+        return preserved
+
     raw_case = str(
         case_data.get(
             "case_number",

@@ -1,0 +1,362 @@
+import mongoose, { Schema, Types } from "mongoose";
+
+export interface IJudgment {
+  ingestionId?: Types.ObjectId;
+
+  caseNumber?: string;
+  slscCitation?: string;
+
+  judgmentDate?: Date;
+
+  category: string;
+  subCategory?: string;
+
+  acts?: string[];
+  sections?: string[];
+  sectionActMap?: Record<string, string>;
+
+  pointOfLaw?: string[];
+
+  // 🔥 NEW STRUCTURED HEADNOTES
+  headnotes?: {
+    topic: string;
+    issue: string;
+    rule: string;
+    application: string;
+    conclusion: string;
+    para?: string;
+  }[];
+
+  headnote?: string; // keep for backward compatibility
+
+  // 🔥 PARTIES (IMPORTANT)
+  parties?: {
+    petitioner?: string;
+    respondent?: string;
+  };
+
+  fullText: string;
+  embedding?: number[];
+
+  summary?: string;
+  confidence?: number;
+
+      // ============================================
+    // 🔥 DOCUMENT QUALITY
+    // ============================================
+
+    documentQuality: {
+
+      type: String,
+
+      enum: [
+
+        "HIGH_QUALITY",
+
+        "REVIEW_REQUIRED",
+
+        "LOW_QUALITY",
+
+        "REJECTED"
+
+      ],
+
+      default: "REVIEW_REQUIRED",
+
+      index: true,
+    },
+
+    // ============================================
+    // 🔥 REVIEW WORKFLOW
+    // ============================================
+
+    reviewStatus: {
+
+      type: String,
+
+      enum: [
+
+        "PENDING",
+
+        "APPROVED",
+
+        "REJECTED",
+
+        "REVIEW_REQUIRED"
+
+      ],
+
+      default: "PENDING",
+
+      index: true,
+    },
+
+    reviewedBy: {
+
+      type: Schema.Types.ObjectId,
+
+      ref: "User",
+    },
+
+    reviewedAt: Date,
+
+    // ============================================
+    // 🔥 PUBLICATION CONTROL
+    // ============================================
+
+    isPublished: {
+
+      type: Boolean,
+
+      default: false,
+
+      index: true,
+    },
+
+    publishedAt: Date,
+
+    // ============================================
+    // 🔥 ONTOLOGY SIGNALS
+    // ============================================
+
+    ontologySignals: {
+
+      type: [String],
+
+      default: [],
+    },
+
+    ontologyConfidence: {
+
+      type: Number,
+
+      min: 0,
+
+      max: 1,
+    },
+
+    // ============================================
+    // 🔥 REVIEWER CORRECTIONS
+    // ============================================
+
+    reviewerCorrections: {
+
+      type: [
+
+        {
+
+          field: String,
+
+          oldValue: Schema.Types.Mixed,
+
+          newValue: Schema.Types.Mixed,
+
+          correctedBy: {
+
+            type: Schema.Types.ObjectId,
+
+            ref: "User",
+          },
+
+          correctedAt: {
+
+            type: Schema.Types.Date,
+
+          },
+        },
+      ],
+
+      default: [],
+    },
+
+  // 🔥 SLSC / PAGINATION
+  startPage?: number;
+  endPage?: number;
+  pageCount?: number;
+
+  // 🔥 NLP STATUS
+  nlpStatus?: string;
+
+  createdBy?: Types.ObjectId;
+
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+const JudgmentSchema = new Schema<IJudgment>(
+  {
+    ingestionId: {
+      type: Schema.Types.ObjectId,
+      ref: "JudgmentIngestion",
+    },
+
+    caseNumber: String,
+
+    slscCitation: String,
+
+    judgmentDate: {
+      type: Date,
+      index: true,
+    },
+
+    category: {
+      type: String,
+      required: true,
+      index: true,
+    },
+
+    subCategory: String,
+
+    // ============================================
+    // LEGAL STRUCTURE
+    // ============================================
+
+    acts: {
+      type: [String],
+      default: [],
+      index: true,
+    },
+
+    sections: {
+      type: [String],
+      default: [],
+      index: true,
+    },
+
+    sectionActMap: {
+      type: Map,
+      of: String,
+      default: {},
+    },
+
+    pointOfLaw: {
+      type: [String],
+      default: [],
+    },
+
+    // 🔥 STRUCTURED HEADNOTES
+    headnotes: [
+      {
+        topic: String,
+        issue: String,
+        rule: String,
+        application: String,
+        conclusion: String,
+        para: String,
+      },
+    ],
+
+    headnote: {
+      type: String,
+      trim: true,
+    },
+
+    // 🔥 PARTIES
+    parties: {
+      petitioner: String,
+      respondent: String,
+    },
+
+    // ============================================
+    // CORE TEXT
+    // ============================================
+
+    fullText: {
+      type: String,
+      required: true,
+    },
+
+    embedding: {
+      type: [Number],
+      default: [],
+    },
+
+    // ============================================
+    // ANALYTICS
+    // ============================================
+
+    summary: String,
+
+    confidence: {
+      type: Number,
+      min: 0,
+      max: 1,
+    },
+
+    // ============================================
+    // SLSC PAGINATION
+    // ============================================
+
+    startPage: Number,
+    endPage: Number,
+    pageCount: Number,
+
+    // ============================================
+    // NLP STATUS
+    // ============================================
+
+    nlpStatus: {
+      type: String,
+      index: true,
+    },
+
+    createdBy: {
+      type: Schema.Types.ObjectId,
+      ref: "User",
+    },
+  },
+  {
+    timestamps: true,
+  }
+);
+
+// ============================================
+// 🔥 INDEXES (CLEAN)
+// ============================================
+
+// Unique ingestion
+JudgmentSchema.index(
+  { ingestionId: 1 },
+  { unique: true, sparse: true }
+);
+
+// TEXT SEARCH
+JudgmentSchema.index(
+  {
+    pointOfLaw: "text",
+    headnote: "text",
+    caseNumber: "text",
+    fullText: "text",
+  },
+  {
+    weights: {
+      pointOfLaw: 5,
+      headnote: 4,
+      caseNumber: 2,
+      fullText: 1,
+    },
+    name: "legal_text_index",
+  }
+);
+
+// Explorer
+JudgmentSchema.index({ category: 1, acts: 1, pointOfLaw: 1 });
+
+// Citation lookup
+JudgmentSchema.index({ caseNumber: 1, slscCitation: 1 });
+
+// Unique SLSC
+JudgmentSchema.index(
+  { slscCitation: 1 },
+  { unique: true, sparse: true }
+);
+
+// ============================================
+// SAFE EXPORT
+// ============================================
+
+const Judgment =
+  mongoose.models.Judgment ||
+  mongoose.model<IJudgment>("Judgment", JudgmentSchema);
+
+export default Judgment;

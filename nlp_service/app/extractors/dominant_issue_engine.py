@@ -168,6 +168,54 @@ SEMANTIC_ISSUE_PATTERNS = {
 
         "bail application",
     ],
+
+    "Pay Revision And Service Benefits": [
+
+        "pay revision",
+
+        "revision of pay",
+
+        "salary revision",
+
+        "wage revision",
+
+        "financial capacity",
+
+        "public sector undertaking",
+
+        "employees of the company",
+
+        "industrial law",
+
+        "minimum wage",
+
+        "fair wage",
+
+        "service benefits",
+    ],
+
+    "Public Employment And Service Law": [
+
+        "departmental proceeding",
+
+        "termination",
+
+        "reinstatement",
+
+        "service matter",
+
+        "disciplinary authority",
+
+        "government servant",
+
+        "public employment",
+
+        "promotion",
+
+        "pension",
+
+        "service benefits",
+    ],
 }
 
 
@@ -226,7 +274,7 @@ def detect_dominant_issue(
         map(str, acts)
     ).lower()
 
-    semantic_text = " ".join([
+    combined_text = " ".join([
 
         full_text,
 
@@ -235,7 +283,7 @@ def detect_dominant_issue(
         doctrine_text,
 
         acts_text,
-    ])
+    ]).lower()
 
     for item in section_hierarchy:
 
@@ -266,6 +314,37 @@ def detect_dominant_issue(
                 best_score = score
 
                 best_issue = issue_name
+
+    # =====================================================
+    # 🔥 SEMANTIC FALLBACK DETECTION
+    # =====================================================
+
+    if best_issue == "General":
+
+        semantic_scores = {}
+
+        for issue_name, patterns in SEMANTIC_ISSUE_PATTERNS.items():
+
+            score = 0
+
+            for pattern in patterns:
+
+                if pattern.lower() in combined_text:
+
+                    score += 10
+
+            if score > 0:
+
+                semantic_scores[issue_name] = score
+
+        if semantic_scores:
+
+            best_issue = max(
+                semantic_scores,
+                key=semantic_scores.get
+            )
+
+            best_score = semantic_scores[best_issue]
 
     return {
 

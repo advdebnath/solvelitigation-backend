@@ -36,3 +36,86 @@ tools/
 # misc
 cookies.txt
 test.pdf
+
+# =====================================================
+# 🔥 SOLVELITIGATION REPOSITORY HARDENING
+# =====================================================
+
+# swap/editor junk
+*.swp
+*.swo
+*.nano
+*.tmp
+*.temp
+
+# backup variants
+*.bak
+*.bak2
+*.broken
+*.cleanfix
+*.error_backup
+*.finalbak
+*.freebak
+*.logicfix
+*.superbak
+*.ultra
+*.save.*
+*.save
+*.old
+
+# runtime outputs
+output.txt
+results/
+transport/
+logs/
+*.pid
+
+# pm2
+.pm2/
+dump.pm2
+
+# generated documents
+*.pdf
+*.docx
+*.xlsx
+*.csv
+
+# screenshots/images
+*.png
+*.jpg
+*.jpeg
+*.webp
+
+# corpus / regression
+test_corpus/
+test_corpus_expected/
+regression_framework/
+
+# checkpoints / backups
+STABLE_CHECKPOINTS/
+backups/
+*_backup_*/
+backend_backup_*/
+frontend_backup_*/
+
+# python artifacts
+.pytest_cache/
+.mypy_cache/
+
+# ingestion/runtime data
+uploads/
+vector_store/
+faiss_index/
+
+# OS/editor
+*~
+
+# temporary experimental variants
+*.tsnano
+*.final_clean
+*.final_v2
+*.draft
+sample.txt
+
+# local backend snapshots
+backend_stable_*/

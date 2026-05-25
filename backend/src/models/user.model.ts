@@ -16,6 +16,11 @@ export interface IUser extends Document {
 
   role: "user" | "admin" | "superadmin";
 
+  courtScope?: ("SUPREME" | "HIGH" | "TRIBUNAL" | "ALL")[];
+
+  courtNames?: string[];
+
+
   plan: "free" | "simple" | "premium" | "enterprise";
   planStatus: "active" | "inactive" | "expired";
   planExpiresAt?: Date | null;
@@ -68,6 +73,8 @@ const UserSchema = new Schema<IUser>(
       index: true,
     },
 
+    
+
     /** 🔥 CRITICAL FIX */
     password: {
       type: String,
@@ -84,6 +91,20 @@ const UserSchema = new Schema<IUser>(
       enum: ["user", "admin", "superadmin"],
       default: "user",
       index: true,
+    },
+
+    courtScope: {
+      type: [String],
+      enum: ["SUPREME", "HIGH", "TRIBUNAL", "ALL"],
+      default: ["ALL"],
+      index: true,
+    },
+
+    courtNames: {
+      type: [String],
+      default: [],
+      index: true,
+
     },
 
     plan: {
@@ -127,6 +148,8 @@ const UserSchema = new Schema<IUser>(
       default: false,
       index: true,
     },
+
+    
 
     deletedAt: {
       type: Date,

@@ -296,7 +296,7 @@ def build_semantic_paragraphs(pages):
 
             if is_footer_metadata(line):
 
-                if len(current_para.split()) > 8:
+                if len(current_para.split()) > 2:
 
                     paragraphs.append(
 
@@ -323,7 +323,7 @@ def build_semantic_paragraphs(pages):
 
             if starts_new_paragraph(line):
 
-                if len(current_para.split()) > 8:
+                if len(current_para.split()) > 2:
 
                     paragraphs.append(
 
@@ -367,7 +367,7 @@ def build_semantic_paragraphs(pages):
         # 🔥 LAST PARAGRAPH
         # =================================================
 
-        if len(current_para.split()) > 8:
+        if len(current_para.split()) > 2:
 
             paragraphs.append(
 

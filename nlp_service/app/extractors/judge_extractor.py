@@ -1553,7 +1553,26 @@ def extract_judges(pdf_path):
                 "hon ble",
                 "justice of",
                 "for appellant",
-                "for respondent"
+                "for respondent",
+
+                # =====================================
+                # 🔥 JUDGE POLLUTION BLOCKLIST
+                # =====================================
+
+                "since deceased",
+                "through lrs",
+                "through legal representatives",
+                "legal representative",
+                "deceased",
+                "dead through",
+                "lr of",
+                "heirs of",
+                "represented by",
+                "through guardian",
+                "minor through",
+                "next friend",
+                "applicant",
+                "complainant"
             ]
 
             lower_j = j.lower()
