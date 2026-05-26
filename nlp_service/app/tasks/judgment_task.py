@@ -4,7 +4,6 @@ import fitz
 fitz.TOOLS.mupdf_display_errors(False)
 
 
-from app.core_intelligence.legal_context_builder import build_validated_legal_context
 from app.core_intelligence.headnote_jurisprudential_engine import (
     build_headnote_jurisprudence
 )
@@ -29,8 +28,8 @@ import subprocess
 # 🔥 CORE EXTRACTORS
 # =========================================================
 
-from app.extractors.case_number_bridge import (
-    extract_case_number_bridge as extract_case_number
+from app.extractors.case_number_extractor import (
+    extract_case_number
 )
 
 from app.utils.case_number_normalizer import (
@@ -70,9 +69,6 @@ from app.extractors.text_reconstruction_engine import (
     reconstruct_legal_text
 )
 
-from app.core_reconstruction.canonical_legal_text_engine import (
-    canonicalize_legal_text
-)
 
 from app.extractors.ratio_detector import (
     extract_ratio
@@ -807,24 +803,6 @@ def process_judgment(ingestion_id):
             []
         )
 
-        print(
-            "🔥 SEMANTIC PARAGRAPH COUNT:"
-        )
-
-        print(
-            len(semantic_paragraphs)
-        )
-
-        if semantic_paragraphs:
-
-            print(
-                "🔥 FIRST SEMANTIC PARAGRAPH:"
-            )
-
-            print(
-                str(semantic_paragraphs[0])[:3000]
-            )
-
         print("\n🔥 SEMANTIC PARAGRAPH SAMPLE START\n")
 
         for idx, para in enumerate(semantic_paragraphs[:20]):
@@ -880,28 +858,11 @@ def process_judgment(ingestion_id):
         # 🔥 RAW MULTILINE TEXT
         # =====================================================
 
-        # =====================================================
-        # 🔥 SAFE RAW TEXT RESOLUTION
-        # =====================================================
-
-        if isinstance(semantic_text, dict):
-
-            raw_full_text = semantic_text.get(
-                "text",
-                ""
-            )
-
-        else:
-
-            raw_full_text = str(
-                semantic_text
-            )
+        raw_full_text = semantic_text
 
         # =====================================================
         # 🔥 LEGAL TEXT RECONSTRUCTION
         # =====================================================
-
-        print("🚨 ENTERED LEGAL TEXT RECONSTRUCTION REGION 🚨")
 
         try:
 
@@ -914,14 +875,6 @@ def process_judgment(ingestion_id):
                 full_text=raw_full_text
             )
 
-            print("🧪 RECONSTRUCTED TEXT TYPE:")
-
-            print(type(reconstructed_text))
-
-            print("🧪 RECONSTRUCTED TEXT VALUE:")
-
-            print(reconstructed_text)
-
             if reconstructed_text:
 
                 reconstructed_value = reconstructed_text.get(
@@ -930,26 +883,6 @@ def process_judgment(ingestion_id):
                 )
 
                 raw_full_text = reconstructed_value
-
-                # =====================================================
-                # 🔥 ENTERPRISE CANONICAL LEGAL RECONSTRUCTION
-                # =====================================================
-
-                try:
-
-                    reconstructed_value = canonicalize_legal_text(
-                        reconstructed_value
-                    )
-
-                    print("✅ CANONICAL LEGAL TEXT COMPLETE")
-
-                    print(reconstructed_value[:3000])
-
-                except Exception as canonical_error:
-
-                    print("❌ CANONICALIZATION ERROR:")
-
-                    print(str(canonical_error))
 
                 semantic_text = {
                     "text": reconstructed_value
@@ -970,25 +903,8 @@ def process_judgment(ingestion_id):
         # 🔥 NORMALIZED SEARCH TEXT
         # =====================================================
 
-        # =====================================================
-        # 🔥 SAFE NORMALIZED TEXT RESOLUTION
-        # =====================================================
-
-        if isinstance(semantic_text, dict):
-
-            normalized_input = semantic_text.get(
-                "text",
-                ""
-            )
-
-        else:
-
-            normalized_input = str(
-                semantic_text
-            )
-
         full_text = normalize_text(
-            normalized_input
+            semantic_text.get("text", "")
         )
 
         # =====================================================
@@ -1116,15 +1032,6 @@ def process_judgment(ingestion_id):
         print("🔥 RAW HEADER TEXT BEFORE NORMALIZATION")
         print("=" * 80)
         print(raw_header_text[:5000])
-
-        # =====================================================
-        # 🔒 AUTHORITATIVE HEADER LOCK
-        # =====================================================
-
-        authoritative_header_text = raw_header_text
-
-        print("🔒 AUTHORITATIVE HEADER LOCK:")
-        print(authoritative_header_text[:4000])
         print("=" * 80 + "\n")
 
         header_text = normalize_text(
@@ -1223,48 +1130,6 @@ def process_judgment(ingestion_id):
         parties = extract_parties(
             header_text
         )
-
-
-        authoritative_petitioner = parties.get(
-            "petitioner",
-            "Unknown"
-        )
-
-        authoritative_respondent = parties.get(
-            "respondent",
-            "Unknown"
-        )
-
-        invalid_party_tokens = [
-            "page",
-            "judis.nic.in",
-            "http",
-            "section",
-            "article",
-            "judgment",
-            "//",
-            ".....",
-            "petitioner(s)",
-            "respondent(s)"
-        ]
-
-        if any(
-            token in authoritative_petitioner.lower()
-            for token in invalid_party_tokens
-        ):
-            authoritative_petitioner = "Unknown"
-
-        if any(
-            token in authoritative_respondent.lower()
-            for token in invalid_party_tokens
-        ):
-            authoritative_respondent = "Unknown"
-
-        print("✅ AUTHORITATIVE PETITIONER:")
-        print(authoritative_petitioner)
-
-        print("✅ AUTHORITATIVE RESPONDENT:")
-        print(authoritative_respondent)
 
         print("\n🔥 RAW HEADER FOR JUDGE EXTRACTION:")
         print(raw_header_text[:3000])
@@ -1467,50 +1332,13 @@ def process_judgment(ingestion_id):
         # 🔥 OPERATIVE ORDER EXTRACTION
         # =====================================================
 
-        try:
-
-            operative_data = extract_operative_order(
-                full_text=full_text,
-                semantic_paragraphs=semantic_paragraphs,
-                category=locals().get(
-                    "dominant_category",
-                    locals().get(
-                        "predicted_category",
-                        "Unknown"
-                    )
-                ),
-            )
-
-        except Exception as operative_engine_error:
-
-            print(
-                "❌ OPERATIVE ENGINE CRASH:"
-            )
-
-            import traceback
-
-            traceback.print_exc()
-
-            operative_data = {
-                "final_holding": "Operative Extraction Failed",
-                "operative_order": [],
-                "confidence": 0,
-            }
-        print("🔥 OPERATIVE DATA FINAL SAFE:")
-
-        try:
-
-            for k, v in operative_data.items():
-
-                print(f"{k}: {str(v)[:1200]}")
-
-        except Exception as operative_log_error:
-
-            print(
-                "❌ OPERATIVE LOGGING FAILURE:"
-            )
-
-            print(str(operative_log_error))
+        operative_data = extract_operative_order(
+            full_text=full_text,
+            semantic_paragraphs=semantic_paragraphs,
+            category=locals().get("final_category", "Unknown"),
+        )
+        print("🔥 OPERATIVE DATA FINAL:")
+        print(operative_data)
 
         # =====================================================
         # 🔥 HEADNOTE
@@ -1572,21 +1400,21 @@ def process_judgment(ingestion_id):
         if isinstance(ratio_data, list):
 
             ratio_data = {
-              "ratio": " ".join([str(x) for x in ratio_data]),
+                "ratio": " ".join([str(x) for x in ratio_data]),
                 "confidence": 70
             }
 
         elif ratio_data is None:
 
             ratio_data = {
-              "ratio": "",
+                "ratio": "",
                 "confidence": 0
             }
 
         elif not isinstance(ratio_data, dict):
 
             ratio_data = {
-              "ratio": str(ratio_data),
+                "ratio": str(ratio_data),
                 "confidence": 50
             }
 
@@ -1784,26 +1612,6 @@ def process_judgment(ingestion_id):
             run_strategy_orchestration
         )
 
-        from app.core_intelligence.evidentiary_agent import (
-            run_evidentiary_analysis
-        )
-
-        from app.core_intelligence.procedural_timeline_agent import (
-            run_procedural_timeline_analysis
-        )
-
-        from app.core_intelligence.semantic_graph_agent import (
-            run_semantic_graph_analysis
-        )
-
-        from app.core_intelligence.rag_reasoning_agent import (
-            run_rag_reasoning_analysis
-        )
-
-        from app.core_intelligence.agentic_reasoning_agent import (
-            run_agentic_reasoning_analysis
-        )
-
 
 
 
@@ -1881,64 +1689,11 @@ def process_judgment(ingestion_id):
         # 🔥 AUTHORITATIVE NORMALIZED SEMANTIC SOURCE
         # =====================================================
 
-        print("🔥🔥🔥 AUTHORITATIVE SEMANTIC REBUILD V2 ACTIVE 🔥🔥🔥")
-
         normalized_semantic_text = full_text
 
         print(
             "✅ AUTHORITATIVE SEMANTIC SOURCE CREATED"
         )
-
-        # =====================================================
-        # 🔥 REBUILD SEMANTIC PARAGRAPHS FROM AUTHORITATIVE TEXT
-        # =====================================================
-
-        semantic_paragraphs = [
-
-            x.strip()
-
-            for x in re.split(
-                r'\n\s*\n',
-                normalized_semantic_text
-            )
-
-            if x.strip()
-        ]
-
-        if len(semantic_paragraphs) <= 3:
-
-            semantic_paragraphs = re.split(
-
-                r'(?<=[\.!?])\s+(?='
-                r'(?:the|this|these|however|therefore|'
-                r'we|in view|accordingly|thus|hence|'
-                r'appeal|petition|application|bail|'
-                r'judgment|order|held|observed)'
-                r')',
-
-                normalized_semantic_text,
-
-                flags=re.I
-            )
-
-        semantic_paragraphs = [
-
-            normalize_legal_text(x)
-
-            for x in semantic_paragraphs
-
-            if len(x.strip()) > 20
-        ]
-
-        print("🔥 REBUILT AUTHORITATIVE PARAGRAPHS:")
-
-        print(len(semantic_paragraphs))
-
-        if semantic_paragraphs:
-
-            print("🔥 FIRST SEMANTIC PARAGRAPH:")
-
-            print(semantic_paragraphs[0][:3000])
 
         print("✅ LEGAL OCR NORMALIZATION COMPLETE")
 
@@ -2018,7 +1773,7 @@ def process_judgment(ingestion_id):
                     signal,
                     normalized_detection_text,
                     flags=re.I
-              ):
+                ):
 
                     judgment_signal_count += 1
 
@@ -3808,7 +3563,7 @@ def process_judgment(ingestion_id):
                 if (
                     constitutional_success_probability >= 0.7
                     and litigation_risk_score < 0.4
-              ):
+                ):
 
                     predicted_outcome = (
                         "LIKELY_ALLOWED"
@@ -4001,34 +3756,6 @@ def process_judgment(ingestion_id):
 
                     try:
 
-                        # =========================================
-                        # 🔥 GLOBAL ORCHESTRATION INITIALIZATION
-                        # =========================================
-
-                        rag_reasoning = {}
-
-                        agentic_reasoning = {}
-
-                        semantic_graph_intelligence = {}
-
-                        contradiction_risk_data = {}
-
-                        autonomous_reasoning = {}
-
-                        legal_graph_intelligence = {}
-
-                        # =========================================
-                        # 🔥 SEMANTIC CONFIDENCE DEFAULT
-                        # =========================================
-
-                        semantic_confidence = 50
-
-                        contradiction_risk_score = 0.0
-
-                        constitutional_density = 0.0
-
-                        semantic_support_score = 0.0
-
                         doctrine_priority = []
 
                         upper_text = reconstructed_text.upper()
@@ -4170,13 +3897,6 @@ def process_judgment(ingestion_id):
                                 constitutional_consistency
                         )
 
-                        # =========================================
-                        contradiction_risk_data = {}
-
-                        autonomous_reasoning = {}
-
-                        legal_graph_intelligence = {}
-
                         contradiction_risk_data[
                             "self_validation"
                         ] = self_validation
@@ -4193,18 +3913,17 @@ def process_judgment(ingestion_id):
                         # 🔥 AUTONOMOUS LEGAL STRATEGY ORCHESTRATION ENGINE
                         # =====================================================
 
-                        
                         strategy_orchestration = (
                             run_strategy_orchestration(
 
                                 adaptive_reasoning=
                                     adaptive_reasoning,
 
-                                procedural_timeline=
-                                    {},
+                                  procedural_timeline=
+                                      {},
 
-                                semantic_graph_intelligence=
-                                    semantic_graph_intelligence,
+                                  semantic_graph_intelligence=
+                                      {},
 
                                 rag_reasoning=
                                     rag_reasoning,
@@ -4213,14 +3932,6 @@ def process_judgment(ingestion_id):
                                     agentic_reasoning
                             )
                         )
-
-                        # =========================================
-                        contradiction_risk_data = {}
-
-                        autonomous_reasoning = {}
-
-                        legal_graph_intelligence = {}
-
 
                         contradiction_risk_data[
                             "strategy_orchestration"
@@ -4839,7 +4550,7 @@ def process_judgment(ingestion_id):
                 if re.match(
                     r"^[a-z]\.\s+(on|to|of|in|at|by|for|with|from)$",
                     judge_name.lower()
-              ):
+                ):
                     continue
 
                 cleaned_judges.append(
@@ -4910,7 +4621,7 @@ def process_judgment(ingestion_id):
                 if re.match(
                     r"^[a-z]\.\s+(on|to|of|in|at|by|for|with|from)$",
                     judge_name.lower()
-              ):
+                ):
                     continue
 
                 cleaned_judges.append(
@@ -5019,8 +4730,8 @@ def process_judgment(ingestion_id):
         if not isinstance(parties, dict):
 
             parties = {
-              "petitioner": "Unknown",
-              "respondent": "Unknown",
+                "petitioner": "Unknown",
+                "respondent": "Unknown",
                 "confidence": 0
             }
 
@@ -5106,7 +4817,7 @@ def process_judgment(ingestion_id):
         if not isinstance(ratio_data, dict):
 
             ratio_data = {
-              "ratio": "",
+                "ratio": "",
                 "para": "",
                 "confidence": 0
             }
@@ -5403,23 +5114,6 @@ def process_judgment(ingestion_id):
         print("✅ NORMALIZED SECTIONS:")
         print(normalized_sections)
 
-
-        # =====================================================
-        # 🔥 AUTHORITATIVE LEGAL CONTEXT ENGINE
-        # =====================================================
-
-        validated_legal_context = build_validated_legal_context(
-            canonical_acts=canonical_acts,
-            resolved_sections=normalized_sections,
-            canonical_issue_data=canonical_issue_data,
-            court_type=locals().get("court_type", ""),
-            case_type=locals().get("case_type", "")
-        )
-
-        print("✅ VALIDATED LEGAL CONTEXT:")
-        print(validated_legal_context)
-
-
         print("✅ FULL LEGAL OBJECT NORMALIZATION COMPLETE")
 
         # =====================================================
@@ -5435,22 +5129,22 @@ def process_judgment(ingestion_id):
                     "UNKNOWN"
                 ),
 
-              "petitioner": locals().get(
+                "petitioner": locals().get(
                     "petitioner",
                     ""
                 ),
 
-              "respondent": locals().get(
+                "respondent": locals().get(
                     "respondent",
                     ""
                 ),
 
-              "issue": locals().get(
+                "issue": locals().get(
                     "dominant_doctrine",
                     "UNKNOWN"
                 ),
 
-              "judge": (
+                "judge": (
                     locals().get(
                         "judges",
                         ["UNKNOWN"]
@@ -5581,6 +5275,7 @@ def process_judgment(ingestion_id):
 
         print("✅ EARLY VALIDATED ACTS:")
         print(canonical_acts)
+
         print("✅ EARLY VALIDATED POINTS:")
         print(canonical_points_of_law)
 
@@ -5853,29 +5548,6 @@ def process_judgment(ingestion_id):
         )
 
         # =====================================================
-        # 🔥 CATEGORY-BASED ACT RECOVERY FIREWALL
-        # =====================================================
-
-        if (
-            not canonical_acts
-            and
-            str(final_category).lower() == "criminal"
-        ):
-
-            canonical_acts = [
-
-                "Code Of Criminal Procedure, 1973",
-
-                "Indian Penal Code, 1860"
-            ]
-
-            print(
-                "🔥 Criminal fallback acts injected"
-            )
-
-            print(canonical_acts)
-
-        # =====================================================
         # 🔥 SEMANTIC CONFLICT GOVERNANCE ENGINE
         # =====================================================
 
@@ -6123,7 +5795,7 @@ def process_judgment(ingestion_id):
                 for point in headnote_jurisprudence.get(
                     "primary",
                     []
-              ):
+                ):
 
                     if isinstance(point, dict):
 
@@ -6189,9 +5861,9 @@ def process_judgment(ingestion_id):
 
                 deduped_points.append(item)
 
-                authoritative_points_of_law = (
-                    deduped_points
-                )
+            authoritative_points_of_law = (
+                deduped_points
+            )
 
         except Exception as e:
 
@@ -6320,26 +5992,9 @@ def process_judgment(ingestion_id):
                 ),
 
             "dominantIssue":
-                resolved_dominant_issue,
-
-            # =====================================================
-            # 🔥 SEMANTIC CONFLICT ENGINE
-            # =====================================================
-
-            "semanticConflict":
-                semantic_conflict,
-
-            "conflictCategories":
-                conflict_categories,
-
-            "conflictGap":
-                conflict_gap,
-
-            "conflictLevel":
-                conflict_level,
-
-            "reviewRecommended":
-                review_recommended,
+                issue_data.get(
+                    "dominant_issue"
+                ),
 
 
             "operativeOrder":
@@ -6424,13 +6079,6 @@ def process_judgment(ingestion_id):
             "validation":
                 validation,
 
-            # =====================================================
-            # 🔥 AUTHORITATIVE LEGAL CONTEXT
-            # =====================================================
-
-            "validatedLegalContext":
-                validated_legal_context,
-
             "overallConfidence":
                 validation.get(
                     "overall_confidence",
@@ -6501,25 +6149,16 @@ def process_judgment(ingestion_id):
         # 🔥 AUTO EXTRACT ACT NAMES
         # =====================================================
 
-        extracted_act_names = extract_act_names(
+        judgment_doc["actNames"] = (
 
-            judgment_doc.get(
-                "sections",
-                []
+            extract_act_names(
+
+                judgment_doc.get(
+                    "sections",
+                    []
+                )
             )
         )
-
-        judgment_doc["actNames"] = sorted(list(set(
-
-            locals().get(
-                "canonical_acts",
-                []
-            )
-
-            +
-
-            extracted_act_names
-        )))
 
         print(
             "✅ Dynamic act enrichment complete"
