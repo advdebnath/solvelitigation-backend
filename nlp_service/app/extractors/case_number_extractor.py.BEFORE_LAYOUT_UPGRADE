@@ -841,44 +841,6 @@ def extract_case_number(
 
         header = normalized_header
 
-        # =====================================================
-        # 🔥 ENTERPRISE DIRECT HEADER MATCH ENGINE
-        # =====================================================
-
-        direct_header = re.sub(
-            r"\s+",
-            " ",
-            header
-        )
-
-        for pattern in CASE_PATTERNS[:40]:
-
-            try:
-
-                direct_match = re.search(
-                    pattern,
-                    direct_header,
-                    flags=re.I
-                )
-
-                if direct_match:
-
-                    extracted_case = direct_match.group(1).strip()
-
-                    print("✅ DIRECT HEADER CASE MATCH:")
-                    print(extracted_case)
-
-                    return {
-                        "case_number": extracted_case,
-                        "normalized_case_number": extracted_case.upper(),
-                        "confidence": 96,
-                        "source": "DIRECT_HEADER_ENGINE"
-                    }
-
-            except Exception:
-                pass
-
-
 
         # =====================================================
         # ð¥ OCR NORMALIZATION FIREWALL
@@ -1973,12 +1935,7 @@ r"O\s*F\s+\d{4})",
                     flags=re.I
                 )
 
-            except Exception as fallback_error:
-
-                print("❌ FALLBACK CASE PATTERN ERROR:")
-                print(pattern)
-                print(str(fallback_error))
-
+            except Exception:
                 continue
 
             for match in fallback_matches:
@@ -2058,24 +2015,6 @@ r"O\s*F\s+\d{4})",
 
             print("BEST CASE NUMBER:")
             print(best)
-
-            # =====================================================
-            # 🔥 SEMANTIC PROCEEDING RESOLUTION ENGINE
-            # =====================================================
-
-        else:
-
-            print("❌ NO VALID CASE NUMBER CANDIDATES FOUND")
-
-            print("🧪 HEADER TEXT SAMPLE:")
-
-            print(header[:2000])
-
-            return {
-                "case_number": None,
-                "confidence": 0,
-                "source": "NO_CASE_NUMBER_FOUND"
-            }
 
             # =====================================================
             # 🔥 SEMANTIC PROCEEDING RESOLUTION ENGINE

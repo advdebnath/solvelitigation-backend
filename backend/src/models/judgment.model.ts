@@ -4,6 +4,16 @@ export interface IJudgment {
   ingestionId?: Types.ObjectId;
 
   caseNumber?: string;
+
+  canonicalIdentifier?: string;
+
+  fallbackCaseTitle?: string;
+
+  identifierType?: string;
+
+  isCaseNumberLocked?: boolean;
+
+  identifierConfidence?: number;
   slscCitation?: string;
 
   judgmentDate?: Date;
@@ -128,6 +138,38 @@ const JudgmentSchema = new Schema<IJudgment>(
     },
 
     caseNumber: String,
+
+    canonicalIdentifier: {
+      type: String,
+      index: true,
+      default: null,
+    },
+
+    fallbackCaseTitle: {
+      type: String,
+      default: null,
+    },
+
+    identifierType: {
+      type: String,
+      enum: [
+        "REAL_CASE_NUMBER",
+        "LEGACY_TITLE",
+        "SEMANTIC_HASH",
+        "NO_IDENTIFIER",
+      ],
+      default: "NO_IDENTIFIER",
+    },
+
+    isCaseNumberLocked: {
+      type: Boolean,
+      default: false,
+    },
+
+    identifierConfidence: {
+      type: Number,
+      default: 0,
+    },
 
     slscCitation: String,
 
@@ -339,6 +381,11 @@ JudgmentSchema.index({
 
 // Citation lookup
 JudgmentSchema.index({ caseNumber: 1, slscCitation: 1 });
+
+JudgmentSchema.index(
+  { canonicalIdentifier: 1 },
+  { unique: true, sparse: true }
+);
 
 // Unique SLSC
 JudgmentSchema.index(

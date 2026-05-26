@@ -4,6 +4,7 @@
 
 import fitz
 import re
+from app.utils.ocr_legal_normalizer import normalize_ocr_legal_text
 import pytesseract
 
 from PIL import Image
@@ -44,11 +45,9 @@ def canonical_judge_header_normalizer(text):
     # =====================================================
     # 🔥 SHARED OCR LEGAL NORMALIZATION
     # =====================================================
-
     text = normalize_ocr_legal_text(
         text
     )
-
     # -----------------------------------------------------
     # 🔒 COLLAPSE OCR-SPACED LETTERS
     # -----------------------------------------------------
@@ -508,7 +507,7 @@ def valid_name(name):
 
         r"\(\s*([A-Z][A-Z\.\s]{5,120})\s*\)",
 
-        r"\b([A-Z]\.\s*[A-Z][A-Z\s]{2,120})\b",
+        r"\b([A-Z]\.[A-Z][A-Za-z\.]{1,40})\b",
 
         r"(?:J\s*U\s*D\s*G\s*M\s*E\s*N\s*T|ORDER)?\s*(?:\n|\r|\s){0,10}(Dr\.?\s+)?([A-Z][A-Za-z\.\s]{3,70}?)\s*,\s*J\.?\b",
 
@@ -627,7 +626,7 @@ def extract_names_from_text(full_text):
 
         r"\(\s*([A-Z][A-Z\.\s]{5,120})\s*\)",
 
-        r"\b([A-Z]\.\s*[A-Z][A-Z\s]{2,120})\b",
+        r"\b([A-Z]\.[A-Z][A-Za-z\.]{1,40})\b",
 
         r"(?:J\s*U\s*D\s*G\s*M\s*E\s*N\s*T|ORDER)[\s\r\n]{0,20}(?:Dr\.?\s+)?([A-Z][A-Za-z\.\s]{3,70}?)\s*,\s*J\.?\b",
 
@@ -657,7 +656,7 @@ def extract_names_from_text(full_text):
         # R.F. Nariman, J.
         # =============================================
 
-        r"([A-Z][A-Za-z\.\s]{3,80}),\s*J\.",
+        r"([A-Z][A-Z\.\s]{2,80}),\s*J\.",
 
         # =============================================
         # CORAM BLOCK
@@ -1040,7 +1039,7 @@ def extract_judges(pdf_path):
 
         r"\(\s*([A-Z][A-Z\.\s]{5,120})\s*\)",
 
-        r"\b([A-Z]\.\s*[A-Z][A-Z\s]{2,120})\b",
+        r"\b([A-Z]\.[A-Z][A-Za-z\.]{1,40})\b",
 
         r"\b([A-Z][A-Z\s]{3,120})\s*,\s*J\.?\b",
 
@@ -1116,7 +1115,7 @@ def extract_judges(pdf_path):
 
         r"\(\s*([A-Z][A-Z\.\s]{5,120})\s*\)",
 
-        r"\b([A-Z]\.\s*[A-Z][A-Z\s]{2,120})\b",
+        r"\b([A-Z]\.[A-Z][A-Za-z\.]{1,40})\b",
 
         r"\b([A-Z][A-Z\s]{3,120})\s*,\s*J\.?\b",
 

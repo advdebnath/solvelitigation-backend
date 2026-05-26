@@ -54,7 +54,29 @@ def extract_ratio(
         jurisprudential_chunks = []
 
 
-    paragraphs = text.split("\n")
+    # =====================================================
+    # 🔥 JURISPRUDENTIAL SENTENCE SEGMENTATION
+    # =====================================================
+
+    paragraphs = re.split(
+        r'(?<=[\\.!\\?])\\s+(?='
+        r'(?:It|Thus|Therefore|Hence|Accordingly|'
+        r'We|The Court|In the result|'
+        r'The petitions|The appeals|'
+        r'Under Article|When an authority|'
+        r'If the Government|'
+        r'It becomes apparent|'
+        r'The Government)'
+        r')',
+        text
+    )
+
+    if len(paragraphs) <= 3:
+
+        paragraphs = re.split(
+            r'(?<=[\\.!\\?])\\s+',
+            text
+        )
 
     ratio_candidates = []
 
@@ -66,6 +88,37 @@ def extract_ratio(
             continue
 
         lower_para = clean_para.lower()
+
+        # =====================================================
+        # 🔥 HARD OCR / HEADER POLLUTION REJECTION
+        # =====================================================
+
+        hard_pollution_hits = [
+
+            "http://judis.nic.in",
+            "page 1 of",
+            "page 2 of",
+            "petitioner:",
+            "respondent:",
+            "date of judgment:",
+            "bench:",
+            "supreme court of india"
+        ]
+
+        pollution_score = sum(
+            1
+            for patt in hard_pollution_hits
+            if patt in lower_para
+        )
+
+        if pollution_score >= 3:
+            continue
+
+        if lower_para.count("supreme court of india") >= 2:
+            continue
+
+        if lower_para.count("http://judis") >= 1:
+            continue
 
         score = 0
 
@@ -86,12 +139,38 @@ def extract_ratio(
         if "act" in lower_para:
             score += 5
 
+        
+        polluted_patterns = [
+
+          "http://judis",
+          "supreme court of india",
+          "page 1 of",
+          "page 2 of",
+          "petitioner:",
+          "respondent:",
+          "date of judgment",
+          "bench:"
+        ]
+
+        is_polluted = any(
+          patt in lower_para
+          for patt in polluted_patterns
+        )
+
+        if (
+          is_polluted
+          or clean_para.count("\n") > 10
+          or len(clean_para.split()) > 220
+          or len(clean_para) > 4000
+        ):
+          continue
+
         if score >= 20:
 
-            ratio_candidates.append({
-                "text": clean_para,
-                "score": score
-            })
+          ratio_candidates.append({
+              "text": clean_para,
+              "score": score
+          })
 
 
     # =====================================================
@@ -116,6 +195,37 @@ def extract_ratio(
         )
 
         lower_chunk = chunk_text.lower()
+
+        # =====================================================
+        # 🔥 HARD OCR / HEADER POLLUTION REJECTION
+        # =====================================================
+
+        hard_pollution_hits = [
+
+            "http://judis.nic.in",
+            "page 1 of",
+            "page 2 of",
+            "petitioner:",
+            "respondent:",
+            "date of judgment:",
+            "bench:",
+            "supreme court of india"
+        ]
+
+        pollution_score = sum(
+            1
+            for patt in hard_pollution_hits
+            if patt in lower_chunk
+        )
+
+        if pollution_score >= 3:
+            continue
+
+        if lower_chunk.count("supreme court of india") >= 2:
+            continue
+
+        if lower_chunk.count("http://judis") >= 1:
+            continue
 
         score = 0
 
@@ -153,18 +263,40 @@ def extract_ratio(
             200
         )
 
+        
+        polluted_patterns = [
+
+          "http://judis",
+          "supreme court of india",
+          "page 1 of",
+          "page 2 of",
+          "petitioner:",
+          "respondent:",
+          "date of judgment",
+          "bench:"
+        ]
+
+        is_polluted = any(
+          patt in lower_chunk
+          for patt in polluted_patterns
+        )
+
+        if (
+          is_polluted
+          or chunk_text.count("\n") > 12
+          or len(chunk_text.split()) > 260
+          or len(chunk_text) > 5000
+        ):
+          continue
+
         if score >= 60:
 
-            ratio_candidates.append({
-
-                "text": chunk_text,
-
-                "score": score,
-
-                "source": "jurisprudential_chunk",
-
-                "chunk_type": chunk_type
-            })
+          ratio_candidates.append({
+              "text": chunk_text,
+              "score": score,
+              "source": "jurisprudential_chunk",
+              "chunk_type": chunk_type
+          })
 
     ratio_candidates = sorted(
         ratio_candidates,

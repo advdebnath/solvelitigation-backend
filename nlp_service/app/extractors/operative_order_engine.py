@@ -84,6 +84,16 @@ DISPOSITION_PATTERNS = {
         r"\\bproceedings\\s+quashed\\b",
 
         r"\bwrit\s+petition\s+allowed\b",
+
+        r"\bwrit\s+petitions\s+are\s+allowed\b",
+
+        r"\bliable\s+to\s+be\s+quashed\b",
+
+        r"\bset\s+aside\s+all\s+the\s+orders\b",
+
+        r"\borders?\s+.*?\s+quashed\b",
+
+        r"\bthe\s+writ\s+petitions\s+are\s+allowed\b",
     ],
 
     "Appeal Dismissed": [
@@ -815,6 +825,8 @@ def extract_operative_order(
 
                                 "petition allowed",
 
+                                "writ petitions are allowed to the extent indicated above",
+
                                 "allowed and set aside"
                             ]
                         ):
@@ -1121,9 +1133,7 @@ def extract_operative_order(
 
                         "no reason to interfere",
 
-                        "appeal",
 
-                        "petition",
 
                         "interference",
 
@@ -1296,6 +1306,36 @@ def extract_operative_order(
         winning_party = infer_winning_party(
             final_holding
         )
+
+        # ====================================================
+        # 🔥 OPERATIVE SIGNAL DEDUP ENGINE
+        # ====================================================
+
+        seen_operatives = set()
+
+        deduped_signals = []
+
+        for sig in matched_signals:
+
+            if not isinstance(sig, dict):
+                continue
+
+            para = sig.get(
+                "paragraph",
+                ""
+            ).strip().lower()
+
+            if not para:
+                continue
+
+            if para in seen_operatives:
+                continue
+
+            seen_operatives.add(para)
+
+            deduped_signals.append(sig)
+
+        matched_signals = deduped_signals
 
         # ====================================================
         # 🔥 RESULT
