@@ -1381,6 +1381,9 @@ def extract_case_number(
             print("🔥 EARLY SC CAPTION LOCK:")
             print(early_case)
 
+            print("🔥 EARLY RETURN VALUE:")
+            print(early_case)
+
             return {
                 "case_number": early_case,
                 "canonical_case_number": early_case,
@@ -1637,6 +1640,9 @@ r"O\s*F\s+\d{4})",
 
                         continue
 
+                    print("🔥 LOCKED RETURN VALUE:")
+                    print(direct_case)
+
                     return {
                         "case_number": direct_case,
                         "canonical_case_number": direct_case,
@@ -1830,6 +1836,19 @@ r"O\s*F\s+\d{4})",
                 print("ð¥ VALIDATION RESULT:")
                 print(is_valid_case_number(value))
 
+                print("🧪 LIVE VALIDATION INPUT:")
+                print(repr(value))
+
+                print("🧪 LIVE VALIDATION OUTPUT:")
+                print(is_valid_case_number(value))
+
+
+                print("🧪 LIVE VALIDATION INPUT:")
+                print(value)
+
+                print("🧪 LIVE VALIDATION OUTPUT:")
+                print(is_valid_case_number(value))
+
                 if not is_valid_case_number(value):
                     continue
 
@@ -1981,6 +2000,19 @@ r"O\s*F\s+\d{4})",
                 print("ð¥ VALIDATION RESULT:")
                 print(is_valid_case_number(value))
 
+                print("🧪 LIVE VALIDATION INPUT:")
+                print(repr(value))
+
+                print("🧪 LIVE VALIDATION OUTPUT:")
+                print(is_valid_case_number(value))
+
+
+                print("🧪 LIVE VALIDATION INPUT:")
+                print(value)
+
+                print("🧪 LIVE VALIDATION OUTPUT:")
+                print(is_valid_case_number(value))
+
                 if not is_valid_case_number(value):
                     continue
 
@@ -2038,6 +2070,9 @@ r"O\s*F\s+\d{4})",
                     header,
                     flags=re.I
                 )
+
+                print("🔥 PARTY TITLE REGEX MATCH:")
+                print(title_match)
 
                 if title_match:
 
@@ -2109,6 +2144,8 @@ r"O\s*F\s+\d{4})",
 
             print(header[:2000])
 
+            print("🔥 CONTINUING TO PARTY TITLE FALLBACK")
+
             try:
 
                 title_match = re.search(
@@ -2116,6 +2153,9 @@ r"O\s*F\s+\d{4})",
                     header,
                     flags=re.I
                 )
+
+                print("🔥 PARTY TITLE REGEX MATCH:")
+                print(title_match)
 
                 if title_match:
 
