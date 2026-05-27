@@ -523,19 +523,6 @@ def extract_pages(pdf_path):
 
             page_text = page.get_text("text")
 
-            # ================================================
-            # 🔒 IMMUTABLE RAW CAPTION PRESERVATION
-            # ================================================
-
-            if page_num == 0:
-
-                raw_first_page_snapshot = str(
-                    page_text
-                )
-
-                print("🔥 IMMUTABLE FIRST PAGE SNAPSHOT:")
-                print(raw_first_page_snapshot[:12000])
-
             # =================================================
             # 🔥 RAW FIRST PAGE DEBUG
             # =================================================

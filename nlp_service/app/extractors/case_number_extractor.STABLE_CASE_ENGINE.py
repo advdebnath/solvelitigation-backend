@@ -1381,9 +1381,6 @@ def extract_case_number(
             print("🔥 EARLY SC CAPTION LOCK:")
             print(early_case)
 
-            print("🔥 EARLY RETURN VALUE:")
-            print(early_case)
-
             return {
                 "case_number": early_case,
                 "canonical_case_number": early_case,
@@ -1639,9 +1636,6 @@ r"O\s*F\s+\d{4})",
                         print(direct_case)
 
                         continue
-
-                    print("🔥 LOCKED RETURN VALUE:")
-                    print(direct_case)
 
                     return {
                         "case_number": direct_case,
@@ -2054,73 +2048,6 @@ r"O\s*F\s+\d{4})",
         # ð¥ FINAL BEST CANDIDATE
         # =====================================================
 
-        # =====================================================
-        # 🔥 PARTY TITLE FALLBACK EXTRACTION
-        # =====================================================
-
-        print("🧪 CANDIDATE RESULTS BEFORE PARTY FALLBACK:")
-        print(candidate_results)
-
-        if not candidate_results:
-
-            try:
-
-                title_match = re.search(
-                    r'([A-Z][A-Z\\s\\.\\&]+?)\\s*(?:Vs\\.?|VERSUS)\\s*([A-Z][A-Z\\s\\.\\&]+)',
-                    header,
-                    flags=re.I
-                )
-
-                print("🔥 PARTY TITLE REGEX MATCH:")
-                print(title_match)
-
-                if title_match:
-
-                    petitioner = (
-                        title_match.group(1).strip()
-                    )
-
-                    respondent = (
-                        title_match.group(2).strip()
-                    )
-
-                    synthetic_case = (
-                        f"{petitioner} Vs. {respondent}"
-                    )
-
-                    # ============================================
-                    # 🔥 CAPTION TAIL POLLUTION CLEANER
-                    # ============================================
-
-                    synthetic_case = re.sub(
-                        r'\bDATE OF.*$',
-                        '',
-                        synthetic_case,
-                        flags=re.I
-                    ).strip()
-
-                    synthetic_case = re.sub(
-                        r'\s+',
-                        ' ',
-                        synthetic_case
-                    ).strip()
-
-                    print("🔥 AUTHORITATIVE PARTY TITLE FALLBACK:")
-                    print(synthetic_case)
-
-                    candidate_results.append({
-
-                        "case_number": synthetic_case,
-
-                        "confidence": 55
-                    })
-
-            except Exception as fallback_error:
-
-                print("❌ PARTY TITLE FALLBACK ERROR:")
-                print(str(fallback_error))
-
-
         if candidate_results:
 
             candidate_results = rank_case_candidates(
@@ -2144,74 +2071,11 @@ r"O\s*F\s+\d{4})",
 
             print(header[:2000])
 
-            print("🔥 CONTINUING TO PARTY TITLE FALLBACK")
-
-            try:
-
-                title_match = re.search(
-                    r'PETITIONER\s*[:\-]?\s*([A-Z][A-Z\s\.\&]+?)\s*(?:Vs\.?|VERSUS)\s*RESPONDENT\s*[:\-]?\s*([A-Z][A-Z\s\.\&]+(?:ORS\.)?)',
-                    header,
-                    flags=re.I
-                )
-
-                print("🔥 PARTY TITLE REGEX MATCH:")
-                print(title_match)
-
-                if title_match:
-
-                    petitioner = (
-                        title_match.group(1).strip()
-                    )
-
-                    respondent = (
-                        title_match.group(2).strip()
-                    )
-
-                    synthetic_case = (
-                        f"{petitioner} Vs. {respondent}"
-                    )
-
-                    # ============================================
-                    # 🔥 CAPTION TAIL POLLUTION CLEANER
-                    # ============================================
-
-                    synthetic_case = re.sub(
-                        r'\bDATE OF.*$',
-                        '',
-                        synthetic_case,
-                        flags=re.I
-                    ).strip()
-
-                    synthetic_case = re.sub(
-                        r'\s+',
-                        ' ',
-                        synthetic_case
-                    ).strip()
-
-                    print("🔥 AUTHORITATIVE PARTY TITLE FALLBACK:")
-                    print(synthetic_case)
-
-                    best = {
-                        "case_number": synthetic_case,
-                        "confidence": 55
-                    }
-
-                else:
-
-                    best = {
-                        "case_number": "Unknown Case",
-                        "confidence": 0
-                    }
-
-            except Exception as fallback_error:
-
-                print("❌ PARTY TITLE FALLBACK ERROR:")
-                print(str(fallback_error))
-
-                best = {
-                    "case_number": "Unknown Case",
-                    "confidence": 0
-                }
+            return {
+                "case_number": None,
+                "confidence": 0,
+                "source": "NO_CASE_NUMBER_FOUND"
+            }
 
             # =====================================================
             # 🔥 SEMANTIC PROCEEDING RESOLUTION ENGINE
@@ -2358,18 +2222,6 @@ r"O\s*F\s+\d{4})",
 
         print("🔥 FINAL CANDIDATE_RESULTS LENGTH:")
         print(len(candidate_results))
-
-        print("🔥 PARTY TITLE DEBUG HEADER:")
-        print(header[:5000])
-
-        print("🔥 PETITIONER MATCH:")
-        print(petitioner_match)
-
-        print("🔥 RESPONDENT MATCH:")
-        print(respondent_match)
-
-        print("🔥 CANDIDATE_RESULTS:")
-        print(candidate_results)
 
         if (
             petitioner_match
