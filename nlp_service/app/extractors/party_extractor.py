@@ -373,6 +373,44 @@ def extract_parties(text):
         header = normalize_spaces(header)
 
         # =====================================================
+        # 🔥 HEADER OCR SANITIZATION
+        # =====================================================
+
+        header = re.sub(
+            r'//Judis\.Nic\.In\s*Page\s*\d+\s*Of\s*\d+',
+            ' ',
+            header,
+            flags=re.I
+        )
+
+        header = re.sub(
+            r'Signature\s+Not\s+Verified',
+            ' ',
+            header,
+            flags=re.I
+        )
+
+        header = re.sub(
+            r'Digitally\s+signed\s+by.*',
+            ' ',
+            header,
+            flags=re.I
+        )
+
+        header = re.sub(
+            r'Page\s+\d+\s+Of\s+\d+',
+            ' ',
+            header,
+            flags=re.I
+        )
+
+        header = re.sub(
+            r'\s+',
+            ' ',
+            header
+        ).strip()
+
+        # =====================================================
         # 🔥 ROLE-BASED EXTRACTION
         # =====================================================
 
@@ -425,6 +463,10 @@ def extract_parties(text):
             r'(?i)^transfer\s+petition',
             r'(?i)^review\s+petition',
             r'(?i)^case\s+no',
+            r'(?i)judis\.nic\.in',
+            r'(?i)^page\s+\d+',
+            r'(?i)signature\s+not\s+verified',
+            r'(?i)digitally\s+signed',
         ]
 
         for pattern in INVALID_PARTY_PATTERNS:
@@ -518,5 +560,4 @@ def extract_parties(text):
         " ",
         header
     )
-
 
