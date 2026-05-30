@@ -1,13 +1,11 @@
-import re
 import hashlib
-
+import re
 
 # =========================================================
 # 🔥 PROCEDURAL / LEGAL SUFFIXES
 # =========================================================
 
 GOVERNMENT_HINTS = [
-
     "UNION OF INDIA",
     "STATE OF",
     "COMMISSIONER",
@@ -21,7 +19,7 @@ GOVERNMENT_HINTS = [
     "NIA",
     "INCOME TAX",
     "DIRECTORATE",
-    "POLICE"
+    "POLICE",
 ]
 
 
@@ -40,9 +38,7 @@ def detect_entity_type(name):
     return "PRIVATE_ENTITY"
 
 
-
 PROCEDURAL_SUFFIXES = [
-
     r"\bM/S\.?\b",
     r"\b(DEAD)\b",
     r"\bTHROUGH\s+L\.?R\.?S?\.?\b",
@@ -69,6 +65,7 @@ PROCEDURAL_SUFFIXES = [
 # 🔥 OCR NORMALIZATION
 # =========================================================
 
+
 def normalize_ocr_spacing(text):
 
     if not text:
@@ -76,11 +73,7 @@ def normalize_ocr_spacing(text):
 
     text = str(text)
 
-    text = re.sub(
-        r"\s+",
-        " ",
-        text
-    )
+    text = re.sub(r"\s+", " ", text)
 
     return text.strip()
 
@@ -88,6 +81,7 @@ def normalize_ocr_spacing(text):
 # =========================================================
 # 🔥 PARTY NORMALIZATION
 # =========================================================
+
 
 def normalize_party_name(name):
 
@@ -98,53 +92,23 @@ def normalize_party_name(name):
 
     for pattern in PROCEDURAL_SUFFIXES:
 
-        name = re.sub(
-            pattern,
-            " ",
-            name,
-            flags=re.I
-        )
+        name = re.sub(pattern, " ", name, flags=re.I)
 
-    name = re.sub(
-        r"\([^)]*\)",
-        " ",
-        name
-    )
+    name = re.sub(r"\([^)]*\)", " ", name)
 
-    name = re.sub(
-        r"[^A-Z0-9\s\.\&\-]",
-        " ",
-        name,
-        flags=re.I
-    )
+    name = re.sub(r"[^A-Z0-9\s\.\&\-]", " ", name, flags=re.I)
 
-    name = re.sub(
-        r"\s+",
-        " ",
-        name
-    ).strip()
+    name = re.sub(r"\s+", " ", name).strip()
 
     # -----------------------------------------------------
     # 🔥 EDGE PUNCTUATION CLEANUP
     # -----------------------------------------------------
 
-    name = re.sub(
-        r"^[\.\&\-\s]+",
-        "",
-        name
-    )
+    name = re.sub(r"^[\.\&\-\s]+", "", name)
 
-    name = re.sub(
-        r"[\.\&\-\s]+$",
-        "",
-        name
-    )
+    name = re.sub(r"[\.\&\-\s]+$", "", name)
 
-    name = re.sub(
-        r"\s+",
-        " ",
-        name
-    ).strip()
+    name = re.sub(r"\s+", " ", name).strip()
 
     return name
 
@@ -153,39 +117,30 @@ def normalize_party_name(name):
 # 🔥 ENTITY HASH
 # =========================================================
 
+
 def build_entity_hash(name):
 
     if not name:
         return ""
 
-    return hashlib.sha256(
-        name.upper().encode()
-    ).hexdigest()
-
+    return hashlib.sha256(name.upper().encode()).hexdigest()
 
 
 # =========================================================
 # 🔥 FULL CAPTION NORMALIZATION
 # =========================================================
 
+
 def normalize_party_caption(case_title):
 
     if not case_title:
-        return {
-            "petitioner": "",
-            "respondent": ""
-        }
+        return {"petitioner": "", "respondent": ""}
 
     title = normalize_ocr_spacing(case_title)
 
     split_pattern = r"\b(?:VS\.?|VERSUS|V\.?)\b"
 
-    parts = re.split(
-        split_pattern,
-        title,
-        maxsplit=1,
-        flags=re.I
-    )
+    parts = re.split(split_pattern, title, maxsplit=1, flags=re.I)
 
     petitioner = ""
     respondent = ""
@@ -197,36 +152,18 @@ def normalize_party_caption(case_title):
         respondent = normalize_party_name(parts[1])
 
     return {
-
         "petitioner": {
-
             "canonical_name": petitioner,
-
-            "entity_type": detect_entity_type(
-                petitioner
-            ),
-
-            "entity_hash": build_entity_hash(
-                petitioner
-            ),
-
-            "confidence": 98
+            "entity_type": detect_entity_type(petitioner),
+            "entity_hash": build_entity_hash(petitioner),
+            "confidence": 98,
         },
-
         "respondent": {
-
             "canonical_name": respondent,
-
-            "entity_type": detect_entity_type(
-                respondent
-            ),
-
-            "entity_hash": build_entity_hash(
-                respondent
-            ),
-
-            "confidence": 98
-        }
+            "entity_type": detect_entity_type(respondent),
+            "entity_hash": build_entity_hash(respondent),
+            "confidence": 98,
+        },
     }
 
 

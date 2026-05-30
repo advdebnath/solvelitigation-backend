@@ -1,5 +1,6 @@
+from typing import Dict, List, Optional
+
 from pymongo import MongoClient
-from typing import List, Dict, Optional
 
 MONGO_URI = "mongodb://sl_app:Debnath%401966@127.0.0.1:27017/solvelitigation"
 
@@ -11,6 +12,7 @@ db = client["solvelitigation"]
 # 🔥 NORMALIZE JUDGE NAME
 # ============================================
 
+
 def normalize_judge_name(name: str) -> str:
     return name.strip().upper()
 
@@ -19,13 +21,11 @@ def normalize_judge_name(name: str) -> str:
 # 🔥 CORE JUDGE PREDICTION (SINGLE JUDGE)
 # ============================================
 
+
 def _single_judge_prediction(judge_name: str) -> Optional[Dict]:
     judge_name = normalize_judge_name(judge_name)
 
-    cases = list(db.judgments.find({
-        "judgeList": judge_name,
-        "outcome": {"$ne": None}
-    }))
+    cases = list(db.judgments.find({"judgeList": judge_name, "outcome": {"$ne": None}}))
 
     if len(cases) == 0:
         return None
@@ -39,13 +39,14 @@ def _single_judge_prediction(judge_name: str) -> Optional[Dict]:
         "judge": judge_name,
         "cases": total,
         "wins": wins,
-        "probability": probability
+        "probability": probability,
     }
 
 
 # ============================================
 # 🔥 MAIN FUNCTION (SINGLE OR MULTI-JUDGE)
 # ============================================
+
 
 def predict_with_judge(judge_input: Optional[str]):
     if not judge_input:
@@ -87,5 +88,5 @@ def predict_with_judge(judge_input: Optional[str]):
         "finalProbability": avg_probability,
         "confidence": confidence,
         "judgeBreakdown": results,
-        "totalCases": total_cases
+        "totalCases": total_cases,
     }

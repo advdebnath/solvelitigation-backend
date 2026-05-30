@@ -1,17 +1,16 @@
-from fastapi import APIRouter
-from pymongo import MongoClient
-
 # ============================================
 # 🔥 NEW FAISS + EMBEDDING (UPDATED)
 # ============================================
 from app.services.embedding_service import generate_embedding
-from app.services.faiss_service import search_by_embedding, fetch_documents
+from app.services.faiss_service import fetch_documents, search_by_embedding
+from fastapi import APIRouter
+from pymongo import MongoClient
 
 router = APIRouter()
 
-db = MongoClient(
-    "mongodb://sl_app:Debnath%401966@127.0.0.1:27017/solvelitigation"
-)["solvelitigation"]
+db = MongoClient("mongodb://sl_app:Debnath%401966@127.0.0.1:27017/solvelitigation")[
+    "solvelitigation"
+]
 
 
 # ============================================
@@ -91,7 +90,7 @@ This question relates to the legal principles concerning:
             "success": True,
             "answer": answer,
             "sources": cases,
-            "confidence": round(results[0]["score"], 3)
+            "confidence": round(results[0]["score"], 3),
         }
 
     except Exception as e:

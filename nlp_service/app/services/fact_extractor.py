@@ -1,5 +1,6 @@
 import re
 
+
 def clean(text: str):
     return re.sub(r"\s+", " ", text).strip()
 
@@ -7,10 +8,7 @@ def clean(text: str):
 def extract_parties(text: str):
     m = re.search(r"(.+?)\s+Versus\s+(.+?)(?:\n|$)", text, re.IGNORECASE)
     if m:
-        return {
-            "petitioner": clean(m.group(1)),
-            "respondent": clean(m.group(2))
-        }
+        return {"petitioner": clean(m.group(1)), "respondent": clean(m.group(2))}
     return {}
 
 
@@ -54,5 +52,5 @@ def extract_all(text: str):
         "date": extract_date(text),
         "facts": extract_facts(text),
         "issues": extract_issues(text),
-        "relief": extract_relief(text)
+        "relief": extract_relief(text),
     }

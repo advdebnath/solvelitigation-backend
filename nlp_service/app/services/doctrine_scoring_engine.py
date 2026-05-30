@@ -4,19 +4,14 @@
 
 import re
 
-from app.legal_ontology.doctrinal_ontology import (
-    DOCTRINAL_ONTOLOGY
-)
+from app.legal_ontology.doctrinal_ontology import DOCTRINAL_ONTOLOGY
 
 # =========================================================
 # 🔥 MAIN ENGINE
 # =========================================================
 
-def detect_doctrines(
-    full_text,
-    acts=None,
-    sections=None
-):
+
+def detect_doctrines(full_text, acts=None, sections=None):
 
     if not isinstance(full_text, str):
         full_text = str(full_text)
@@ -75,7 +70,7 @@ def detect_doctrines(
 
             doctrine_scores[doctrine] = {
                 "score": score,
-                "category": config.get("category")
+                "category": config.get("category"),
             }
 
     # =====================================================
@@ -83,18 +78,9 @@ def detect_doctrines(
     # =====================================================
 
     sorted_doctrines = sorted(
-        doctrine_scores.items(),
-        key=lambda x: x[1]["score"],
-        reverse=True
+        doctrine_scores.items(), key=lambda x: x[1]["score"], reverse=True
     )
 
-    dominant_doctrine = (
-        sorted_doctrines[0][0]
-        if sorted_doctrines
-        else "UNDETERMINED"
-    )
+    dominant_doctrine = sorted_doctrines[0][0] if sorted_doctrines else "UNDETERMINED"
 
-    return {
-        "dominant_doctrine": dominant_doctrine,
-        "all_doctrines": sorted_doctrines
-    }
+    return {"dominant_doctrine": dominant_doctrine, "all_doctrines": sorted_doctrines}

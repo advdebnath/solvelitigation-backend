@@ -1,5 +1,6 @@
 import re
 
+
 def extract_point_of_law(text, acts, sections):
     text_lower = text.lower()
 

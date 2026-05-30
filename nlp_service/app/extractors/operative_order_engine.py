@@ -1,16 +1,14 @@
 import re
 from collections import defaultdict
-from app.extractors.procedural_history_detector import (
+
+from app.extractors.procedural_history_detector import \
     detect_procedural_history
-)
 
 # ============================================================
 # 🔥 LEGAL OPERATIVE VERB ONTOLOGY
 # ============================================================
 
 LEGAL_OPERATIVE_VERBS = [
-
-
     "allowed",
     "dismissed",
     "disposed",
@@ -35,7 +33,6 @@ LEGAL_OPERATIVE_VERBS = [
 # ============================================================
 
 HISTORICAL_CONTEXT_MARKERS = [
-
     "trial court",
     "sessions court",
     "lower court",
@@ -60,140 +57,83 @@ HISTORICAL_CONTEXT_MARKERS = [
 # ============================================================
 
 DISPOSITION_PATTERNS = {
-
     "Appeal Allowed": [
-
         r"\bappeal\s+is\s+allowed\b",
         r"\bappeal\s+stands\s+allowed\b",
         r"\bappeal\s+allowed\b",
         r"\bimpugned\s+judgment\s+set\s+aside\b",
         r"\border\s+set\s+aside\b",
-
         r"\\bwe\\s+accordingly\\s+allow\\s+the\\s+appeal\\b",
-
         r"\\ballowed\\s+and\\s+set\\s+aside\\b",
-
         r"\\bimpugned\\s+judgment\\s+is\\s+set\\s+aside\\b",
-
         r"\\bjudgment\\s+is\\s+set\\s+aside\\b",
-
         r"\\bconviction\\s+set\\s+aside\\b",
-
         r"\\border\\s+quashed\\b",
-
         r"\\bproceedings\\s+quashed\\b",
-
         r"\bwrit\s+petition\s+allowed\b",
-
         r"\bwrit\s+petitions\s+are\s+allowed\b",
-
         r"\bliable\s+to\s+be\s+quashed\b",
-
         r"\bset\s+aside\s+all\s+the\s+orders\b",
-
         r"\borders?\s+.*?\s+quashed\b",
-
         r"\bthe\s+writ\s+petitions\s+are\s+allowed\b",
     ],
-
     "Appeal Dismissed": [
-
         r"\bappeal\s+is\s+dismissed\b",
-
         r"\bappeal\s+stands\s+dismissed\b",
-
         r"\bappeal\s+dismissed\b",
-
         r"\bdismissed\b",
-
         r"\bthe\s+appeal\s+fails\b",
-
         r"\bappeal\s+fails\b",
-
         r"\border\s+upheld\b",
-
         r"\bjudgment\s+upheld\b",
-
         r"\bconviction\s+upheld\b",
-
         r"\bwe\s+find\s+no\s+reason\s+to\s+interfere\b",
-
         r"\bno\s+reason\s+to\s+interfere\b",
-
         r"\bno\s+merit\b",
-
         r"\bdevoid\s+of\s+merit\b",
-
         r"\bfind\s+no\s+infirmity\b",
-
         r"\bno\s+infirmity\b",
-
         r"\binterference\s+is\s+not\s+warranted\b",
-
         r"\bno\s+case\s+for\s+interference\b",
-
         r"\bappeal\s+lacks\s+merit\b",
-
         r"\bwe\s+see\s+no\s+reason\s+to\s+interfere\b",
-
         r"\bjudgment\s+calls\s+for\s+no\s+interference\b",
-
         r"\bappeal\s+fails\s+and\s+is\s+dismissed\b",
-
         r"\bfindings\s+of\s+the\s+courts\s+below\b",
-
         # ====================================================
         # 🔥 ADVANCED SUPREME COURT DISMISSAL SEMANTICS
         # ====================================================
-
         r"\bdoes\s+not\s+warrant\s+interference\b",
-
         r"\bfindings\s+do\s+not\s+call\s+for\s+interference\b",
-
         r"\bwe\s+find\s+no\s+merit\s+in\s+the\s+appeal\b",
-
         r"\bappeal\s+is\s+without\s+merit\b",
-
         r"\bthe\s+appeal\s+deserves\s+to\s+be\s+dismissed\b",
-
         r"\bwe\s+do\s+not\s+find\s+any\s+ground\s+to\s+interfere\b",
-
         r"\bno\s+interference\s+is\s+called\s+for\b",
-
         r"\bjudgment\s+does\s+not\s+suffer\s+from\s+any\s+infirmity\b",
     ],
-
     "Conviction Upheld": [
-
         r"\bconviction\s+is\s+upheld\b",
         r"\bconviction\s+affirmed\b",
         r"\bconviction\s+sustained\b",
     ],
-
     "Acquittal": [
-
         r"\bacquitted\b",
         r"\bbenefit\s+of\s+doubt\b",
         r"\baccused\s+is\s+acquitted\b",
     ],
-
     "Remand": [
-
         r"\bmatter\s+is\s+remanded\b",
         r"\bmatter\s+stands\s+remanded\b",
         r"\bremitted\s+back\b",
         r"\bcase\s+remanded\b",
     ],
-
     "Sentence Modified": [
-
         r"\bsentence\s+modified\b",
         r"\bsentence\s+reduced\b",
         r"\bpunishment\s+modified\b",
     ],
-
     "Termination Quashed": [
-
         r"\btermination\s+quashed\b",
         r"\bdismissal\s+quashed\b",
         r"\breinstated\s+in\s+service\b",
@@ -205,21 +145,13 @@ DISPOSITION_PATTERNS = {
 # ============================================================
 
 DISPOSITION_WEIGHTS = {
-
     "Appeal Allowed": 120,
-
     "Acquittal": 120,
-
     "Termination Quashed": 115,
-
     "Remand": 95,
-
     "Sentence Modified": 90,
-
     "Appeal Dismissed": 80,
-
     "Conviction Upheld": 75,
-
     "Disposed": 30,
 }
 
@@ -227,6 +159,7 @@ DISPOSITION_WEIGHTS = {
 # ============================================================
 # 🔥 CLEAN TEXT
 # ============================================================
+
 
 def normalize_text(text):
 
@@ -241,6 +174,7 @@ def normalize_text(text):
 # ============================================================
 # 🔥 PARAGRAPH BUILDER
 # ============================================================
+
 
 def build_paragraphs(text):
 
@@ -257,17 +191,14 @@ def build_paragraphs(text):
     if len(paras) <= 3:
 
         paras = re.split(
-
-            r'(?<=[\.!?])\s+(?='
-            r'(?:we|therefore|thus|hence|accordingly|'
-            r'in view of|for the foregoing|appeal|petition|'
-            r'the appeal|the petition|ordered accordingly|'
-            r'consequently|resultantly|henceforth)'
-            r')',
-
+            r"(?<=[\.!?])\s+(?="
+            r"(?:we|therefore|thus|hence|accordingly|"
+            r"in view of|for the foregoing|appeal|petition|"
+            r"the appeal|the petition|ordered accordingly|"
+            r"consequently|resultantly|henceforth)"
+            r")",
             text,
-
-            flags=re.I
+            flags=re.I,
         )
 
     cleaned = []
@@ -286,10 +217,7 @@ def build_paragraphs(text):
 
     if len(cleaned) <= 2:
 
-        sentences = re.split(
-            r'(?<=[\.!?])\s+',
-            text
-        )
+        sentences = re.split(r"(?<=[\.!?])\s+", text)
 
         window = []
 
@@ -306,9 +234,7 @@ def build_paragraphs(text):
 
             if len(window) >= 4:
 
-                rebuilt.append(
-                    " ".join(window)
-                )
+                rebuilt.append(" ".join(window))
 
                 window = []
 
@@ -316,53 +242,36 @@ def build_paragraphs(text):
 
             cleaned = rebuilt
 
-
     # ====================================================
     # 🔥 HARD FALLBACK PARAGRAPH GUARANTEE
     # ====================================================
 
     if not cleaned:
 
-        emergency_sentences = re.split(
-            r'(?<=[\.\!\?])\s+',
-            text
-        )
+        emergency_sentences = re.split(r"(?<=[\.\!\?])\s+", text)
 
         emergency_sentences = [
-
-            normalize_text(x)
-
-            for x in emergency_sentences
-
-            if normalize_text(x)
+            normalize_text(x) for x in emergency_sentences if normalize_text(x)
         ]
 
         if emergency_sentences:
 
             cleaned = [
-
-                " ".join(
-                    emergency_sentences[i:i+5]
-                )
-
-                for i in range(
-                    0,
-                    len(emergency_sentences),
-                    5
-                )
+                " ".join(emergency_sentences[i : i + 5])
+                for i in range(0, len(emergency_sentences), 5)
             ]
 
         print("🔥 EMERGENCY PARAGRAPH FALLBACK ACTIVATED")
 
         print(len(cleaned))
 
-
-
     return cleaned
+
 
 # ============================================================
 # 🔥 WINNING PARTY INFERENCE
 # ============================================================
+
 
 def infer_winning_party(disposition):
 
@@ -389,8 +298,8 @@ def infer_winning_party(disposition):
 
 print("🔥🔥🔥 OPERATIVE ENGINE VERSION: MAY24_RUNTIME_SYNC_V1 🔥🔥🔥")
 
-def extract_operative_order(
 
+def extract_operative_order(
     full_text,
     semantic_paragraphs=None,
     category=None,
@@ -403,7 +312,6 @@ def extract_operative_order(
         if not full_text:
 
             return {
-
                 "operative_order": [],
                 "final_holding": "Unknown",
                 "disposition_type": "Unknown",
@@ -418,11 +326,7 @@ def extract_operative_order(
         # 🔥 USE SEMANTIC PARAGRAPHS
         # ====================================================
 
-        if semantic_paragraphs and isinstance(
-
-            semantic_paragraphs,
-            list
-        ):
+        if semantic_paragraphs and isinstance(semantic_paragraphs, list):
 
             paragraphs = semantic_paragraphs
 
@@ -478,7 +382,6 @@ def extract_operative_order(
 
                 para = str(para)
 
-
             para_lower = para.lower()
 
             # --------------------------------------------
@@ -489,21 +392,16 @@ def extract_operative_order(
 
             try:
 
-                stage_result = detect_procedural_history(
-                    para
-                )
+                stage_result = detect_procedural_history(para)
 
                 if stage_result:
 
-                    procedural_stage = stage_result[0].get(
-                        "stage"
-                    )
+                    procedural_stage = stage_result[0].get("stage")
 
             except Exception as e:
 
                 print("❌ Procedural Stage Detection Error")
                 print(str(e))
-
 
             print("🔥 PROCEDURAL STAGE:")
             print(procedural_stage)
@@ -515,68 +413,36 @@ def extract_operative_order(
             # ------------------------------------------------
 
             history_indicators = [
-
                 "high court",
-
                 "trial court",
-
                 "sessions judge",
-
                 "learned judge",
-
                 "tribunal",
-
                 "wakf tribunal",
-
                 "civil court",
-
                 "munsif",
-
                 "revision petition",
-
                 "written statement",
-
                 "plaintiff filed",
-
                 "defendant no.",
-
                 "evidence",
-
                 "dw-",
-
                 "pw-",
-
                 "trial",
-
                 "suit was dismissed",
-
                 "high court held",
-
                 "tribunal held",
-
                 "filed this appeal",
-
                 "approached this court",
-
                 "special leave petition",
-
                 "brief facts",
-
                 "case of the prosecution",
-
                 "convicted the appellant",
-
             ]
-
 
             if procedural_stage != "SUPREME_COURT_FINAL":
 
-                if any(
-
-                    indicator in para_lower
-
-                    for indicator in history_indicators
-                ):
+                if any(indicator in para_lower for indicator in history_indicators):
 
                     paragraph_score -= 160
 
@@ -588,59 +454,32 @@ def extract_operative_order(
             # 🔥 LOWER COURT DISMISSAL COLLAPSE
             # ------------------------------------------------
 
-            if (
-
-                any(
-
-                    indicator in para_lower
-
-                    for indicator in [
-
-                        "tribunal",
-
-                        "high court",
-
-                        "trial court",
-
-                        "civil court",
-
-                        "sessions judge",
-
-                    ]
-                )
-
-                and
-
-                any(
-
-                    word in para_lower
-
-                    for word in [
-
-                        "dismissed",
-
-                        "allowed",
-
-                        "upheld",
-
-                        "decreed",
-
-                    ]
-                )
+            if any(
+                indicator in para_lower
+                for indicator in [
+                    "tribunal",
+                    "high court",
+                    "trial court",
+                    "civil court",
+                    "sessions judge",
+                ]
+            ) and any(
+                word in para_lower
+                for word in [
+                    "dismissed",
+                    "allowed",
+                    "upheld",
+                    "decreed",
+                ]
             ):
 
                 paragraph_score -= 220
-
-
 
             # --------------------------------------------
             # POSITION WEIGHT
             # --------------------------------------------
 
-            position_ratio = (
-
-                idx / max(len(paragraphs), 1)
-            )
+            position_ratio = idx / max(len(paragraphs), 1)
 
             if position_ratio > 0.92:
 
@@ -654,7 +493,6 @@ def extract_operative_order(
 
                 paragraph_score += 50
 
-
             # --------------------------------------------
             # VERB BONUS
             # --------------------------------------------
@@ -665,61 +503,41 @@ def extract_operative_order(
 
                     paragraph_score += 10
 
-
             # --------------------------------------------
             # 🔥 DISPOSITION SEMANTIC NORMALIZATION
             # --------------------------------------------
 
             para_lower = re.sub(
-                r"\bstand\s+dismissed\b",
-                "stands dismissed",
-                para_lower
+                r"\bstand\s+dismissed\b", "stands dismissed", para_lower
             )
 
             para_lower = re.sub(
-                r"\bappeal\s+dismissed\b",
-                "appeal is dismissed",
-                para_lower
+                r"\bappeal\s+dismissed\b", "appeal is dismissed", para_lower
             )
 
             para_lower = re.sub(
-                r"\bpetition\s+dismissed\b",
-                "petition is dismissed",
-                para_lower
+                r"\bpetition\s+dismissed\b", "petition is dismissed", para_lower
+            )
+
+            para_lower = re.sub(r"\bstand\s+allowed\b", "stands allowed", para_lower)
+
+            para_lower = re.sub(
+                r"\bappeal\s+allowed\b", "appeal is allowed", para_lower
             )
 
             para_lower = re.sub(
-                r"\bstand\s+allowed\b",
-                "stands allowed",
-                para_lower
-            )
-
-            para_lower = re.sub(
-                r"\bappeal\s+allowed\b",
-                "appeal is allowed",
-                para_lower
-            )
-
-            para_lower = re.sub(
-                r"\bpetition\s+allowed\b",
-                "petition is allowed",
-                para_lower
+                r"\bpetition\s+allowed\b", "petition is allowed", para_lower
             )
 
             para_lower = re.sub(
                 r"\bno\s+interference\s+called\s+for\b",
                 "no interference is called for",
-                para_lower
+                para_lower,
             )
 
             para_lower = re.sub(
-                r"\bdeserve\s+dismissal\b",
-                "deserves to be dismissed",
-                para_lower
+                r"\bdeserve\s+dismissal\b", "deserves to be dismissed", para_lower
             )
-
-
-
 
             # --------------------------------------------
             # PATTERN MATCHING
@@ -729,34 +547,21 @@ def extract_operative_order(
 
                 for pattern in patterns:
 
-                    if re.search(
-
-                        pattern,
-                        para_lower,
-                        re.IGNORECASE
-                    ):
+                    if re.search(pattern, para_lower, re.IGNORECASE):
 
                         # --------------------------------
                         # 🔥 NON-OPERATIVE CONTEXT SUPPRESSION
                         # --------------------------------
 
                         suppression_terms = [
-
                             "whether",
-
                             "candidate",
-
                             "disclosure",
-
                             "antecedent",
-
-                            "convicted/acquitted/discharged"
+                            "convicted/acquitted/discharged",
                         ]
 
-                        if any(
-                            term in para_lower
-                            for term in suppression_terms
-                        ):
+                        if any(term in para_lower for term in suppression_terms):
 
                             continue
 
@@ -768,29 +573,14 @@ def extract_operative_order(
 
                         tail_window = tail_text.lower()
 
-                        normalized_para = re.sub(
-                            r"\s+",
-                            " ",
-                            para_lower
-                        ).strip()
+                        normalized_para = re.sub(r"\s+", " ", para_lower).strip()
 
-                        normalized_tail = re.sub(
-                            r"\s+",
-                            " ",
-                            tail_window
-                        )
+                        normalized_tail = re.sub(r"\s+", " ", tail_window)
 
-                        if (
-
-                            normalized_para[:250] in normalized_tail
-
-                            or
-
-                            any(
-                                phrase in normalized_tail
-                                for phrase in normalized_para.split(".")[:3]
-                                if len(phrase.strip()) > 25
-                            )
+                        if normalized_para[:250] in normalized_tail or any(
+                            phrase in normalized_tail
+                            for phrase in normalized_para.split(".")[:3]
+                            if len(phrase.strip()) > 25
                         ):
 
                             score += 30
@@ -800,34 +590,20 @@ def extract_operative_order(
                         # ------------------------------------------------
 
                         if any(
-
                             phrase in para_lower
-
                             for phrase in [
-
                                 "appeal allowed",
-
                                 "appeals are allowed",
-
                                 "we accordingly allow",
-
                                 "impugned judgment set aside",
-
                                 "judgment set aside",
-
                                 "conviction set aside",
-
                                 "order set aside",
-
                                 "order quashed",
-
                                 "proceedings quashed",
-
                                 "petition allowed",
-
                                 "writ petitions are allowed to the extent indicated above",
-
-                                "allowed and set aside"
+                                "allowed and set aside",
                             ]
                         ):
 
@@ -838,38 +614,26 @@ def extract_operative_order(
                         # ====================================================
 
                         historical_hits = sum(
-
-                            1 for marker in HISTORICAL_CONTEXT_MARKERS
+                            1
+                            for marker in HISTORICAL_CONTEXT_MARKERS
                             if marker in para_lower
                         )
 
                         if historical_hits > 0:
 
-                            score -= (historical_hits * 55)
-
-
+                            score -= historical_hits * 55
 
                         # ------------------------------------------------
                         # 🔥 STRONG DISMISSAL SEMANTIC BOOST
                         # ------------------------------------------------
 
                         if any(
-
                             phrase in para_lower
-
                             for phrase in [
-
                                 "dismissed",
-
                                 "upheld",
-
-
-
-
                                 "no reason to interfere",
-
                                 "courts below",
-
                                 "conviction upheld",
                             ]
                         ):
@@ -880,124 +644,93 @@ def extract_operative_order(
                         # 🔥 APPELLATE CONTRADICTION RESOLUTION
                         # ----------------------------------------
 
-                        if (
-                            "dismiss" in para_lower
-                            and any(
-                                x in para_lower
-                                for x in [
-                                    "allowed",
-                                    "set aside",
-                                    "quashed"
-                                ]
-                            )
+                        if "dismiss" in para_lower and any(
+                            x in para_lower for x in ["allowed", "set aside", "quashed"]
                         ):
 
                             score -= 80
-
 
                         # ------------------------------------------------
                         # 🔥 SUPREME COURT FINALITY BOOST
                         # ------------------------------------------------
 
                         finality_indicators = [
-
                             "we find",
-
                             "we hold",
-
                             "we are of the opinion",
-
                             "no reason to interfere",
-
                             "appeal deserves",
-
                             "appeal stands",
-
                             "ordered accordingly",
-
                             "accordingly",
-
                             "thus",
-
                         ]
 
                         if any(
-
-                            indicator in para_lower
-
-                            for indicator in finality_indicators
+                            indicator in para_lower for indicator in finality_indicators
                         ):
 
                             score += 120
-
-
 
                         # ----------------------------------------
                         # 🔥 JURISPRUDENTIAL PRIORITY WEIGHT
                         # ----------------------------------------
 
                         weighted_score = score + DISPOSITION_WEIGHTS.get(
-                            disposition,
-                            50
+                            disposition, 50
                         )
 
                         # Penalize generic disposal if strong
                         # relief language exists
 
-                        if (
-                            disposition.lower() == "disposed"
-                            and any(
-                                strong_word in para_lower
-                                for strong_word in [
-                                    "allowed",
-                                    "quashed",
-                                    "set aside",
-                                    "acquitted",
-                                    "reinstated",
-                                    "released",
-                                ]
-                            )
+                        if disposition.lower() == "disposed" and any(
+                            strong_word in para_lower
+                            for strong_word in [
+                                "allowed",
+                                "quashed",
+                                "set aside",
+                                "acquitted",
+                                "reinstated",
+                                "released",
+                            ]
                         ):
 
                             weighted_score -= 100
 
-                        disposition_scores[
-                            disposition
-                        ] += weighted_score
+                        disposition_scores[disposition] += weighted_score
 
                         print("🔥 WEIGHTED SCORE:")
-                        print({
-                            "disposition": disposition,
-                            "raw_score": score,
-                            "weighted_score": weighted_score
-                        })
+                        print(
+                            {
+                                "disposition": disposition,
+                                "raw_score": score,
+                                "weighted_score": weighted_score,
+                            }
+                        )
                         print("🔥 DISPOSITION MATCH:")
-                        print({
-                            "disposition": disposition,
-                            "score": score,
-                            "paragraph": para[:300]
-                        })
+                        print(
+                            {
+                                "disposition": disposition,
+                                "score": score,
+                                "paragraph": para[:300],
+                            }
+                        )
 
-
-                        matched_signals.append({
-
-                            "disposition": disposition,
-                            "paragraph": para,
-                            "score": score,
-                        })
+                        matched_signals.append(
+                            {
+                                "disposition": disposition,
+                                "paragraph": para,
+                                "score": score,
+                            }
+                        )
 
                         # ----------------------------
                         # BEST PARAGRAPH
                         # ----------------------------
 
-                        if score > disposition_scores.get(
-                            "BEST_INTERNAL",
-                            0
-                        ):
+                        if score > disposition_scores.get("BEST_INTERNAL", 0):
 
-                            disposition_scores[
-                                "BEST_INTERNAL"
-                            ] = score
+                            disposition_scores["BEST_INTERNAL"] = score
 
                             best_paragraph = para
 
@@ -1008,9 +741,7 @@ def extract_operative_order(
         # ====================================================
 
         detected_dispositions = [
-
-            k for k in disposition_scores.keys()
-            if k != "BEST_INTERNAL"
+            k for k in disposition_scores.keys() if k != "BEST_INTERNAL"
         ]
 
         if len(detected_dispositions) > 1:
@@ -1032,27 +763,18 @@ def extract_operative_order(
         if disposition_scores:
 
             filtered_scores = {
-                k: v
-                for k, v in disposition_scores.items()
-                if k != "BEST_INTERNAL"
+                k: v for k, v in disposition_scores.items() if k != "BEST_INTERNAL"
             }
 
             if filtered_scores:
 
-                final_holding = max(
-                    filtered_scores,
-                    key=filtered_scores.get
-                )
+                final_holding = max(filtered_scores, key=filtered_scores.get)
 
-                highest_score = filtered_scores.get(
-                    final_holding,
-                    0
-                )
+                highest_score = filtered_scores.get(final_holding, 0)
 
                 print("🔥 PRIMARY DISPOSITION PROMOTED")
                 print(final_holding)
                 print(highest_score)
-
 
         # ====================================================
         # 🔥 SUPREME COURT FINAL OVERRIDE
@@ -1063,24 +785,13 @@ def extract_operative_order(
         print("🔥 BEST PARAGRAPH LOWER:")
         print(best_paragraph_lower)
 
-
         # ====================================================
         # 🔥 GENERIC FINAL OPERATIVE FALLBACK
         # ====================================================
 
-        if (
+        if final_holding == "Disposition Unknown" or highest_score <= 0:
 
-            final_holding == "Disposition Unknown"
-
-            or highest_score <= 0
-        ):
-
-            tail_start = max(
-
-                int(len(paragraphs) * 0.80),
-
-                0
-            )
+            tail_start = max(int(len(paragraphs) * 0.80), 0)
 
             tail_candidates = paragraphs[tail_start:]
 
@@ -1088,7 +799,9 @@ def extract_operative_order(
 
                 if isinstance(candidate, dict):
 
-                    candidate = candidate.get("paragraph") or candidate.get("text") or ""
+                    candidate = (
+                        candidate.get("paragraph") or candidate.get("text") or ""
+                    )
 
                 candidate_text = str(candidate).strip()
 
@@ -1099,44 +812,26 @@ def extract_operative_order(
                     continue
 
                 if any(
-
-                    indicator in candidate_lower
-
-                    for indicator in history_indicators
+                    indicator in candidate_lower for indicator in history_indicators
                 ):
 
-                    print(
-                        "❌ OPERATIVE CANDIDATE SUPPRESSED:"
-                    )
+                    print("❌ OPERATIVE CANDIDATE SUPPRESSED:")
 
                     print(candidate_text[:800])
 
                     continue
 
                 if any(
-
                     phrase in candidate_lower
-
                     for phrase in [
-
                         "we find",
-
                         "we hold",
-
                         "accordingly",
-
                         "thus",
-
                         "therefore",
-
                         "ordered accordingly",
-
                         "no reason to interfere",
-
-
-
                         "interference",
-
                     ]
                 ):
 
@@ -1166,24 +861,15 @@ def extract_operative_order(
 
                     winning_party = "Respondent"
 
-                    para_match = re.match(
-
-                        r"^\s*(\d+)\.",
-
-                        candidate_text
-                    )
+                    para_match = re.match(r"^\s*(\d+)\.", candidate_text)
 
                     if para_match:
 
-                        operative_para = (
-                            f"para-{para_match.group(1)}"
-                        )
+                        operative_para = f"para-{para_match.group(1)}"
 
                     else:
 
-                        operative_para = (
-                            f"para-{len(paragraphs)}"
-                        )
+                        operative_para = f"para-{len(paragraphs)}"
 
                     best_paragraph = candidate_text
 
@@ -1191,59 +877,33 @@ def extract_operative_order(
 
                     print("🔥 GENERIC FINAL OPERATIVE FALLBACK TRIGGERED")
 
-
                     normalized_para = re.sub(
-                        r"\s+",
-                        " ",
-                        re.sub(
-                            r"[^a-z0-9]",
-                            " ",
-                            candidate_text.lower()
-                        )
+                        r"\s+", " ", re.sub(r"[^a-z0-9]", " ", candidate_text.lower())
                     ).strip()
 
                     supreme_positive_markers = [
-
                         "allow these appeals",
-
                         "appeals are allowed",
-
                         "appeal is allowed",
-
                         "writ petition is allowed",
-
                         "writ petitions are allowed",
-
                         "petition is allowed",
-
                         "petitions are allowed",
-
                         "rule is made absolute",
-
                         "impugned order is quashed",
-
                         "order stands quashed",
-
                         "allowed to the extent indicated above",
-
                         "set aside the orders of conviction",
-
                         "set aside the conviction",
-
                         "set at liberty",
-
                         "released forthwith",
-
                     ]
 
                     if any(
-                        marker in normalized_para
-                        for marker in supreme_positive_markers
+                        marker in normalized_para for marker in supreme_positive_markers
                     ):
 
-                        print(
-                            "🔥 SUPREME COURT FINAL OVERRIDE TRIGGERED"
-                        )
+                        print("🔥 SUPREME COURT FINAL OVERRIDE TRIGGERED")
 
                         final_holding = "Appeal Allowed"
 
@@ -1258,31 +918,20 @@ def extract_operative_order(
                         disposition_scores = {}
 
                         return {
-
                             "operative_order": [],
-
                             "final_holding": final_holding,
-
                             "disposition_type": disposition_type,
-
                             "winning_party": winning_party,
-
                             "operative_para": operative_para,
-
                             "paragraph": candidate_text,
-
                             "confidence": 95,
-
                             "signals": [],
-
-                            "contradictions": []
-
+                            "contradictions": [],
                         }
 
                     print(candidate_text[:500])
 
                     break
-
 
         # ====================================================
         confidence = 0
@@ -1292,20 +941,13 @@ def extract_operative_order(
 
         if highest_score > 0:
 
-            confidence = min(
-
-                highest_score,
-
-                100
-            )
+            confidence = min(highest_score, 100)
 
         # ====================================================
         # 🔥 WINNING PARTY
         # ====================================================
 
-        winning_party = infer_winning_party(
-            final_holding
-        )
+        winning_party = infer_winning_party(final_holding)
 
         # ====================================================
         # 🔥 OPERATIVE SIGNAL DEDUP ENGINE
@@ -1320,10 +962,7 @@ def extract_operative_order(
             if not isinstance(sig, dict):
                 continue
 
-            para = sig.get(
-                "paragraph",
-                ""
-            ).strip().lower()
+            para = sig.get("paragraph", "").strip().lower()
 
             if not para:
                 continue
@@ -1342,17 +981,11 @@ def extract_operative_order(
         # ====================================================
 
         result = {
-
             "operative_order": matched_signals,
-
             "final_holding": final_holding,
-
             "disposition_type": final_holding,
-
             "winning_party": winning_party,
-
             "operative_para": (
-
                 operative_para
                 if "operative_para" in locals()
                 else (
@@ -1361,13 +994,9 @@ def extract_operative_order(
                     else "para-unknown"
                 )
             ),
-
             "paragraph": best_paragraph,
-
             "confidence": confidence,
-
             "signals": matched_signals,
-
             "contradictions": contradictions,
         }
 
@@ -1382,7 +1011,6 @@ def extract_operative_order(
         print(str(e))
 
         return {
-
             "operative_order": [],
             "final_holding": "Disposition Unknown",
             "disposition_type": "Unknown",

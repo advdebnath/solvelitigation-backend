@@ -6,72 +6,41 @@ from collections import defaultdict
 # =========================================================
 
 LEGAL_POINT_PATTERNS = {
-
-    "Wakf Property Dispute": [
-        "wakf property",
-        "wakf board",
-        "wakf tribunal"
-    ],
-
+    "Wakf Property Dispute": ["wakf property", "wakf board", "wakf tribunal"],
     "Tenancy Surrender": [
         "surrender tenancy",
         "tenancy rights",
-        "tenant in the premises"
+        "tenant in the premises",
     ],
-
-    "Joint Hindu Family": [
-        "joint hindu family",
-        "karta",
-        "coparcener"
-    ],
-
-    "Constitutional Jurisdiction": [
-        "article 226",
-        "article 227",
-        "writ petition"
-    ],
-
-    "Bail": [
-        "anticipatory bail",
-        "regular bail",
-        "grant of bail"
-    ],
-
-    "Murder": [
-        "section 302",
-        "murder",
-        "homicide"
-    ]
+    "Joint Hindu Family": ["joint hindu family", "karta", "coparcener"],
+    "Constitutional Jurisdiction": ["article 226", "article 227", "writ petition"],
+    "Bail": ["anticipatory bail", "regular bail", "grant of bail"],
+    "Murder": ["section 302", "murder", "homicide"],
 }
 
 # =========================================================
 # 🔥 CATEGORY DETECTION
 # =========================================================
 
+
 def detect_category(text):
 
     text = text.lower()
 
-    if any(x in text for x in [
-        "fir",
-        "charge sheet",
-        "accused",
-        "conviction",
-        "sentence"
-    ]):
+    if any(
+        x in text for x in ["fir", "charge sheet", "accused", "conviction", "sentence"]
+    ):
         return "Criminal"
 
     return "Civil"
+
 
 # =========================================================
 # 🔥 MAIN EXTRACTOR
 # =========================================================
 
-def extract_points_of_law(
-    full_text="",
-    acts=None,
-    clustered_issues=None
-):
+
+def extract_points_of_law(full_text="", acts=None, clustered_issues=None):
 
     if acts is None:
         acts = []
@@ -98,9 +67,7 @@ def extract_points_of_law(
         if not issue_name:
             continue
 
-        detected[issue_name] += (
-            100 + score
-        )
+        detected[issue_name] += 100 + score
 
     # -----------------------------------------------------
     # 🔥 PRIORITY 2 → LEGAL PHRASES
@@ -110,13 +77,7 @@ def extract_points_of_law(
 
         for pattern in patterns:
 
-            hits = len(
-                re.findall(
-                    re.escape(pattern),
-                    text,
-                    flags=re.I
-                )
-            )
+            hits = len(re.findall(re.escape(pattern), text, flags=re.I))
 
             if hits:
 
@@ -126,9 +87,7 @@ def extract_points_of_law(
     # 🔥 ACT BASED BOOST
     # -----------------------------------------------------
 
-    acts_lower = [
-        a.lower() for a in acts
-    ]
+    acts_lower = [a.lower() for a in acts]
 
     if any("wakf" in a for a in acts_lower):
 
@@ -142,11 +101,7 @@ def extract_points_of_law(
     # 🔥 FINAL SORTING
     # -----------------------------------------------------
 
-    final_points = sorted(
-        detected.items(),
-        key=lambda x: x[1],
-        reverse=True
-    )
+    final_points = sorted(detected.items(), key=lambda x: x[1], reverse=True)
 
     cleaned = []
 
@@ -164,12 +119,7 @@ def extract_points_of_law(
 
         seen.add(normalized)
 
-        cleaned.append({
-
-            "point": normalized,
-
-            "category": category
-        })
+        cleaned.append({"point": normalized, "category": category})
 
     # -----------------------------------------------------
     # 🔥 LIMIT
@@ -178,30 +128,19 @@ def extract_points_of_law(
     cleaned = cleaned[:6]
 
     return {
-
         "points_of_law": cleaned,
-
         "category": category,
-
-        "confidence": min(
-            95,
-            60 + len(cleaned) * 5
-        )
+        "confidence": min(95, 60 + len(cleaned) * 5),
     }
+
 
 # =========================================================
 # 🔥 LEGACY COMPATIBILITY
 # =========================================================
 
-def extract_canonical_points_of_law(
-    full_text="",
-    acts=None,
-    clustered_issues=None
-):
+
+def extract_canonical_points_of_law(full_text="", acts=None, clustered_issues=None):
 
     return extract_points_of_law(
-        full_text=full_text,
-        acts=acts,
-        clustered_issues=clustered_issues
+        full_text=full_text, acts=acts, clustered_issues=clustered_issues
     )
-

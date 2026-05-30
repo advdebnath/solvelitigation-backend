@@ -1,10 +1,10 @@
+from app.api.enqueue import router as enqueue_router
 from fastapi import FastAPI
 
 # ============================================
 # 🔥 SAFE ROUTER IMPORTS
 # ============================================
 
-from app.api.enqueue import router as enqueue_router
 
 pdf_router = None
 intelligent_router = None
@@ -32,19 +32,16 @@ except Exception as e:
     print("❌ legal_router failed:", e)
 
 from app.config import settings
+from app.services.embedding_service import generate_embedding
+from app.services.faiss_service import build_index  # ✅ ADDED
+from app.services.faiss_service import (fetch_documents, load_index,
+                                        search_by_embedding)
 
 # ============================================
 # 🔥 FAISS + EMBEDDING
 # ============================================
 
-from app.services.faiss_service import (
-    search_by_embedding,
-    fetch_documents,
-    load_index,
-    build_index   # ✅ ADDED
-)
 
-from app.services.embedding_service import generate_embedding
 
 # ============================================
 # ✅ APP
@@ -61,6 +58,7 @@ app = FastAPI(
 # 🚀 STARTUP
 # ============================================
 
+
 @app.on_event("startup")
 def startup_event():
     print("🚀 NLP SERVICE STARTING...")
@@ -72,6 +70,7 @@ def startup_event():
         print("❌ FAISS ERROR:", e)
 
     print("✅ EMBEDDING READY (LAZY LOAD)")
+
 
 # ============================================
 # 🔥 ROUTES
@@ -95,17 +94,16 @@ if legal_router:
 # ❤️ HEALTH
 # ============================================
 
+
 @app.get("/health")
 def health():
-    return {
-        "status": "ok",
-        "service": settings.NLP_SERVICE_NAME,
-        "version": "2.4.0"
-    }
+    return {"status": "ok", "service": settings.NLP_SERVICE_NAME, "version": "2.4.0"}
+
 
 # ============================================
 # 🔍 FAISS SEARCH
 # ============================================
+
 
 @app.post("/faiss/search")
 def faiss_search(data: dict):
@@ -123,19 +121,17 @@ def faiss_search(data: dict):
         results = search_by_embedding(embedding)
         docs = fetch_documents(results)
 
-        return {
-            "success": True,
-            "count": len(docs),
-            "results": docs
-        }
+        return {"success": True, "count": len(docs), "results": docs}
 
     except Exception as e:
         print("❌ FAISS SEARCH ERROR:", e)
         return {"success": True, "count": 0, "results": []}
 
+
 # ============================================
 # 🔄 FAISS BUILD (CRITICAL FIX)
 # ============================================
+
 
 @app.get("/faiss/build")
 def rebuild_faiss():
@@ -144,23 +140,20 @@ def rebuild_faiss():
 
         build_index()
 
-        return {
-            "success": True,
-            "status": "rebuilt"
-        }
+        return {"success": True, "status": "rebuilt"}
 
     except Exception as e:
         import traceback
+
         traceback.print_exc()
 
-        return {
-            "success": False,
-            "error": str(e)
-        }
+        return {"success": False, "error": str(e)}
+
 
 # ============================================
 # ROOT
 # ============================================
+
 
 @app.get("/")
 def root():

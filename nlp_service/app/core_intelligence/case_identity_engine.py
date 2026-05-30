@@ -23,75 +23,50 @@
 
 import re
 
-from app.extractors.case_number_bridge import (
+from app.extractors.case_number_bridge import \
     extract_case_number_bridge as authoritative_extract_case_number
-)
-
 
 # =========================================================
 # 🔥 CANONICAL CASE PATTERNS
 # =========================================================
 
 CASE_PATTERNS = [
-
     # -----------------------------------------------------
     # 🔥 CRIMINAL APPEALS
     # -----------------------------------------------------
-
     r"(CRIMINAL\s+APPEAL\s+NO\.?\s*[\w\-\/]+\s*OF\s*\d{4})",
-
     r"(CRIMINAL\s+APPEAL\s+NOS\.?\s*[\w\-\/,\s]+\s*OF\s*\d{4})",
-
     r"(CRL\.?A\.?\s*NO\.?\s*[\w\-\/]+)",
-
     # -----------------------------------------------------
     # 🔥 CIVIL APPEALS
     # -----------------------------------------------------
-
     r"(CIVIL\s+APPEAL\s+NO\.?\s*[\w\-\/]+\s*OF\s*\d{4})",
-
     r"(CIVIL\s+APPEAL\s+NOS\.?\s*[\w\-\/,\s]+\s*OF\s*\d{4})",
-
-
     # 🔥 SPECIAL LEAVE PETITIONS
     # -----------------------------------------------------
-
     r"(SPECIAL\s+LEAVE\s+PETITION\s*\(.*?\)\s*NO\.?\s*[\w\-\/]+\s*OF\s*\d{4})",
-
     r"(SLP\s*\(C\)\s*NO\.?\s*[\w\-\/]+)",
-
     r"(SLP\s*\(CRL\.?\)\s*NO\.?\s*[\w\-\/]+)",
-
     # -----------------------------------------------------
     # 🔥 WRIT PETITIONS
     # -----------------------------------------------------
-
     r"(WRIT\s+PETITION\s*\(.*?\)\s*NO\.?\s*[\w\-\/]+\s*OF\s*\d{4})",
-
     r"(W\.P\.\s*NO\.?\s*[\w\-\/]+)",
-
     # -----------------------------------------------------
     # 🔥 REVIEW PETITIONS
     # -----------------------------------------------------
-
     r"(REVIEW\s+PETITION\s*\(.*?\)\s*NO\.?\s*[\w\-\/]+)",
-
     # -----------------------------------------------------
     # 🔥 TRANSFER PETITIONS
     # -----------------------------------------------------
-
     r"(TRANSFER\s+PETITION\s*\(.*?\)\s*NO\.?\s*[\w\-\/]+)",
-
     # -----------------------------------------------------
     # 🔥 DIARY NUMBERS
     # -----------------------------------------------------
-
     r"(DIARY\s+NO\.?\s*[\w\-\/]+)",
-
     # -----------------------------------------------------
     # 🔥 MISC APPLICATIONS
     # -----------------------------------------------------
-
     r"(MISC\.?\s+APPLICATION\s+NO\.?\s*[\w\-\/]+)",
 ]
 
@@ -100,6 +75,7 @@ CASE_PATTERNS = [
 # 🔥 EXTRACT CASE NUMBER
 # =========================================================
 
+
 def extract_case_number(text):
 
     if not text:
@@ -107,29 +83,21 @@ def extract_case_number(text):
             "case_number": "Unknown Case",
             "value": "Unknown Case",
             "confidence": 0,
-            "source": "case_identity_engine"
+            "source": "case_identity_engine",
         }
 
     # =====================================================
     # 🔒 AUTHORITATIVE CASE NUMBER EXTRACTION
     # =====================================================
 
-    extracted = authoritative_extract_case_number(
-        text
-    )
+    extracted = authoritative_extract_case_number(text)
 
     print("🔥 RAW AUTHORITATIVE EXTRACTOR OUTPUT 🔥")
     print(extracted)
 
-    extracted_case_number = extracted.get(
-        "case_number",
-        "Unknown Case"
-    )
+    extracted_case_number = extracted.get("case_number", "Unknown Case")
 
-    confidence = extracted.get(
-        "confidence",
-        0
-    )
+    confidence = extracted.get("confidence", 0)
 
     print("🔥 AUTHORITATIVE CASE NUMBER:")
     print(extracted)
@@ -138,12 +106,14 @@ def extract_case_number(text):
         "case_number": extracted_case_number,
         "value": extracted_case_number,
         "confidence": confidence,
-        "source": "case_identity_engine"
+        "source": "case_identity_engine",
     }
+
 
 # =========================================================
 # 🔥 BUILD CANONICAL CASE OBJECT
 # =========================================================
+
 
 def build_canonical_case_object(full_text=""):
 
@@ -154,6 +124,5 @@ def build_canonical_case_object(full_text=""):
         "case_number": case_number,
         "confidence": case_number.get("confidence", 0),
         "validation": {},
-        "contradictions": []
+        "contradictions": [],
     }
-

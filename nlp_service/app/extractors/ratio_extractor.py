@@ -5,7 +5,6 @@ import re
 # =========================================================
 
 INVALID_RATIO_PATTERNS = [
-
     "criminal appeal no",
     "civil appeal no",
     "special leave petition",
@@ -32,7 +31,6 @@ INVALID_RATIO_PATTERNS = [
 # =========================================================
 
 LEGAL_REASONING_TERMS = [
-
     "we are of the opinion",
     "it is evident",
     "it is clear",
@@ -54,41 +52,30 @@ LEGAL_REASONING_TERMS = [
 # 🔥 CLEAN TEXT
 # =========================================================
 
+
 def clean_text(text):
 
     if not text:
 
         return ""
 
-    text = text.replace(
-        "\r",
-        "\n"
-    )
+    text = text.replace("\r", "\n")
 
-    text = re.sub(
-        r"[ \t]+",
-        " ",
-        text
-    )
+    text = re.sub(r"[ \t]+", " ", text)
 
-    text = re.sub(
-        r"\n{3,}",
-        "\n\n",
-        text
-    )
+    text = re.sub(r"\n{3,}", "\n\n", text)
 
     return text.strip()
+
 
 # =========================================================
 # 🔥 SPLIT PARAGRAPHS
 # =========================================================
 
+
 def split_paragraphs(text):
 
-    parts = re.split(
-        r"\n\s*\n",
-        text
-    )
+    parts = re.split(r"\n\s*\n", text)
 
     cleaned = []
 
@@ -102,9 +89,11 @@ def split_paragraphs(text):
 
     return cleaned
 
+
 # =========================================================
 # 🔥 INVALID PARAGRAPH
 # =========================================================
+
 
 def is_invalid_paragraph(para):
 
@@ -118,9 +107,11 @@ def is_invalid_paragraph(para):
 
     return False
 
+
 # =========================================================
 # 🔥 SCORE LEGAL REASONING
 # =========================================================
+
 
 def score_ratio_paragraph(para):
 
@@ -154,23 +145,21 @@ def score_ratio_paragraph(para):
     # SECTION / ARTICLE BOOST
     # =====================================================
 
-    if re.search(
-        r"(section|article)\s+\d+",
-        lower
-    ):
+    if re.search(r"(section|article)\s+\d+", lower):
 
         score += 15
 
     return score
 
+
 # =========================================================
 # 🔥 EXTRACT PARA NUMBER
 # =========================================================
 
+
 def extract_para_number(para):
 
     patterns = [
-
         r"\b(\d{1,3})\.\s",
         r"\((\d{1,3})\)",
         r"paragraph\s+(\d{1,3})",
@@ -178,11 +167,7 @@ def extract_para_number(para):
 
     for pattern in patterns:
 
-        match = re.search(
-            pattern,
-            para,
-            re.I
-        )
+        match = re.search(pattern, para, re.I)
 
         if match:
 
@@ -190,9 +175,11 @@ def extract_para_number(para):
 
     return "para-unknown"
 
+
 # =========================================================
 # 🔥 MAIN RATIO ENGINE
 # =========================================================
+
 
 def extract_ratio(text):
 
@@ -201,7 +188,6 @@ def extract_ratio(text):
         if not text:
 
             return {
-
                 "ratio": None,
                 "para": None,
                 "confidence": 0,
@@ -214,7 +200,6 @@ def extract_ratio(text):
         if not paragraphs:
 
             return {
-
                 "ratio": None,
                 "para": None,
                 "confidence": 0,
@@ -224,13 +209,9 @@ def extract_ratio(text):
         # IGNORE FIRST 15%
         # =================================================
 
-        start_index = int(
-            len(paragraphs) * 0.15
-        )
+        start_index = int(len(paragraphs) * 0.15)
 
-        target_paragraphs = paragraphs[
-            start_index:
-        ]
+        target_paragraphs = paragraphs[start_index:]
 
         best_score = 0
 
@@ -242,9 +223,7 @@ def extract_ratio(text):
 
         for para in target_paragraphs:
 
-            score = score_ratio_paragraph(
-                para
-            )
+            score = score_ratio_paragraph(para)
 
             if score > best_score:
 
@@ -259,32 +238,18 @@ def extract_ratio(text):
         if not best_para:
 
             return {
-
                 "ratio": None,
                 "para": None,
                 "confidence": 0,
             }
 
         result = {
-
-            "ratio":
-                best_para[:2500],
-
-            "para":
-                extract_para_number(
-                    best_para
-                ),
-
-            "confidence":
-                min(
-                    99,
-                    best_score
-                ),
+            "ratio": best_para[:2500],
+            "para": extract_para_number(best_para),
+            "confidence": min(99, best_score),
         }
 
-        print(
-            "✅ Ratio Extracted:"
-        )
+        print("✅ Ratio Extracted:")
 
         print(result)
 
@@ -292,17 +257,14 @@ def extract_ratio(text):
 
     except Exception as e:
 
-        print(
-            "❌ RATIO EXTRACTION ERROR:",
-            e
-        )
+        print("❌ RATIO EXTRACTION ERROR:", e)
 
         return {
-
             "ratio": None,
             "para": None,
             "confidence": 0,
         }
+
 
 # =========================================================
 # 🔥 DIRECT TEST
@@ -310,7 +272,7 @@ def extract_ratio(text):
 
 if __name__ == "__main__":
 
-    sample = '''
+    sample = """
 
     42. We are of the opinion that
     the conviction cannot be sustained
@@ -318,8 +280,6 @@ if __name__ == "__main__":
 
     Therefore, the accused is entitled
     to acquittal.
-    '''
+    """
 
-    print(
-        extract_ratio(sample)
-    )
+    print(extract_ratio(sample))

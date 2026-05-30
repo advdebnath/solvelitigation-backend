@@ -1,8 +1,6 @@
 import re
 
-
 CANONICAL_ISSUE_PATTERNS = {
-
     "Premature Release Of Life Convicts": [
         r"premature release",
         r"life convict",
@@ -11,7 +9,6 @@ CANONICAL_ISSUE_PATTERNS = {
         r"life sentence",
         r"prison authorities",
     ],
-
     "Quashing Of Criminal Proceedings": [
         r"quash(ed|ing)?",
         r"section\s+482",
@@ -19,28 +16,24 @@ CANONICAL_ISSUE_PATTERNS = {
         r"fir",
         r"charge sheet",
     ],
-
     "Preventive Detention": [
         r"preventive detention",
         r"detenu",
         r"detention order",
         r"national security",
     ],
-
     "Service Reinstatement": [
         r"reinstatement",
         r"departmental proceeding",
         r"termination",
         r"dismissal from service",
     ],
-
     "Land Acquisition Compensation": [
         r"land acquisition",
         r"compensation",
         r"acquired land",
         r"market value",
     ],
-
     "Arbitration Enforcement": [
         r"arbitral award",
         r"section\s+34",
@@ -53,11 +46,7 @@ CANONICAL_ISSUE_PATTERNS = {
 def detect_canonical_issues(full_text):
 
     if not full_text:
-        return {
-            "dominant_issue": "General",
-            "sub_issues": [],
-            "confidence": 0
-        }
+        return {"dominant_issue": "General", "sub_issues": [], "confidence": 0}
 
     text = full_text.lower()
 
@@ -78,22 +67,16 @@ def detect_canonical_issues(full_text):
                 "charge sheet quashed",
                 "proceedings deserve to be quashed",
                 "abuse of process",
-                "inherent powers under section 482"
+                "inherent powers under section 482",
             ]
 
-            evidence_hits = sum(
-                1
-                for ev in quash_evidence
-                if ev in text
-            )
+            evidence_hits = sum(1 for ev in quash_evidence if ev in text)
 
             if evidence_hits < 2:
                 semantic_reject = True
 
-
         if semantic_reject:
             continue
-
 
         score = 0
 
@@ -108,27 +91,16 @@ def detect_canonical_issues(full_text):
 
     if not scores:
 
-        return {
-            "dominant_issue": "General",
-            "sub_issues": [],
-            "confidence": 25
-        }
+        return {"dominant_issue": "General", "sub_issues": [], "confidence": 25}
 
     dominant_issue = max(scores, key=scores.get)
 
-    sub_issues = sorted(
-        scores.keys(),
-        key=lambda x: scores[x],
-        reverse=True
-    )[1:5]
+    sub_issues = sorted(scores.keys(), key=lambda x: scores[x], reverse=True)[1:5]
 
-    confidence = min(
-        95,
-        scores[dominant_issue]
-    )
+    confidence = min(95, scores[dominant_issue])
 
     return {
         "dominant_issue": dominant_issue,
         "sub_issues": sub_issues,
-        "confidence": confidence
+        "confidence": confidence,
     }

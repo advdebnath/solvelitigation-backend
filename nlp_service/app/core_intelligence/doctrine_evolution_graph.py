@@ -1,9 +1,9 @@
 from collections import defaultdict
 
-
 # =========================================================
 # 🔥 SAFE YEAR EXTRACTOR
 # =========================================================
+
 
 def extract_year(case_number):
 
@@ -14,10 +14,7 @@ def extract_year(case_number):
 
     import re
 
-    match = re.search(
-        r"(19|20)\d{2}",
-        case_number
-    )
+    match = re.search(r"(19|20)\d{2}", case_number)
 
     if match:
         return int(match.group())
@@ -29,6 +26,7 @@ def extract_year(case_number):
 # 🔥 STANCE DETECTOR
 # =========================================================
 
+
 def detect_stance(text):
 
     if not text:
@@ -37,22 +35,20 @@ def detect_stance(text):
     text = str(text).upper()
 
     liberal_hints = [
-
         "LIBERAL",
         "BENEFICIAL",
         "EXPANSIVE",
         "PURPOSIVE",
         "CONSTITUTIONAL MORALITY",
-        "SUBSTANTIAL JUSTICE"
+        "SUBSTANTIAL JUSTICE",
     ]
 
     strict_hints = [
-
         "STRICT",
         "LITERAL",
         "NARROW",
         "TECHNICAL",
-        "LIMITED INTERPRETATION"
+        "LIMITED INTERPRETATION",
     ]
 
     liberal_score = 0
@@ -81,21 +77,10 @@ def detect_stance(text):
 # 🔥 DOCTRINE EVOLUTION ENGINE
 # =========================================================
 
-def build_doctrine_evolution(
 
-    doctrine_name,
+def build_doctrine_evolution(doctrine_name, judgments):
 
-    judgments
-):
-
-    result = {
-
-        "doctrine": doctrine_name,
-
-        "timeline": [],
-
-        "evolution_pattern": "STABLE"
-    }
+    result = {"doctrine": doctrine_name, "timeline": [], "evolution_pattern": "STABLE"}
 
     if not judgments:
         return result
@@ -104,39 +89,18 @@ def build_doctrine_evolution(
 
     for doc in judgments:
 
-        case_number = doc.get(
-            "caseNumber",
-            ""
-        )
+        case_number = doc.get("caseNumber", "")
 
-        year = extract_year(
-            case_number
-        )
+        year = extract_year(case_number)
 
         if not year:
             continue
 
-        stance = detect_stance(
+        stance = detect_stance(doc.get("ratio", ""))
 
-            doc.get(
-                "ratio",
-                ""
-            )
-        )
+        timeline.append({"year": year, "case": case_number, "stance": stance})
 
-        timeline.append({
-
-            "year": year,
-
-            "case": case_number,
-
-            "stance": stance
-        })
-
-    timeline = sorted(
-        timeline,
-        key=lambda x: x["year"]
-    )
+    timeline = sorted(timeline, key=lambda x: x["year"])
 
     result["timeline"] = timeline
 
@@ -144,12 +108,7 @@ def build_doctrine_evolution(
     # 🔥 EVOLUTION DETECTION
     # -----------------------------------------------------
 
-    stances = [
-
-        item["stance"]
-
-        for item in timeline
-    ]
+    stances = [item["stance"] for item in timeline]
 
     if "STRICT" in stances and "LIBERAL" in stances:
 
@@ -158,18 +117,11 @@ def build_doctrine_evolution(
 
         if first == "STRICT" and last == "LIBERAL":
 
-            result[
-                "evolution_pattern"
-            ] = "STRICT_TO_LIBERAL"
+            result["evolution_pattern"] = "STRICT_TO_LIBERAL"
 
-        elif (
-            first == "LIBERAL"
-            and last == "STRICT"
-        ):
+        elif first == "LIBERAL" and last == "STRICT":
 
-            result[
-                "evolution_pattern"
-            ] = "LIBERAL_TO_STRICT"
+            result["evolution_pattern"] = "LIBERAL_TO_STRICT"
 
     return result
 
@@ -181,33 +133,18 @@ def build_doctrine_evolution(
 if __name__ == "__main__":
 
     sample_judgments = [
-
         {
-
             "caseNumber": "1998 SLSC 10",
-
-            "ratio": (
-                "Strict interpretation "
-                "must apply."
-            )
+            "ratio": ("Strict interpretation " "must apply."),
         },
-
         {
-
             "caseNumber": "2018 SLSC 101",
-
-            "ratio": (
-                "Beneficial and expansive "
-                "constitutional interpretation."
-            )
-        }
+            "ratio": ("Beneficial and expansive " "constitutional interpretation."),
+        },
     ]
 
     result = build_doctrine_evolution(
-
-        doctrine_name="REINSTATEMENT",
-
-        judgments=sample_judgments
+        doctrine_name="REINSTATEMENT", judgments=sample_judgments
     )
 
     print(result)

@@ -2,9 +2,8 @@
 # 🔥 JUDGE ANALYTICS ENGINE
 # =========================================================
 
-from collections import Counter
 import re
-
+from collections import Counter
 
 
 def extract_judge_analytics(
@@ -12,7 +11,7 @@ def extract_judge_analytics(
     judges=None,
     operative_order_data=None,
     headnote_data=None,
-    semantic_issues=None
+    semantic_issues=None,
 ):
 
     try:
@@ -23,16 +22,10 @@ def extract_judge_analytics(
         if not isinstance(judges, list):
             judges = []
 
-        lower_text = re.sub(
-            r"\\s+",
-            " ",
-            full_text.lower()
-        )
+        lower_text = re.sub(r"\\s+", " ", full_text.lower())
 
         print("✅ Judge Analytics Normalized Text Sample:")
         print(lower_text[:1000])
-
-
 
         # =====================================================
 
@@ -44,55 +37,24 @@ def extract_judge_analytics(
 
         operative_text = ""
 
-        if isinstance(
-            operative_order_data,
-            dict
-        ):
+        if isinstance(operative_order_data, dict):
 
-            operative_text = str(
-                operative_order_data.get(
-                    "final_holding",
-                    ""
-                )
-            ).lower()
+            operative_text = str(operative_order_data.get("final_holding", "")).lower()
 
         print("✅ OPERATIVE TEXT:")
         print(operative_text)
 
-        if any(
-            x in operative_text
-            for x in [
-                "high court set aside",
-                "set aside"
-            ]
-        ):
+        if any(x in operative_text for x in ["high court set aside", "set aside"]):
 
-            traits.append(
-                "Appellate Interventionist"
-            )
+            traits.append("Appellate Interventionist")
 
-        if any(
-            x in operative_text
-            for x in [
-                "appeal allowed",
-                "allowed"
-            ]
-        ):
+        if any(x in operative_text for x in ["appeal allowed", "allowed"]):
 
-            traits.append(
-                "Rights-Oriented"
-            )
+            traits.append("Rights-Oriented")
 
-        if any(
-            x in operative_text
-            for x in [
-                "dismissed"
-            ]
-        ):
+        if any(x in operative_text for x in ["dismissed"]):
 
-            traits.append(
-                "Restrictive"
-            )
+            traits.append("Restrictive")
 
         # 🔥 TRAIT DETECTION
         # =====================================================
@@ -106,14 +68,11 @@ def extract_judge_analytics(
                 "set aside",
                 "quashed",
                 "relief granted",
-                "writ petition allowed"
-                "relief granted"
+                "writ petition allowed" "relief granted",
             ]
         ):
 
-            traits.append(
-                "Liberal Relief Approach"
-            )
+            traits.append("Liberal Relief Approach")
 
         if any(
             x in lower_text
@@ -124,14 +83,11 @@ def extract_judge_analytics(
                 "no merit",
                 "liable to be dismissed",
                 "cannot be accepted",
-                "interference not warranted"
-                "rejected"
+                "interference not warranted" "rejected",
             ]
         ):
 
-            traits.append(
-                "Strict Interpretation"
-            )
+            traits.append("Strict Interpretation")
 
         if any(
             x in lower_text
@@ -148,9 +104,7 @@ def extract_judge_analytics(
             ]
         ):
 
-            traits.append(
-                "Constitutional Activism"
-            )
+            traits.append("Constitutional Activism")
 
         if any(
             x in lower_text
@@ -158,13 +112,11 @@ def extract_judge_analytics(
                 "natural justice",
                 "fair hearing",
                 "procedural fairness",
-                "audi alteram partem"
+                "audi alteram partem",
             ]
         ):
 
-            traits.append(
-                "Procedural Fairness Focus"
-            )
+            traits.append("Procedural Fairness Focus")
 
         if any(
             x in lower_text
@@ -179,41 +131,26 @@ def extract_judge_analytics(
             ]
         ):
 
-            traits.append(
-                "Tribunal Deference"
-            )
+            traits.append("Tribunal Deference")
 
         if any(
             x in lower_text
-            for x in [
-                "liberty",
-                "personal liberty",
-                "human rights",
-                "civil rights"
-            ]
+            for x in ["liberty", "personal liberty", "human rights", "civil rights"]
         ):
 
-            traits.append(
-                "Civil Liberties Expansion"
-            )
-
+            traits.append("Civil Liberties Expansion")
 
         # =====================================================
         # 🔥 TRAIT COUNTS
         # =====================================================
 
-        trait_scores = dict(
-            Counter(traits)
-        )
+        trait_scores = dict(Counter(traits))
 
         primary_tendency = None
 
         if trait_scores:
 
-            primary_tendency = max(
-                trait_scores,
-                key=trait_scores.get
-            )
+            primary_tendency = max(trait_scores, key=trait_scores.get)
 
         # =====================================================
         # 🔥 APPEAL RATE
@@ -234,40 +171,23 @@ def extract_judge_analytics(
         # =====================================================
 
         return {
-
-            "judges":
-                judges,
-
-            "primary_tendency":
-                primary_tendency,
-
-            "judicial_traits":
-                list(trait_scores.keys()),
-
-            "trait_scores":
-                trait_scores,
-
-            "appeal_allowance_rate":
-                appeal_allowance_rate
+            "judges": judges,
+            "primary_tendency": primary_tendency,
+            "judicial_traits": list(trait_scores.keys()),
+            "trait_scores": trait_scores,
+            "appeal_allowance_rate": appeal_allowance_rate,
         }
 
     except Exception as e:
 
-        print(
-            "❌ Judge Analytics Error:"
-        )
+        print("❌ Judge Analytics Error:")
 
         print(e)
 
         return {
-
             "judges": [],
-
             "primary_tendency": None,
-
             "judicial_traits": [],
-
             "trait_scores": {},
-
-            "appeal_allowance_rate": 50
+            "appeal_allowance_rate": 50,
         }

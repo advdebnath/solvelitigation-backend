@@ -16,7 +16,6 @@ def normalize_case_number_object(case_data):
         "confidence": 0,
         "validation_status": "INVALID",
         "source": "post_processor",
-
         "jurisdiction": "UNKNOWN",
         "proceeding_family": "UNKNOWN",
         "is_primary_matter": True,
@@ -29,7 +28,7 @@ def normalize_case_number_object(case_data):
         "linked_cases": [],
         "appellate_chain": [],
         "review_chain": [],
-        "constitutional_cluster": None
+        "constitutional_cluster": None,
     }
 
     # =====================================================
@@ -38,10 +37,7 @@ def normalize_case_number_object(case_data):
 
     if isinstance(case_data, str):
 
-        case_data = {
-            "case_number": case_data,
-            "confidence": 50
-        }
+        case_data = {"case_number": case_data, "confidence": 50}
 
     # =====================================================
     # 🔥 INVALID INPUT
@@ -55,34 +51,23 @@ def normalize_case_number_object(case_data):
     # =====================================================
 
     authoritative_sources = [
-
         "LOCKED_JUDICIARY_ENGINE",
-
         "ULTRA_PRIORITY_SC_LOCK",
-
         "PETITIONER_RESPONDENT_CAPTION",
-
         "HIGH_CONFIDENCE_HEADER_ENGINE",
-
-        "CANONICAL_CAPTION_ENGINE"
+        "CANONICAL_CAPTION_ENGINE",
     ]
 
-    incoming_source = str(
-        case_data.get("source", "")
-    )
+    incoming_source = str(case_data.get("source", ""))
 
-    incoming_confidence = int(
-        case_data.get("confidence", 0)
-    )
+    incoming_confidence = int(case_data.get("confidence", 0))
 
-    incoming_case = str(
-        case_data.get("case_number", "")
-    ).strip()
+    incoming_case = str(case_data.get("case_number", "")).strip()
 
     if (
         incoming_source in authoritative_sources
         and incoming_confidence >= 90
-        and re.search(r'\d{2,}', incoming_case)
+        and re.search(r"\d{2,}", incoming_case)
     ):
 
         print("🔒 AUTHORITATIVE CASE PRESERVATION LOCK")
@@ -94,9 +79,7 @@ def normalize_case_number_object(case_data):
 
         if not preserved.get("normalized_case_number"):
 
-            preserved["normalized_case_number"] = (
-                incoming_case.upper()
-            )
+            preserved["normalized_case_number"] = incoming_case.upper()
 
         if not preserved.get("case_number"):
 
@@ -104,69 +87,39 @@ def normalize_case_number_object(case_data):
 
         return preserved
 
-    raw_case = str(
-        case_data.get(
-            "case_number",
-            "Unknown"
-        )
-    ).strip()
+    raw_case = str(case_data.get("case_number", "Unknown")).strip()
 
-    raw_case = re.sub(
-        r"\s+",
-        " ",
-        raw_case
-    )
+    raw_case = re.sub(r"\s+", " ", raw_case)
 
     normalized["case_number"] = raw_case
 
-    normalized["normalized_case_number"] = (
-        raw_case.upper()
-    )
+    normalized["normalized_case_number"] = raw_case.upper()
 
-    normalized["confidence"] = int(
-        case_data.get(
-            "confidence",
-            0
-        )
-    )
+    normalized["confidence"] = int(case_data.get("confidence", 0))
 
     # =====================================================
     # 🔥 PRESERVE EXTRACTOR SEMANTIC METADATA
     # =====================================================
 
-    normalized["case_type"] = case_data.get(
-        "case_type",
-        normalized["case_type"]
-    )
+    normalized["case_type"] = case_data.get("case_type", normalized["case_type"])
 
-    normalized["court_type"] = case_data.get(
-        "court_type",
-        normalized["court_type"]
-    )
+    normalized["court_type"] = case_data.get("court_type", normalized["court_type"])
 
     normalized["jurisdiction"] = case_data.get(
-        "jurisdiction",
-        normalized["jurisdiction"]
+        "jurisdiction", normalized["jurisdiction"]
     )
 
     normalized["proceeding_family"] = case_data.get(
-        "proceeding_family",
-        normalized["proceeding_family"]
+        "proceeding_family", normalized["proceeding_family"]
     )
 
-    normalized["source"] = case_data.get(
-        "source",
-        normalized["source"]
-    )
+    normalized["source"] = case_data.get("source", normalized["source"])
 
     # =====================================================
     # 🔥 YEAR EXTRACTION
     # =====================================================
 
-    year_match = re.search(
-        r"\b(19|20)\d{2}\b",
-        raw_case
-    )
+    year_match = re.search(r"\b(19|20)\d{2}\b", raw_case)
 
     if year_match:
         normalized["year"] = year_match.group(0)
@@ -192,17 +145,11 @@ def normalize_case_number_object(case_data):
         normalized["jurisdiction"] = "CRIMINAL"
         normalized["case_type"] = "CRIMINAL"
 
-    elif (
-        "CRL.A" in upper
-        or "CRL." in upper
-    ):
+    elif "CRL.A" in upper or "CRL." in upper:
         normalized["jurisdiction"] = "CRIMINAL"
         normalized["case_type"] = "CRIMINAL"
 
-    elif (
-        "C.A." in upper
-        or "CIV.A" in upper
-    ):
+    elif "C.A." in upper or "CIV.A" in upper:
         normalized["jurisdiction"] = "CIVIL"
         normalized["case_type"] = "CIVIL"
 
@@ -257,16 +204,11 @@ def normalize_case_number_object(case_data):
     # =====================================================
 
     parent_patterns = [
-
         r"IN\s+(SLP\(C\).*?NO\.?\s*[\d\/\-]+\s*OF\s*\d{4})",
-
         r"IN\s+(CIVIL\s+APPEAL\s+NO\.?\s*[\d\/\-]+\s*OF\s*\d{4})",
-
         r"IN\s+(CRIMINAL\s+APPEAL\s+NO\.?\s*[\d\/\-]+\s*OF\s*\d{4})",
-
         r"ARISING\s+OUT\s+OF\s+(.*?)$",
-
-        r"CONNECTED\s+WITH\s+(.*?)$"
+        r"CONNECTED\s+WITH\s+(.*?)$",
     ]
 
     linked_cases = []
@@ -275,19 +217,11 @@ def normalize_case_number_object(case_data):
 
         try:
 
-            matches = re.findall(
-                pattern,
-                upper,
-                flags=re.I | re.M
-            )
+            matches = re.findall(pattern, upper, flags=re.I | re.M)
 
             for match in matches:
 
-                cleaned = re.sub(
-                    r"\s+",
-                    " ",
-                    str(match)
-                ).strip()
+                cleaned = re.sub(r"\s+", " ", str(match)).strip()
 
                 if cleaned and cleaned not in linked_cases:
 
@@ -310,11 +244,7 @@ def normalize_case_number_object(case_data):
 
         normalized["review_chain"] = linked_cases
 
-    if normalized.get("jurisdiction") in [
-        "CIVIL",
-        "CRIMINAL",
-        "SPECIAL_LEAVE"
-    ]:
+    if normalized.get("jurisdiction") in ["CIVIL", "CRIMINAL", "SPECIAL_LEAVE"]:
 
         normalized["appellate_chain"] = linked_cases
 
@@ -322,22 +252,15 @@ def normalize_case_number_object(case_data):
     # 🔥 CONSTITUTIONAL CLUSTERING
     # =====================================================
 
-    if (
-        "ARTICLE 32" in upper
-        or "ARTICLE 226" in upper
-        or "WRIT PETITION" in upper
-    ):
+    if "ARTICLE 32" in upper or "ARTICLE 226" in upper or "WRIT PETITION" in upper:
 
-        normalized["constitutional_cluster"] = (
-            "CONSTITUTIONAL_LITIGATION"
-        )
+        normalized["constitutional_cluster"] = "CONSTITUTIONAL_LITIGATION"
 
     # =====================================================
     # 🔥 CASE TYPE INFERENCE
     # =====================================================
 
     CASE_TYPES = [
-
         "CIVIL APPEAL",
         "CRIMINAL APPEAL",
         "SPECIAL LEAVE PETITION",
@@ -353,7 +276,7 @@ def normalize_case_number_object(case_data):
         "BAIL APPLN",
         "OA",
         "TA",
-        "MA"
+        "MA",
     ]
 
     for item in CASE_TYPES:
@@ -374,32 +297,17 @@ def normalize_case_number_object(case_data):
             "CIVIL APPEAL",
             "CRIMINAL APPEAL",
             "CURATIVE",
-            "TRANSFER PETITION"
+            "TRANSFER PETITION",
         ]
     ):
 
         normalized["court_type"] = "SUPREME COURT"
 
-    elif any(
-        x in upper
-        for x in [
-            "WP(C)",
-            "CRM-M",
-            "RSA",
-            "CRL.REV"
-        ]
-    ):
+    elif any(x in upper for x in ["WP(C)", "CRM-M", "RSA", "CRL.REV"]):
 
         normalized["court_type"] = "HIGH COURT"
 
-    elif any(
-        x in upper
-        for x in [
-            "OA",
-            "TA",
-            "MA"
-        ]
-    ):
+    elif any(x in upper for x in ["OA", "TA", "MA"]):
 
         normalized["court_type"] = "TRIBUNAL"
 
@@ -407,10 +315,7 @@ def normalize_case_number_object(case_data):
     # 🔥 VALIDATION
     # =====================================================
 
-    if (
-        normalized["case_number"] != "Unknown"
-        and re.search(r"\d", raw_case)
-    ):
+    if normalized["case_number"] != "Unknown" and re.search(r"\d", raw_case):
 
         normalized["validation_status"] = "VALID"
 

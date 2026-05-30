@@ -101,5 +101,3 @@ def classify_category(acts, text):
     # 🔥 FINAL FALLBACK (NO MORE "Other")
     # =========================================
     return "Civil"
-
-

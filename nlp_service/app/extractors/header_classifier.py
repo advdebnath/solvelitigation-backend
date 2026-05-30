@@ -1,37 +1,28 @@
 import re
 from typing import Dict
 
-
 # =========================================================
 # 🔥 BODY START MARKERS
 # =========================================================
 
-BODY_START_MARKERS = [
-
-    "JUDGMENT",
-    "J U D G M E N T",
-    "ORDER",
-    "O R D E R"
-]
+BODY_START_MARKERS = ["JUDGMENT", "J U D G M E N T", "ORDER", "O R D E R"]
 
 
 # =========================================================
 # 🔥 HEADER CLASSIFIER
 # =========================================================
 
-def classify_and_clean_header(
-    text: str
-) -> Dict:
+
+def classify_and_clean_header(text: str) -> Dict:
 
     if not text:
 
         return {
-
             "reportable_status": None,
             "court": None,
             "jurisdiction": None,
             "body_start_found": False,
-            "clean_text": ""
+            "clean_text": "",
         }
 
     original_text = text
@@ -64,19 +55,11 @@ def classify_and_clean_header(
 
     else:
 
-        high_court_match = re.search(
-
-            r'HIGH COURT OF ([A-Z ]+)',
-            upper_text
-        )
+        high_court_match = re.search(r"HIGH COURT OF ([A-Z ]+)", upper_text)
 
         if high_court_match:
 
-            court = (
-
-                "High Court Of "
-                + high_court_match.group(1).title()
-            )
+            court = "High Court Of " + high_court_match.group(1).title()
 
     # =====================================================
     # 🔥 JURISDICTION DETECTION
@@ -85,12 +68,11 @@ def classify_and_clean_header(
     jurisdiction = None
 
     jurisdiction_patterns = [
-
         "CIVIL APPELLATE JURISDICTION",
         "CRIMINAL APPELLATE JURISDICTION",
         "CIVIL ORIGINAL JURISDICTION",
         "CRIMINAL ORIGINAL JURISDICTION",
-        "WRIT JURISDICTION"
+        "WRIT JURISDICTION",
     ]
 
     for pattern in jurisdiction_patterns:
@@ -125,29 +107,14 @@ def classify_and_clean_header(
     # 🔥 FINAL CLEANUP
     # =====================================================
 
-    clean_text = re.sub(
+    clean_text = re.sub(r"[ \t]+", " ", clean_text)
 
-        r'[ \t]+',
-        ' ',
-        clean_text
-    )
-
-    clean_text = re.sub(
-
-        r'\n{3,}',
-        '\n\n',
-        clean_text
-    ).strip()
+    clean_text = re.sub(r"\n{3,}", "\n\n", clean_text).strip()
 
     return {
-
         "reportable_status": reportable_status,
-
         "court": court,
-
         "jurisdiction": jurisdiction,
-
         "body_start_found": body_start_found,
-
-        "clean_text": clean_text
+        "clean_text": clean_text,
     }

@@ -5,63 +5,42 @@ import unicodedata
 # 🔥 NORMALIZE TEXT
 # =========================================================
 
+
 def normalize_text(text):
 
     if not text:
 
         return ""
 
-    text = unicodedata.normalize(
-        "NFKC",
-        text
-    )
+    text = unicodedata.normalize("NFKC", text)
 
-    text = text.replace(
-        "\x0c",
-        " "
-    )
+    text = text.replace("\x0c", " ")
 
-    text = text.replace(
-        "\r",
-        " "
-    )
+    text = text.replace("\r", " ")
 
-    text = text.replace(
-        "\t",
-        " "
-    )
+    text = text.replace("\t", " ")
 
     # =====================================================
     # 🔥 FIX OCR HYPHENS
     # =====================================================
 
-    text = re.sub(
-        r"-\s+",
-        "",
-        text
-    )
+    text = re.sub(r"-\s+", "", text)
 
     # =====================================================
     # 🔥 PRESERVE NEWLINES
     # =====================================================
 
-    text = re.sub(
-        r"[ \t]+",
-        " ",
-        text
-    )
+    text = re.sub(r"[ \t]+", " ", text)
 
-    text = re.sub(
-        r"\n{3,}",
-        "\n\n",
-        text
-    )
+    text = re.sub(r"\n{3,}", "\n\n", text)
 
     return text.strip()
+
 
 # =========================================================
 # 🔥 NOISE FILTER
 # =========================================================
+
 
 def is_noise(line):
 
@@ -72,75 +51,57 @@ def is_noise(line):
     lower = line.lower().strip()
 
     patterns = [
-
         r"^page\s+\d+",
-
         r"digitally signed",
-
         r"signature not verified",
-
         r"downloaded on",
-
         r"scanned with",
-
         r"uploaded on",
-
         r"^http",
-
         r"^www\.",
-
         r"^\d+$",
-
         r"^cid:",
-
-        r"^untitled"
+        r"^untitled",
     ]
 
     for pattern in patterns:
 
-        if re.search(
-            pattern,
-            lower
-        ):
+        if re.search(pattern, lower):
 
             return True
 
     return False
 
+
 # =========================================================
 # 🔥 FOOTER METADATA
 # =========================================================
+
 
 def is_footer_metadata(line):
 
     line = line.strip()
 
     footer_patterns = [
-
         r"^NEW DELHI[;,\s]*$",
-
         r"^(JANUARY|FEBRUARY|MARCH|APRIL|MAY|JUNE|JULY|AUGUST|SEPTEMBER|OCTOBER|NOVEMBER|DECEMBER)\s+\d{1,2},\s+\d{4}\.?$",
-
         r"^\.*J\.$",
-
-        r"^\([A-Z\s\.]+\)$"
+        r"^\([A-Z\s\.]+\)$",
     ]
 
     for pattern in footer_patterns:
 
-        if re.search(
-            pattern,
-            line,
-            re.I
-        ):
+        if re.search(pattern, line, re.I):
 
             return True
 
     return False
 
+
 # =========================================================
 # 🔥 HEADING DETECTOR
 # =========================================================
+
 
 def is_heading(line):
 
@@ -163,20 +124,13 @@ def is_heading(line):
         return True
 
     keywords = [
-
         "JUDGMENT",
-
         "ORDER",
-
         "REPORTABLE",
-
         "NON-REPORTABLE",
-
         "SUPREME COURT",
-
         "HIGH COURT",
-
-        "TRIBUNAL"
+        "TRIBUNAL",
     ]
 
     upper = line.upper()
@@ -189,9 +143,11 @@ def is_heading(line):
 
     return False
 
+
 # =========================================================
 # 🔥 PARAGRAPH START DETECTOR
 # =========================================================
+
 
 def starts_new_paragraph(line):
 
@@ -209,10 +165,7 @@ def starts_new_paragraph(line):
     # 🔥 NUMBERED PARAGRAPHS
     # =====================================================
 
-    if re.match(
-        r"^\d+\.",
-        line
-    ):
+    if re.match(r"^\d+\.", line):
 
         return True
 
@@ -220,10 +173,7 @@ def starts_new_paragraph(line):
     # 🔥 BULLET STYLE
     # =====================================================
 
-    if re.match(
-        r"^\(\w+\)",
-        line
-    ):
+    if re.match(r"^\(\w+\)", line):
 
         return True
 
@@ -237,9 +187,11 @@ def starts_new_paragraph(line):
 
     return False
 
+
 # =========================================================
 # 🔥 SEMANTIC PARAGRAPH BUILDER
 # =========================================================
+
 
 def build_semantic_paragraphs(pages):
 
@@ -247,14 +199,7 @@ def build_semantic_paragraphs(pages):
 
         if not pages:
 
-            return {
-
-                "paragraphs": [],
-
-                "headings": [],
-
-                "confidence": 0
-            }
+            return {"paragraphs": [], "headings": [], "confidence": 0}
 
         paragraphs = []
 
@@ -298,10 +243,7 @@ def build_semantic_paragraphs(pages):
 
                 if len(current_para.split()) > 2:
 
-                    paragraphs.append(
-
-                        current_para.strip()
-                    )
+                    paragraphs.append(current_para.strip())
 
                 current_para = ""
 
@@ -325,10 +267,7 @@ def build_semantic_paragraphs(pages):
 
                 if len(current_para.split()) > 2:
 
-                    paragraphs.append(
-
-                        current_para.strip()
-                    )
+                    paragraphs.append(current_para.strip())
 
                 current_para = line
 
@@ -340,11 +279,7 @@ def build_semantic_paragraphs(pages):
 
                 if current_para.endswith("-"):
 
-                    current_para = (
-
-                        current_para[:-1]
-                        + line
-                    )
+                    current_para = current_para[:-1] + line
 
                 else:
 
@@ -356,10 +291,7 @@ def build_semantic_paragraphs(pages):
 
             if len(current_para) > 2500:
 
-                paragraphs.append(
-
-                    current_para.strip()
-                )
+                paragraphs.append(current_para.strip())
 
                 current_para = ""
 
@@ -369,10 +301,7 @@ def build_semantic_paragraphs(pages):
 
         if len(current_para.split()) > 2:
 
-            paragraphs.append(
-
-                current_para.strip()
-            )
+            paragraphs.append(current_para.strip())
 
         # =================================================
         # 🔥 DEDUPLICATION
@@ -384,11 +313,7 @@ def build_semantic_paragraphs(pages):
 
         for para in paragraphs:
 
-            short = re.sub(
-                r"\s+",
-                " ",
-                para[:300].lower()
-            )
+            short = re.sub(r"\s+", " ", para[:300].lower())
 
             if short not in seen:
 
@@ -406,57 +331,31 @@ def build_semantic_paragraphs(pages):
 
             confidence += 10
 
-        confidence = min(
-            confidence,
-            95
-        )
+        confidence = min(confidence, 95)
 
         result = {
-
-            "paragraphs":
-                cleaned,
-
-            "headings":
-                list(dict.fromkeys(headings)),
-
-            "confidence":
-                confidence
+            "paragraphs": cleaned,
+            "headings": list(dict.fromkeys(headings)),
+            "confidence": confidence,
         }
 
         print(
-
             "✅ Semantic Paragraphs Built:",
-
             {
-
-                "paragraphs":
-                    len(cleaned),
-
-                "headings":
-                    len(headings),
-
-                "confidence":
-                    confidence
-            }
+                "paragraphs": len(cleaned),
+                "headings": len(headings),
+                "confidence": confidence,
+            },
         )
 
         return result
 
     except Exception as e:
 
-        print(
-            "❌ SEMANTIC PARAGRAPH ERROR:",
-            e
-        )
+        print("❌ SEMANTIC PARAGRAPH ERROR:", e)
 
-        return {
+        return {"paragraphs": [], "headings": [], "confidence": 0}
 
-            "paragraphs": [],
-
-            "headings": [],
-
-            "confidence": 0
-        }
 
 # =========================================================
 # 🔥 DIRECT TEST
@@ -464,9 +363,7 @@ def build_semantic_paragraphs(pages):
 
 if __name__ == "__main__":
 
-    sample_pages = [
-
-        """
+    sample_pages = ["""
         IN THE SUPREME COURT OF INDIA
 
         CIVIL APPEAL NO.7469 OF 2008
@@ -481,11 +378,8 @@ if __name__ == "__main__":
 
         NEW DELHI;
         APRIL 05, 2021.
-        """
-    ]
+        """]
 
-    result = build_semantic_paragraphs(
-        sample_pages
-    )
+    result = build_semantic_paragraphs(sample_pages)
 
     print(result)

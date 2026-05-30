@@ -4,35 +4,28 @@ import re
 # 🔥 CLEAN TEXT
 # =========================================================
 
+
 def clean_text(text):
 
-    text = re.sub(
-        r"\s+",
-        " ",
-        text
-    )
+    text = re.sub(r"\s+", " ", text)
 
     return text.strip()
+
 
 # =========================================================
 # 🔥 FIND HOLDING
 # =========================================================
 
+
 def extract_holding(text):
 
     patterns = [
-
         r"appeal\s+is\s+allowed",
-
         r"appeal\s+stands\s+allowed",
-
         r"petition\s+is\s+dismissed",
-
         r"high\s+court\s+is\s+set\s+aside",
-
         r"tribunal\s+is\s+restored",
-
-        r"judgment\s+is\s+set\s+aside"
+        r"judgment\s+is\s+set\s+aside",
     ]
 
     lower = text.lower()
@@ -41,11 +34,7 @@ def extract_holding(text):
 
     for pattern in patterns:
 
-        if re.search(
-            pattern,
-            lower,
-            re.I
-        ):
+        if re.search(pattern, lower, re.I):
 
             findings.append(pattern)
 
@@ -63,35 +52,27 @@ def extract_holding(text):
 
         if "allowed" in item:
 
-            result.append(
-                "Appeal allowed"
-            )
+            result.append("Appeal allowed")
 
         elif "dismissed" in item:
 
-            result.append(
-                "Petition dismissed"
-            )
+            result.append("Petition dismissed")
 
         elif "set aside" in item:
 
-            result.append(
-                "High Court judgment set aside"
-            )
+            result.append("High Court judgment set aside")
 
         elif "restored" in item:
 
-            result.append(
-                "Tribunal restored"
-            )
+            result.append("Tribunal restored")
 
-    return ", ".join(
-        list(dict.fromkeys(result))
-    )
+    return ", ".join(list(dict.fromkeys(result)))
+
 
 # =========================================================
 # 🔥 KEY FACTS
 # =========================================================
+
 
 def detect_key_facts(text):
 
@@ -100,21 +81,11 @@ def detect_key_facts(text):
     facts = []
 
     checks = {
-
-        "surrender of tenancy":
-            "Tenancy surrender",
-
-        "joint hindu family":
-            "Joint Hindu Family",
-
-        "karta":
-            "Karta powers",
-
-        "wakf tribunal":
-            "Wakf Tribunal",
-
-        "benefit of the joint family":
-            "Benefit of Joint Family"
+        "surrender of tenancy": "Tenancy surrender",
+        "joint hindu family": "Joint Hindu Family",
+        "karta": "Karta powers",
+        "wakf tribunal": "Wakf Tribunal",
+        "benefit of the joint family": "Benefit of Joint Family",
     }
 
     for key, label in checks.items():
@@ -125,18 +96,15 @@ def detect_key_facts(text):
 
     return facts[:4]
 
+
 # =========================================================
 # 🔥 PARA FINDER
 # =========================================================
 
+
 def find_relevant_para(text):
 
-    para_matches = re.findall(
-
-        r"\b(\d{1,3})\.\s",
-
-        text
-    )
+    para_matches = re.findall(r"\b(\d{1,3})\.\s", text)
 
     if not para_matches:
 
@@ -152,39 +120,27 @@ def find_relevant_para(text):
 
         return "para-unknown"
 
+
 # =========================================================
 # 🔥 MAIN ENGINE
 # =========================================================
 
+
 def generate_headnote(
-
     full_text,
-
     issue_data=None,
-
     points_data=None,
-
     sections_data=None,
-
-    operative_data=None
+    operative_data=None,
 ):
 
     try:
 
         if not full_text:
 
-            return {
+            return {"headnote": "", "confidence": 0}
 
-                "headnote":
-                    "",
-
-                "confidence":
-                    0
-            }
-
-        full_text = clean_text(
-            full_text
-        )
+        full_text = clean_text(full_text)
 
         # =================================================
         # 🔥 DOMINANT ISSUE
@@ -194,17 +150,13 @@ def generate_headnote(
 
         if issue_data:
 
-            dominant_issue = issue_data.get(
-                "dominant_issue"
-            )
+            dominant_issue = issue_data.get("dominant_issue")
 
         # =================================================
         # 🔥 KEY FACTS
         # =================================================
 
-        facts = detect_key_facts(
-            full_text
-        )
+        facts = detect_key_facts(full_text)
 
         # =================================================
         # 🔥 HOLDING
@@ -214,25 +166,15 @@ def generate_headnote(
 
         if operative_data:
 
-            print(
-                "🔥 OPERATIVE DATA RECEIVED:",
-                operative_data
-            )
+            print("🔥 OPERATIVE DATA RECEIVED:", operative_data)
 
-            holding = operative_data.get(
-                "final_holding"
-            )
+            holding = operative_data.get("final_holding")
 
-            print(
-                "🔥 HOLDING AFTER OPERATIVE:",
-                holding
-            )
+            print("🔥 HOLDING AFTER OPERATIVE:", holding)
 
         if not holding:
 
-            holding = extract_holding(
-                full_text
-            )
+            holding = extract_holding(full_text)
 
         # =================================================
         # 🔥 PARA
@@ -242,15 +184,11 @@ def generate_headnote(
 
         if operative_data:
 
-            para = operative_data.get(
-                "operative_para"
-            )
+            para = operative_data.get("operative_para")
 
         if not para:
 
-            para = find_relevant_para(
-                full_text
-            )
+            para = find_relevant_para(full_text)
 
         # =================================================
         # 🔥 BUILD HEADNOTE
@@ -268,10 +206,7 @@ def generate_headnote(
 
             if isinstance(points_data, dict):
 
-                extracted_points = points_data.get(
-                    "points_of_law",
-                    []
-                )
+                extracted_points = points_data.get("points_of_law", [])
 
             elif isinstance(points_data, list):
 
@@ -283,9 +218,7 @@ def generate_headnote(
 
                 if isinstance(p, dict):
 
-                    point = p.get(
-                        "point"
-                    )
+                    point = p.get("point")
 
                 else:
 
@@ -293,15 +226,11 @@ def generate_headnote(
 
                 if point:
 
-                    labels.append(
-                        clean_text(point)
-                    )
+                    labels.append(clean_text(point))
 
             if labels:
 
-                parts.append(
-                    " — ".join(labels)
-                )
+                parts.append(" — ".join(labels))
 
         # =============================================
         # 🔥 DOMINANT ISSUE SECONDARY
@@ -309,9 +238,7 @@ def generate_headnote(
 
         elif dominant_issue:
 
-            parts.append(
-                dominant_issue
-            )
+            parts.append(dominant_issue)
 
         # =============================================
         # 🔥 FACTS
@@ -319,9 +246,7 @@ def generate_headnote(
 
         if facts:
 
-            parts.append(
-                " — ".join(facts)
-            )
+            parts.append(" — ".join(facts))
 
         # =============================================
         # 🔥 HOLDING
@@ -329,9 +254,7 @@ def generate_headnote(
 
         if holding:
 
-            parts.append(
-                holding
-            )
+            parts.append(holding)
 
         # =============================================
         # 🔥 FALLBACK POINTS
@@ -339,30 +262,21 @@ def generate_headnote(
 
         if not dominant_issue and points_data:
 
-            points = points_data.get(
-                "points_of_law",
-                []
-            )
+            points = points_data.get("points_of_law", [])
 
             labels = []
 
             for p in points[:3]:
 
-                point = p.get(
-                    "point"
-                )
+                point = p.get("point")
 
                 if point:
 
-                    labels.append(
-                        point
-                    )
+                    labels.append(point)
 
             if labels:
 
-                parts.append(
-                    " — ".join(labels)
-                )
+                parts.append(" — ".join(labels))
 
         # =================================================
         # 🔥 CLEAN DUPLICATES
@@ -384,9 +298,7 @@ def generate_headnote(
 
                 continue
 
-            seen.add(
-                part.lower()
-            )
+            seen.add(part.lower())
 
             final.append(part)
 
@@ -418,23 +330,11 @@ def generate_headnote(
 
             confidence += 5
 
-        confidence = min(
-            confidence,
-            95
-        )
+        confidence = min(confidence, 95)
 
-        result = {
+        result = {"headnote": headnote, "confidence": confidence}
 
-            "headnote":
-                headnote,
-
-            "confidence":
-                confidence
-        }
-
-        print(
-            "✅ Intelligent Headnote Generated:"
-        )
+        print("✅ Intelligent Headnote Generated:")
 
         print(result)
 
@@ -442,19 +342,10 @@ def generate_headnote(
 
     except Exception as e:
 
-        print(
-            "❌ HEADNOTE ENGINE ERROR:",
-            e
-        )
+        print("❌ HEADNOTE ENGINE ERROR:", e)
 
-        return {
+        return {"headnote": "", "confidence": 0}
 
-            "headnote":
-                "",
-
-            "confidence":
-                0
-        }
 
 # =========================================================
 # 🔥 DIRECT TEST
@@ -475,18 +366,6 @@ if __name__ == "__main__":
     38.
     """
 
-    issue_data = {
+    issue_data = {"dominant_issue": "Wakf Property Dispute"}
 
-        "dominant_issue":
-            "Wakf Property Dispute"
-    }
-
-    print(
-
-        generate_headnote(
-
-            sample,
-
-            issue_data=issue_data
-        )
-    )
+    print(generate_headnote(sample, issue_data=issue_data))

@@ -1,8 +1,6 @@
 import re
 
-
 RATIO_HINTS = [
-
     "held",
     "we hold",
     "we are of the opinion",
@@ -15,11 +13,10 @@ RATIO_HINTS = [
     "the appeal is allowed",
     "the appeal is dismissed",
     "petition allowed",
-    "petition dismissed"
+    "petition dismissed",
 ]
 
 ADVANCED_RATIO_HINTS = [
-
     "we do not find any merit",
     "the high court erred",
     "it cannot be said",
@@ -40,43 +37,35 @@ ADVANCED_RATIO_HINTS = [
     "the appeals are directed against",
     "the question is",
     "the issue is",
-    "the court finds"
+    "the court finds",
 ]
 
 
-
-def extract_ratio(
-    text,
-    jurisprudential_chunks=None
-):
+def extract_ratio(text, jurisprudential_chunks=None):
 
     if jurisprudential_chunks is None:
         jurisprudential_chunks = []
-
 
     # =====================================================
     # 🔥 JURISPRUDENTIAL SENTENCE SEGMENTATION
     # =====================================================
 
     paragraphs = re.split(
-        r'(?<=[\\.!\\?])\\s+(?='
-        r'(?:It|Thus|Therefore|Hence|Accordingly|'
-        r'We|The Court|In the result|'
-        r'The petitions|The appeals|'
-        r'Under Article|When an authority|'
-        r'If the Government|'
-        r'It becomes apparent|'
-        r'The Government)'
-        r')',
-        text
+        r"(?<=[\\.!\\?])\\s+(?="
+        r"(?:It|Thus|Therefore|Hence|Accordingly|"
+        r"We|The Court|In the result|"
+        r"The petitions|The appeals|"
+        r"Under Article|When an authority|"
+        r"If the Government|"
+        r"It becomes apparent|"
+        r"The Government)"
+        r")",
+        text,
     )
 
     if len(paragraphs) <= 3:
 
-        paragraphs = re.split(
-            r'(?<=[\\.!\\?])\\s+',
-            text
-        )
+        paragraphs = re.split(r"(?<=[\\.!\\?])\\s+", text)
 
     ratio_candidates = []
 
@@ -94,7 +83,6 @@ def extract_ratio(
         # =====================================================
 
         hard_pollution_hits = [
-
             "http://judis.nic.in",
             "page 1 of",
             "page 2 of",
@@ -102,14 +90,10 @@ def extract_ratio(
             "respondent:",
             "date of judgment:",
             "bench:",
-            "supreme court of india"
+            "supreme court of india",
         ]
 
-        pollution_score = sum(
-            1
-            for patt in hard_pollution_hits
-            if patt in lower_para
-        )
+        pollution_score = sum(1 for patt in hard_pollution_hits if patt in lower_para)
 
         if pollution_score >= 3:
             continue
@@ -132,46 +116,36 @@ def extract_ratio(
             if adv_hint in lower_para:
                 score += 35
 
-
         if "section" in lower_para:
             score += 5
 
         if "act" in lower_para:
             score += 5
 
-        
         polluted_patterns = [
-
-          "http://judis",
-          "supreme court of india",
-          "page 1 of",
-          "page 2 of",
-          "petitioner:",
-          "respondent:",
-          "date of judgment",
-          "bench:"
+            "http://judis",
+            "supreme court of india",
+            "page 1 of",
+            "page 2 of",
+            "petitioner:",
+            "respondent:",
+            "date of judgment",
+            "bench:",
         ]
 
-        is_polluted = any(
-          patt in lower_para
-          for patt in polluted_patterns
-        )
+        is_polluted = any(patt in lower_para for patt in polluted_patterns)
 
         if (
-          is_polluted
-          or clean_para.count("\n") > 10
-          or len(clean_para.split()) > 220
-          or len(clean_para) > 4000
+            is_polluted
+            or clean_para.count("\n") > 10
+            or len(clean_para.split()) > 220
+            or len(clean_para) > 4000
         ):
-          continue
+            continue
 
         if score >= 20:
 
-          ratio_candidates.append({
-              "text": clean_para,
-              "score": score
-          })
-
+            ratio_candidates.append({"text": clean_para, "score": score})
 
     # =====================================================
     # 🔥 JURISPRUDENTIAL CHUNK ANALYSIS
@@ -179,20 +153,14 @@ def extract_ratio(
 
     for chunk in jurisprudential_chunks:
 
-        chunk_text = str(
-            chunk.get("text", "")
-        ).strip()
+        chunk_text = str(chunk.get("text", "")).strip()
 
         if len(chunk_text) < 80:
             continue
 
-        chunk_type = str(
-            chunk.get("chunk_type", "")
-        ).upper()
+        chunk_type = str(chunk.get("chunk_type", "")).upper()
 
-        importance = int(
-            chunk.get("importance", 0)
-        )
+        importance = int(chunk.get("importance", 0))
 
         lower_chunk = chunk_text.lower()
 
@@ -201,7 +169,6 @@ def extract_ratio(
         # =====================================================
 
         hard_pollution_hits = [
-
             "http://judis.nic.in",
             "page 1 of",
             "page 2 of",
@@ -209,14 +176,10 @@ def extract_ratio(
             "respondent:",
             "date of judgment:",
             "bench:",
-            "supreme court of india"
+            "supreme court of india",
         ]
 
-        pollution_score = sum(
-            1
-            for patt in hard_pollution_hits
-            if patt in lower_chunk
-        )
+        pollution_score = sum(1 for patt in hard_pollution_hits if patt in lower_chunk)
 
         if pollution_score >= 3:
             continue
@@ -239,7 +202,6 @@ def extract_ratio(
             if adv_hint in lower_chunk:
                 score += 40
 
-
         if "section" in lower_chunk:
             score += 10
 
@@ -258,65 +220,46 @@ def extract_ratio(
         if chunk_type == "OPERATIVE_ORDER":
             score += 80
 
-        score += min(
-            importance,
-            200
-        )
+        score += min(importance, 200)
 
-        
         polluted_patterns = [
-
-          "http://judis",
-          "supreme court of india",
-          "page 1 of",
-          "page 2 of",
-          "petitioner:",
-          "respondent:",
-          "date of judgment",
-          "bench:"
+            "http://judis",
+            "supreme court of india",
+            "page 1 of",
+            "page 2 of",
+            "petitioner:",
+            "respondent:",
+            "date of judgment",
+            "bench:",
         ]
 
-        is_polluted = any(
-          patt in lower_chunk
-          for patt in polluted_patterns
-        )
+        is_polluted = any(patt in lower_chunk for patt in polluted_patterns)
 
         if (
-          is_polluted
-          or chunk_text.count("\n") > 12
-          or len(chunk_text.split()) > 260
-          or len(chunk_text) > 5000
+            is_polluted
+            or chunk_text.count("\n") > 12
+            or len(chunk_text.split()) > 260
+            or len(chunk_text) > 5000
         ):
-          continue
+            continue
 
         if score >= 60:
 
-          ratio_candidates.append({
-              "text": chunk_text,
-              "score": score,
-              "source": "jurisprudential_chunk",
-              "chunk_type": chunk_type
-          })
+            ratio_candidates.append(
+                {
+                    "text": chunk_text,
+                    "score": score,
+                    "source": "jurisprudential_chunk",
+                    "chunk_type": chunk_type,
+                }
+            )
 
-    ratio_candidates = sorted(
-        ratio_candidates,
-        key=lambda x: x["score"],
-        reverse=True
-    )
+    ratio_candidates = sorted(ratio_candidates, key=lambda x: x["score"], reverse=True)
 
-    best_ratio = (
-        ratio_candidates[0]["text"]
-        if ratio_candidates
-        else ""
-    )
+    best_ratio = ratio_candidates[0]["text"] if ratio_candidates else ""
 
     return {
         "ratio": best_ratio,
-        "confidence":
-            min(
-                95,
-                40 + len(ratio_candidates) * 5
-            ),
-        "candidates":
-            ratio_candidates[:5]
+        "confidence": min(95, 40 + len(ratio_candidates) * 5),
+        "candidates": ratio_candidates[:5],
     }

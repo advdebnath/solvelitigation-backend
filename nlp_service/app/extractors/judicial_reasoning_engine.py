@@ -1,31 +1,20 @@
 import re
 
-
 # =========================================================
 # 🔥 REASONING PATTERNS
 # =========================================================
 
 REASONING_PATTERNS = [
-
     r"we are of the opinion that",
-
     r"it is clear that",
-
     r"the court held that",
-
     r"it is settled law",
-
     r"therefore",
-
     r"accordingly",
-
     r"in our considered opinion",
-
     r"we find that",
-
     r"it is evident that",
-
-    r"the legal position is"
+    r"the legal position is",
 ]
 
 
@@ -34,26 +23,16 @@ REASONING_PATTERNS = [
 # =========================================================
 
 LEGAL_PRINCIPLE_PATTERNS = [
-
     r"principle of natural justice",
-
     r"burden of proof",
-
     r"presumption of innocence",
-
     r"wakf property",
-
     r"constitutional mandate",
-
     r"rule of law",
-
     r"mens rea",
-
     r"proof beyond reasonable doubt",
-
     r"doctrine of proportionality",
-
-    r"doctrine of legitimate expectation"
+    r"doctrine of legitimate expectation",
 ]
 
 
@@ -61,13 +40,10 @@ LEGAL_PRINCIPLE_PATTERNS = [
 # 🔥 CLEAN
 # =========================================================
 
+
 def clean_text(text):
 
-    text = re.sub(
-        r"\s+",
-        " ",
-        text
-    )
+    text = re.sub(r"\s+", " ", text)
 
     return text.strip()
 
@@ -76,19 +52,16 @@ def clean_text(text):
 # 🔥 SPLIT SENTENCES
 # =========================================================
 
+
 def split_sentences(text):
 
-    return re.split(
-
-        r'(?<=[.!?])\s+',
-
-        text
-    )
+    return re.split(r"(?<=[.!?])\s+", text)
 
 
 # =========================================================
 # 🔥 DETECT PRINCIPLES
 # =========================================================
+
 
 def detect_legal_principles(text):
 
@@ -96,11 +69,7 @@ def detect_legal_principles(text):
 
     for pattern in LEGAL_PRINCIPLE_PATTERNS:
 
-        matches = re.findall(
-            pattern,
-            text,
-            re.I
-        )
+        matches = re.findall(pattern, text, re.I)
 
         for match in matches:
 
@@ -108,9 +77,7 @@ def detect_legal_principles(text):
 
             if principle not in principles:
 
-                principles.append(
-                    principle
-                )
+                principles.append(principle)
 
     return principles
 
@@ -118,6 +85,7 @@ def detect_legal_principles(text):
 # =========================================================
 # 🔥 EXTRACT REASONING
 # =========================================================
+
 
 def extract_judicial_reasoning(text):
 
@@ -141,11 +109,7 @@ def extract_judicial_reasoning(text):
 
             for pattern in REASONING_PATTERNS:
 
-                if re.search(
-                    pattern,
-                    lower,
-                    re.I
-                ):
+                if re.search(pattern, lower, re.I):
 
                     matched = True
                     break
@@ -157,34 +121,19 @@ def extract_judicial_reasoning(text):
             # 🔥 LOCAL REASONING WINDOW
             # =============================================
 
-            context = " ".join(
+            context = " ".join(sentences[idx : min(len(sentences), idx + 2)])
 
-                sentences[
-                    idx:
-                    min(len(sentences), idx + 2)
-                ]
-            )
-
-            context = clean_text(
-                context
-            )
+            context = clean_text(context)
 
             # =============================================
             # 🔥 PRINCIPLES
             # =============================================
 
-            principles = detect_legal_principles(
-                context
+            principles = detect_legal_principles(context)
+
+            reasoning_blocks.append(
+                {"reasoning": context[:1200], "legal_principles": principles}
             )
-
-            reasoning_blocks.append({
-
-                "reasoning":
-                    context[:1200],
-
-                "legal_principles":
-                    principles
-            })
 
         # =================================================
         # 🔥 REMOVE DUPLICATES
@@ -196,9 +145,7 @@ def extract_judicial_reasoning(text):
 
         for item in reasoning_blocks:
 
-            key = item[
-                "reasoning"
-            ][:200].lower()
+            key = item["reasoning"][:200].lower()
 
             if key in seen:
                 continue
@@ -211,18 +158,9 @@ def extract_judicial_reasoning(text):
         # 🔥 RESULT
         # =================================================
 
-        result = {
+        result = {"judicial_reasoning": unique, "confidence": 95}
 
-            "judicial_reasoning":
-                unique,
-
-            "confidence":
-                95
-        }
-
-        print(
-            "✅ Judicial Reasoning Extracted:"
-        )
+        print("✅ Judicial Reasoning Extracted:")
 
         print(result)
 
@@ -230,16 +168,9 @@ def extract_judicial_reasoning(text):
 
     except Exception as e:
 
-        print(
-            "❌ Judicial Reasoning Error:",
-            str(e)
-        )
+        print("❌ Judicial Reasoning Error:", str(e))
 
-        return {
-
-            "judicial_reasoning": [],
-            "confidence": 0
-        }
+        return {"judicial_reasoning": [], "confidence": 0}
 
 
 # =========================================================
@@ -260,6 +191,4 @@ if __name__ == "__main__":
     deserves to be set aside.
     """
 
-    print(
-        extract_judicial_reasoning(sample)
-    )
+    print(extract_judicial_reasoning(sample))

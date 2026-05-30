@@ -6,46 +6,40 @@ SECTION_PATTERNS = {
         r"\bbrief facts\b",
         r"\bbackground\b",
     ],
-
     "petitioner_arguments": [
         r"\blearned counsel for the petitioner\b",
         r"\bpetitioner submitted\b",
         r"\bit was contended\b",
     ],
-
     "respondent_arguments": [
         r"\blearned counsel for the respondent\b",
         r"\brespondent submitted\b",
         r"\bstate submitted\b",
     ],
-
     "issues": [
         r"\bquestion for consideration\b",
         r"\bpoint for determination\b",
         r"\bissues?\b",
         r"\bwhether\b",
     ],
-
     "analysis": [
         r"\bwe have considered\b",
         r"\bafter hearing\b",
         r"\bon perusal\b",
     ],
-
     "findings": [
         r"\bwe hold\b",
         r"\bwe conclude\b",
         r"\bit is held\b",
         r"\btherefore\b",
     ],
-
     "final_order": [
         r"\bappeal is allowed\b",
         r"\bappeal is dismissed\b",
         r"\bpetition is allowed\b",
         r"\bpetition is dismissed\b",
         r"\bordered accordingly\b",
-    ]
+    ],
 }
 
 

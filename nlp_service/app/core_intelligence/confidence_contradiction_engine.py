@@ -2,11 +2,9 @@
 # 🔥 CONFIDENCE + CONTRADICTION ENGINE
 # =========================================================
 
+
 def build_confidence_object(
-    value=None,
-    confidence=0,
-    contradictions=None,
-    evidence=None
+    value=None, confidence=0, contradictions=None, evidence=None
 ):
 
     if contradictions is None:
@@ -20,6 +18,5 @@ def build_confidence_object(
         "confidence": confidence,
         "contradictions": contradictions,
         "evidence": evidence,
-        "review_recommended": confidence < 60
+        "review_recommended": confidence < 60,
     }
-

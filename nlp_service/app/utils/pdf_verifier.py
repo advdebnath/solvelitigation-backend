@@ -1,9 +1,11 @@
 import fitz
+
 fitz.TOOLS.mupdf_display_errors(False)
 import difflib
-from gridfs import GridFS
-from bson import ObjectId
+
 from app.db.mongo import get_db
+from bson import ObjectId
+from gridfs import GridFS
 
 
 def extract_text_from_pdf(path: str) -> str:
@@ -31,16 +33,13 @@ def extract_text_from_gridfs(file_id: ObjectId) -> str:
 
 
 def compare_texts(original_text: str, cleaned_text: str):
-    similarity = difflib.SequenceMatcher(
-        None, original_text, cleaned_text
-    ).ratio()
+    similarity = difflib.SequenceMatcher(None, original_text, cleaned_text).ratio()
 
     original_len = len(original_text)
     cleaned_len = len(cleaned_text)
 
     length_diff_percent = (
-        abs(original_len - cleaned_len) / original_len * 100
-        if original_len > 0 else 0
+        abs(original_len - cleaned_len) / original_len * 100 if original_len > 0 else 0
     )
 
     if similarity >= 0.99:

@@ -4,10 +4,9 @@
 import os
 
 from app.db.mongo import get_db
-
-from app.services.multi_case_reasoning import multi_case_analysis
 from app.services.advocate_engine import build_arguments
 from app.services.judge_engine import generate_judgment
+from app.services.multi_case_reasoning import multi_case_analysis
 from app.services.outcome_engine import predict_outcome
 from app.services.strategy_engine import build_strategy
 
@@ -60,12 +59,7 @@ def search_similar_cases(query: str, limit: int = 5):
         results = list(
             judgments_collection.find(
                 {"$text": {"$search": query}},
-                {
-                    "caseNumber": 1,
-                    "headnote": 1,
-                    "pointsOfLaw": 1,
-                    "category": 1
-                }
+                {"caseNumber": 1, "headnote": 1, "pointsOfLaw": 1, "category": 1},
             ).limit(limit)
         )
 
@@ -74,12 +68,7 @@ def search_similar_cases(query: str, limit: int = 5):
             results = list(
                 judgments_collection.find(
                     {"headnote": {"$regex": query, "$options": "i"}},
-                    {
-                        "caseNumber": 1,
-                        "headnote": 1,
-                        "pointsOfLaw": 1,
-                        "category": 1
-                    }
+                    {"caseNumber": 1, "headnote": 1, "pointsOfLaw": 1, "category": 1},
                 ).limit(limit)
             )
 
@@ -103,8 +92,7 @@ def generate_legal_answer(query: str):
             return (
                 "\n📊 LEGAL ANALYSIS (FALLBACK)\n\n"
                 "No direct case found.\n\n"
-                "================ BASIC LAW =================\n"
-                + fallback
+                "================ BASIC LAW =================\n" + fallback
             )
 
         multi = multi_case_analysis(cases)

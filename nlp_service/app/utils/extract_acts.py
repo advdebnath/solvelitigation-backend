@@ -14,24 +14,25 @@ ACT_ABBREVIATIONS = {
     "CPC": "Code of Civil Procedure, 1908",
 }
 
+
 def extract_acts(text):
     acts = set()
 
     # 🔹 STRICT regex (no long sentences)
-    pattern = r'\b([A-Z][a-zA-Z]+(?:\s+[A-Z][a-zA-Z]+)*\s+Act[s]?,?\s*\d{4})\b'
+    pattern = r"\b([A-Z][a-zA-Z]+(?:\s+[A-Z][a-zA-Z]+)*\s+Act[s]?,?\s*\d{4})\b"
     matches = re.findall(pattern, text)
 
     for m in matches:
         act = m.strip()
 
         # remove prefixes
-        act = re.sub(r'^(Of The|Under The|Under|Of)\s+', '', act, flags=re.IGNORECASE)
+        act = re.sub(r"^(Of The|Under The|Under|Of)\s+", "", act, flags=re.IGNORECASE)
 
         # fix comma
-        act = re.sub(r'Act\s+(\d{4})', r'Act, \1', act)
+        act = re.sub(r"Act\s+(\d{4})", r"Act, \1", act)
 
         # normalize spaces
-        act = re.sub(r'\s+', ' ', act)
+        act = re.sub(r"\s+", " ", act)
 
         # normalize known acts
         act = ACT_NORMALIZATION.get(act, act)

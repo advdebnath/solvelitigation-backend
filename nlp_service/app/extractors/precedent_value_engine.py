@@ -1,60 +1,28 @@
 import re
 
-
 # =========================================================
 # 🔥 PRECEDENT VALUE PATTERNS
 # =========================================================
 
 PRECEDENT_PATTERNS = {
-
     "Relied On": [
-
         r"relied\s+on",
         r"placed\s+reliance\s+upon",
         r"reliance\s+placed\s+on",
         r"reliance\s+was\s+placed\s+on",
-        r"following\s+the\s+decision\s+in"
+        r"following\s+the\s+decision\s+in",
     ],
-
-    "Followed": [
-
-        r"\bfollowed\b",
-        r"we\s+follow",
-        r"respectfully\s+followed"
-    ],
-
+    "Followed": [r"\bfollowed\b", r"we\s+follow", r"respectfully\s+followed"],
     "Distinguished": [
-
         r"\bdistinguished\b",
         r"clearly\s+distinguishable",
         r"facts\s+are\s+different",
-        r"distinguishable\s+on\s+facts"
+        r"distinguishable\s+on\s+facts",
     ],
-
-    "Overruled": [
-
-        r"\boverruled\b",
-        r"no\s+longer\s+good\s+law"
-    ],
-
-    "Approved": [
-
-        r"\bapproved\b",
-        r"approval\s+of"
-    ],
-
-    "Reversed": [
-
-        r"\breversed\b",
-        r"set\s+aside"
-    ],
-
-    "Referred": [
-
-        r"referred\s+to",
-        r"reference\s+made\s+to",
-        r"\bcited\b"
-    ]
+    "Overruled": [r"\boverruled\b", r"no\s+longer\s+good\s+law"],
+    "Approved": [r"\bapproved\b", r"approval\s+of"],
+    "Reversed": [r"\breversed\b", r"set\s+aside"],
+    "Referred": [r"referred\s+to", r"reference\s+made\s+to", r"\bcited\b"],
 }
 
 
@@ -63,12 +31,7 @@ PRECEDENT_PATTERNS = {
 # =========================================================
 
 CITATION_REGEX = re.compile(
-
-    r"(AIR\s+\d{4}\s+SC\s+\d+)"
-    r"|"
-    r"(\(\d{4}\)\s+\d+\s+SCC\s+\d+)",
-
-    re.I
+    r"(AIR\s+\d{4}\s+SC\s+\d+)" r"|" r"(\(\d{4}\)\s+\d+\s+SCC\s+\d+)", re.I
 )
 
 
@@ -76,13 +39,10 @@ CITATION_REGEX = re.compile(
 # 🔥 CLEAN TEXT
 # =========================================================
 
+
 def clean_text(text):
 
-    text = re.sub(
-        r"\s+",
-        " ",
-        text
-    )
+    text = re.sub(r"\s+", " ", text)
 
     return text.strip()
 
@@ -90,6 +50,7 @@ def clean_text(text):
 # =========================================================
 # 🔥 DETECT PRECEDENT VALUE
 # =========================================================
+
 
 def detect_precedent_value(context):
 
@@ -103,11 +64,7 @@ def detect_precedent_value(context):
 
         for pattern in patterns:
 
-            matches = re.findall(
-                pattern,
-                context,
-                re.I
-            )
+            matches = re.findall(pattern, context, re.I)
 
             local_score += len(matches)
 
@@ -124,6 +81,7 @@ def detect_precedent_value(context):
 # 🔥 EXTRACT PRECEDENT VALUES
 # =========================================================
 
+
 def extract_precedent_values(text):
 
     try:
@@ -134,12 +92,7 @@ def extract_precedent_values(text):
         # 🔥 SENTENCE SPLIT
         # =================================================
 
-        sentences = re.split(
-
-            r'(?<=[.!?])\s+',
-
-            text
-        )
+        sentences = re.split(r"(?<=[.!?])\s+", text)
 
         precedents = []
 
@@ -149,18 +102,14 @@ def extract_precedent_values(text):
 
         for sentence in sentences:
 
-            citations = CITATION_REGEX.findall(
-                sentence
-            )
+            citations = CITATION_REGEX.findall(sentence)
 
             if not citations:
                 continue
 
             context = sentence.strip()
 
-            precedent_type = detect_precedent_value(
-                context
-            )
+            precedent_type = detect_precedent_value(context)
 
             citation_texts = []
 
@@ -170,23 +119,17 @@ def extract_precedent_values(text):
 
                     if c:
 
-                        citation_texts.append(
-                            c.strip()
-                        )
+                        citation_texts.append(c.strip())
 
             for citation in citation_texts:
 
-                precedents.append({
-
-                    "citation":
-                        citation,
-
-                    "precedent_value":
-                        precedent_type,
-
-                    "context":
-                        context[:500]
-                })
+                precedents.append(
+                    {
+                        "citation": citation,
+                        "precedent_value": precedent_type,
+                        "context": context[:500],
+                    }
+                )
 
         # =================================================
         # 🔥 REMOVE DUPLICATES
@@ -198,12 +141,7 @@ def extract_precedent_values(text):
 
         for item in precedents:
 
-            key = (
-
-                item["citation"].lower(),
-
-                item["precedent_value"].lower()
-            )
+            key = (item["citation"].lower(), item["precedent_value"].lower())
 
             if key in seen:
                 continue
@@ -216,18 +154,9 @@ def extract_precedent_values(text):
         # 🔥 RESULT
         # =================================================
 
-        result = {
+        result = {"precedents": unique, "confidence": 95}
 
-            "precedents":
-                unique,
-
-            "confidence":
-                95
-        }
-
-        print(
-            "✅ Precedent Values Extracted:"
-        )
+        print("✅ Precedent Values Extracted:")
 
         print(result)
 
@@ -235,16 +164,9 @@ def extract_precedent_values(text):
 
     except Exception as e:
 
-        print(
-            "❌ Precedent Engine Error:",
-            str(e)
-        )
+        print("❌ Precedent Engine Error:", str(e))
 
-        return {
-
-            "precedents": [],
-            "confidence": 0
-        }
+        return {"precedents": [], "confidence": 0}
 
 
 # =========================================================
@@ -253,12 +175,10 @@ def extract_precedent_values(text):
 
 if __name__ == "__main__":
 
-    sample = '''
+    sample = """
     Reliance was placed on AIR 1967 SC 574.
     The judgment reported in (2010) 8 SCC 726 was followed.
     AIR 1958 SC 141 is distinguished on facts.
-    '''
+    """
 
-    print(
-        extract_precedent_values(sample)
-    )
+    print(extract_precedent_values(sample))

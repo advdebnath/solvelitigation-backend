@@ -1,10 +1,13 @@
-from pymongo import MongoClient
 import re
+
+from pymongo import MongoClient
 
 MONGO_URI = "mongodb://sl_app:Debnath%401966@127.0.0.1:27017/solvelitigation"
 
+
 def get_db():
     return MongoClient(MONGO_URI)["solvelitigation"]
+
 
 def match_acts(text):
     db = get_db()

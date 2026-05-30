@@ -1,7 +1,6 @@
 import re
 
 ISSUE_PATTERNS = [
-
     r"whether\s+.*?\.",
     r"question\s+for\s+consideration.*?\.",
     r"point[s]?\s+for\s+determination.*?\.",
@@ -12,7 +11,6 @@ ISSUE_PATTERNS = [
 ]
 
 ISSUE_TYPES = {
-
     "natural justice": "natural_justice",
     "jurisdiction": "jurisdiction",
     "limitation": "limitation",
@@ -67,16 +65,14 @@ def detect_semantic_issues(text: str):
             if len(issue) < 25:
                 continue
 
-            issues.append({
-
-                "issue": issue,
-
-                "normalizedIssue": issue.lower(),
-
-                "issueType": classify_issue(issue),
-
-                "confidence": 85
-            })
+            issues.append(
+                {
+                    "issue": issue,
+                    "normalizedIssue": issue.lower(),
+                    "issueType": classify_issue(issue),
+                    "confidence": 85,
+                }
+            )
 
     unique = []
 
@@ -92,7 +88,6 @@ def detect_semantic_issues(text: str):
 
             unique.append(item)
 
- 
     # =====================================================
     # 🔥 REMISSION JURISPRUDENCE PRIORITY BOOST
     # =====================================================
@@ -103,7 +98,7 @@ def detect_semantic_issues(text: str):
         "remission",
         "article 161",
         "clemency",
-        "reformative justice"
+        "reformative justice",
     ]
 
     remission_hits = 0
@@ -114,19 +109,16 @@ def detect_semantic_issues(text: str):
 
         if signal in lower_text:
 
-           remission_hits += 1
+            remission_hits += 1
 
     if remission_hits >= 2:
 
         for item in unique:
 
-           if item.get("issueType") == "premature_release":
+            if item.get("issueType") == "premature_release":
 
-              item["confidence"] += remission_hits * 10
+                item["confidence"] += remission_hits * 10
 
-    unique.sort(
-        key=lambda x: x.get("confidence", 0),
-        reverse=True
-    )
+    unique.sort(key=lambda x: x.get("confidence", 0), reverse=True)
 
     return unique[:20]

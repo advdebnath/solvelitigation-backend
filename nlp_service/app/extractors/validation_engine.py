@@ -5,7 +5,6 @@ import re
 # =========================================================
 
 VALID_COURTS = [
-
     "SUPREME",
     "HIGH",
     "TRIBUNAL",
@@ -13,12 +12,13 @@ VALID_COURTS = [
     "SPECIAL",
     "CONSUMER",
     "TAX",
-    "UNKNOWN"
+    "UNKNOWN",
 ]
 
 # =========================================================
 # 🔥 CLEAN STRING
 # =========================================================
+
 
 def clean_string(value):
 
@@ -28,17 +28,15 @@ def clean_string(value):
 
     value = str(value)
 
-    value = re.sub(
-        r"\s+",
-        " ",
-        value
-    )
+    value = re.sub(r"\s+", " ", value)
 
     return value.strip()
+
 
 # =========================================================
 # 🔥 VALIDATE COURT
 # =========================================================
+
 
 def validate_court(court_data):
 
@@ -50,24 +48,11 @@ def validate_court(court_data):
 
         errors.append("Missing court data")
 
-        return {
+        return {"valid": False, "confidence": confidence, "errors": errors}
 
-            "valid": False,
+    court_type = clean_string(court_data.get("court_type"))
 
-            "confidence": confidence,
-
-            "errors": errors
-        }
-
-    court_type = clean_string(
-
-        court_data.get("court_type")
-    )
-
-    court_name = clean_string(
-
-        court_data.get("court_name")
-    )
+    court_name = clean_string(court_data.get("court_name"))
 
     if court_type not in VALID_COURTS:
 
@@ -85,18 +70,13 @@ def validate_court(court_data):
 
         confidence += 25
 
-    return {
+    return {"valid": len(errors) == 0, "confidence": confidence, "errors": errors}
 
-        "valid": len(errors) == 0,
-
-        "confidence": confidence,
-
-        "errors": errors
-    }
 
 # =========================================================
 # 🔥 VALIDATE CASE NUMBER
 # =========================================================
+
 
 def validate_case_number(case_data):
 
@@ -108,19 +88,9 @@ def validate_case_number(case_data):
 
         errors.append("Missing case number")
 
-        return {
+        return {"valid": False, "confidence": confidence, "errors": errors}
 
-            "valid": False,
-
-            "confidence": confidence,
-
-            "errors": errors
-        }
-
-    case_number = clean_string(
-
-        case_data.get("case_number")
-    )
+    case_number = clean_string(case_data.get("case_number"))
 
     if case_number == "Unknown Case":
 
@@ -130,10 +100,7 @@ def validate_case_number(case_data):
 
         confidence += 40
 
-    if not re.search(
-        r"\d",
-        case_number
-    ):
+    if not re.search(r"\d", case_number):
 
         errors.append("Case number missing digits")
 
@@ -145,18 +112,13 @@ def validate_case_number(case_data):
 
         errors.append("Case number too short")
 
-    return {
+    return {"valid": len(errors) == 0, "confidence": confidence, "errors": errors}
 
-        "valid": len(errors) == 0,
-
-        "confidence": confidence,
-
-        "errors": errors
-    }
 
 # =========================================================
 # 🔥 VALIDATE PARTIES
 # =========================================================
+
 
 def validate_parties(party_data):
 
@@ -168,24 +130,11 @@ def validate_parties(party_data):
 
         errors.append("Missing party data")
 
-        return {
+        return {"valid": False, "confidence": confidence, "errors": errors}
 
-            "valid": False,
+    petitioner = clean_string(party_data.get("petitioner"))
 
-            "confidence": confidence,
-
-            "errors": errors
-        }
-
-    petitioner = clean_string(
-
-        party_data.get("petitioner")
-    )
-
-    respondent = clean_string(
-
-        party_data.get("respondent")
-    )
+    respondent = clean_string(party_data.get("respondent"))
 
     # =====================================================
     # 🔥 PETITIONER
@@ -215,31 +164,23 @@ def validate_parties(party_data):
     # 🔥 SAME PARTY CHECK
     # =====================================================
 
-    if (
-
-        petitioner
-        and
-        respondent
-        and
-        petitioner.lower() == respondent.lower()
-    ):
+    if petitioner and respondent and petitioner.lower() == respondent.lower():
 
         errors.append("Petitioner and respondent identical")
 
         confidence -= 15
 
     return {
-
         "valid": len(errors) == 0,
-
         "confidence": max(0, confidence),
-
-        "errors": errors
+        "errors": errors,
     }
+
 
 # =========================================================
 # 🔥 VALIDATE JUDGES
 # =========================================================
+
 
 def validate_judges(judges):
 
@@ -251,14 +192,7 @@ def validate_judges(judges):
 
         errors.append("No judges extracted")
 
-        return {
-
-            "valid": False,
-
-            "confidence": confidence,
-
-            "errors": errors
-        }
+        return {"valid": False, "confidence": confidence, "errors": errors}
 
     if isinstance(judges, list):
 
@@ -272,20 +206,15 @@ def validate_judges(judges):
 
             if isinstance(j, str):
 
-                j = {
-                    "name": j
-                }
+                j = {"name": j}
 
             if not isinstance(j, dict):
                 continue
 
-            judge_name = str(
-                j.get("name", "")
-            ).strip()
+            judge_name = str(j.get("name", "")).strip()
 
             if re.match(
-                r"^[a-z]\\.\\s+(on|to|of|in|at|by|for|with|from)$",
-                judge_name.lower()
+                r"^[a-z]\\.\\s+(on|to|of|in|at|by|for|with|from)$", judge_name.lower()
             ):
                 continue
 
@@ -296,23 +225,16 @@ def validate_judges(judges):
                 "video piracy",
                 "head constable",
                 "appellant",
-                "respondent"
+                "respondent",
             ]
 
-            if any(
-                term in judge_name.lower()
-                for term in invalid_judge_terms
-            ):
+            if any(term in judge_name.lower() for term in invalid_judge_terms):
                 continue
 
             normalized_judges.append(j)
 
         valid_judges = [
-
-            j for j in normalized_judges
-
-            if j.get("name")
-            and j.get("name") != "Unknown"
+            j for j in normalized_judges if j.get("name") and j.get("name") != "Unknown"
         ]
 
         if len(valid_judges) > 0:
@@ -327,18 +249,13 @@ def validate_judges(judges):
 
         errors.append("Judges not list")
 
-    return {
+    return {"valid": len(errors) == 0, "confidence": confidence, "errors": errors}
 
-        "valid": len(errors) == 0,
-
-        "confidence": confidence,
-
-        "errors": errors
-    }
 
 # =========================================================
 # 🔥 VALIDATE DATE
 # =========================================================
+
 
 def validate_date(date_data):
 
@@ -350,19 +267,9 @@ def validate_date(date_data):
 
         errors.append("Missing date")
 
-        return {
+        return {"valid": False, "confidence": confidence, "errors": errors}
 
-            "valid": False,
-
-            "confidence": confidence,
-
-            "errors": errors
-        }
-
-    date_value = clean_string(
-
-        date_data.get("date")
-    )
+    date_value = clean_string(date_data.get("date"))
 
     if not date_value:
 
@@ -376,12 +283,7 @@ def validate_date(date_data):
     # 🔥 YYYY-MM-DD
     # =====================================================
 
-    if not re.match(
-
-        r"^\d{4}-\d{2}-\d{2}$",
-
-        date_value
-    ):
+    if not re.match(r"^\d{4}-\d{2}-\d{2}$", date_value):
 
         errors.append("Invalid ISO date")
 
@@ -389,42 +291,30 @@ def validate_date(date_data):
 
         confidence += 30
 
-    return {
+    return {"valid": len(errors) == 0, "confidence": confidence, "errors": errors}
 
-        "valid": len(errors) == 0,
-
-        "confidence": confidence,
-
-        "errors": errors
-    }
 
 # =========================================================
 # 🔥 OVERALL VALIDATION
 # =========================================================
+
 
 def validate_extraction(metadata):
 
     try:
 
         validation = {
-
             "valid": True,
-
             "overall_confidence": 0,
-
             "errors": [],
-
-            "components": {}
+            "components": {},
         }
 
         # =====================================================
         # 🔥 COURT
         # =====================================================
 
-        court_result = validate_court(
-
-            metadata.get("court")
-        )
+        court_result = validate_court(metadata.get("court"))
 
         validation["components"]["court"] = court_result
 
@@ -432,10 +322,7 @@ def validate_extraction(metadata):
         # 🔥 CASE NUMBER
         # =====================================================
 
-        case_result = validate_case_number(
-
-            metadata.get("case_number")
-        )
+        case_result = validate_case_number(metadata.get("case_number"))
 
         validation["components"]["case_number"] = case_result
 
@@ -443,10 +330,7 @@ def validate_extraction(metadata):
         # 🔥 PARTIES
         # =====================================================
 
-        party_result = validate_parties(
-
-            metadata.get("parties")
-        )
+        party_result = validate_parties(metadata.get("parties"))
 
         validation["components"]["parties"] = party_result
 
@@ -454,10 +338,7 @@ def validate_extraction(metadata):
         # 🔥 JUDGES
         # =====================================================
 
-        judge_result = validate_judges(
-
-            metadata.get("judges")
-        )
+        judge_result = validate_judges(metadata.get("judges"))
 
         validation["components"]["judges"] = judge_result
 
@@ -465,10 +346,7 @@ def validate_extraction(metadata):
         # 🔥 DATE
         # =====================================================
 
-        date_result = validate_date(
-
-            metadata.get("date")
-        )
+        date_result = validate_date(metadata.get("date"))
 
         validation["components"]["date"] = date_result
 
@@ -490,43 +368,23 @@ def validate_extraction(metadata):
 
                 validation["valid"] = False
 
-                validation["errors"].extend(
-
-                    component["errors"]
-                )
+                validation["errors"].extend(component["errors"])
 
         if total_items > 0:
 
-            validation["overall_confidence"] = round(
+            validation["overall_confidence"] = round(total_confidence / total_items, 2)
 
-                total_confidence / total_items,
-
-                2
-            )
-
-        print(
-
-            "✅ Validation Complete:",
-
-            validation["overall_confidence"]
-        )
+        print("✅ Validation Complete:", validation["overall_confidence"])
 
         return validation
 
     except Exception as e:
 
-        print(
-            "❌ VALIDATION ENGINE ERROR:",
-            e
-        )
+        print("❌ VALIDATION ENGINE ERROR:", e)
 
         return {
-
             "valid": False,
-
             "overall_confidence": 0,
-
             "errors": [str(e)],
-
-            "components": {}
+            "components": {},
         }

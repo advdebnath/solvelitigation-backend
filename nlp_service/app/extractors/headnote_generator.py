@@ -1,40 +1,27 @@
-
 import re
 
 # =====================================================
 # 🔥 DETECT OUTCOME
 # =====================================================
 
+
 def detect_outcome(text: str) -> str:
 
     lower = text.lower()
 
     outcome_patterns = [
-
         ("appeal dismissed", "Appeal Dismissed"),
-
         ("appeal allowed", "Appeal Allowed"),
-
         ("petition dismissed", "Petition Dismissed"),
-
         ("petition allowed", "Petition Allowed"),
-
         ("set aside", "Order Set Aside"),
-
         ("conviction upheld", "Conviction Upheld"),
-
         ("acquitted", "Accused Acquitted"),
-
         ("bail granted", "Bail Granted"),
-
         ("bail rejected", "Bail Rejected"),
-
         ("matter remanded", "Matter Remanded"),
-
         ("disposed of", "Matter Disposed"),
-
         ("writ petition allowed", "Writ Petition Allowed"),
-
         ("writ petition dismissed", "Writ Petition Dismissed"),
     ]
 
@@ -46,9 +33,11 @@ def detect_outcome(text: str) -> str:
 
     return "Order Passed"
 
+
 # =====================================================
 # 🔥 SELECT IMPORTANT POINTS
 # =====================================================
+
 
 def select_key_points(points_of_law):
 
@@ -57,38 +46,22 @@ def select_key_points(points_of_law):
         return []
 
     priority_keywords = [
-
         "IPC",
-
         "NDPS",
-
         "CrPC",
-
         "Negotiable Instruments",
-
         "Bail",
-
         "Murder",
-
         "Cheque Dishonour",
-
         "Specific Performance",
-
         "Arbitration",
-
         "Tax",
-
         "Constitution",
-
         "Service",
-
         "Termination",
-
         "Reinstatement",
-
         "Dowry",
-
-        "Corruption"
+        "Corruption",
     ]
 
     selected = []
@@ -117,20 +90,13 @@ def select_key_points(points_of_law):
 
     return selected[:5]
 
+
 # =====================================================
 # 🔥 GENERATE HEADNOTE
 # =====================================================
 
-def generate_headnote(
 
-    category: str,
-
-    acts: list,
-
-    points_of_law: list,
-
-    text: str
-):
+def generate_headnote(category: str, acts: list, points_of_law: list, text: str):
 
     try:
 
@@ -160,9 +126,7 @@ def generate_headnote(
         # 🔥 POINTS OF LAW
         # =============================================
 
-        selected_points = select_key_points(
-            points_of_law
-        )
+        selected_points = select_key_points(points_of_law)
 
         for point in selected_points:
 
@@ -174,9 +138,7 @@ def generate_headnote(
         # 🔥 OUTCOME
         # =============================================
 
-        outcome = detect_outcome(
-            text
-        )
+        outcome = detect_outcome(text)
 
         if outcome not in parts:
 
@@ -190,19 +152,12 @@ def generate_headnote(
 
         # CLEAN SPACES
 
-        headnote = re.sub(
-            r"\s+",
-            " ",
-            headnote
-        )
+        headnote = re.sub(r"\s+", " ", headnote)
 
         return headnote.strip()
 
     except Exception as e:
 
-        print(
-            "❌ HEADNOTE GENERATION ERROR:",
-            e
-        )
+        print("❌ HEADNOTE GENERATION ERROR:", e)
 
         return "Legal Issue Involved"

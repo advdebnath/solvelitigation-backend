@@ -1,6 +1,6 @@
-from pymongo import MongoClient
-from gridfs import GridFS
 from app.config import settings
+from gridfs import GridFS
+from pymongo import MongoClient
 
 _client = None
 _db = None

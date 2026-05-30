@@ -1,4 +1,5 @@
 from collections import Counter
+
 from app.services.precedent_engine import get_strongest_case, resolve_conflict
 
 
@@ -179,7 +180,9 @@ def multi_case_analysis(cases):
     if conflict:
         conclusion = "There exists judicial conflict requiring careful interpretation."
     else:
-        conclusion = "The legal position is consistent and supported by binding precedents."
+        conclusion = (
+            "The legal position is consistent and supported by binding precedents."
+        )
 
     result += "\n📌 FINAL CONCLUSION:\n"
     result += conclusion

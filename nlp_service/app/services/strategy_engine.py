@@ -2,6 +2,7 @@
 # ⚖️ STRATEGY ADVISOR ENGINE (UPGRADED)
 # =========================================
 
+
 def clean(t):
     return str(t).replace("\xa0", " ").strip()
 
@@ -74,7 +75,7 @@ def build_strategy(cases, query, outcome_score):
             "Highlight Supreme Court judgments prominently",
             "Press for final disposal or summary judgment",
             "Limit respondent arguments through precedent dominance",
-            "Seek interim relief if applicable"
+            "Seek interim relief if applicable",
         ]
 
     elif strength == "Moderate":
@@ -84,7 +85,7 @@ def build_strategy(cases, query, outcome_score):
             "Add stronger precedents (preferably Supreme Court)",
             "File additional affidavit or documents",
             "Distinguish adverse precedents",
-            "Prepare strong rebuttal strategy"
+            "Prepare strong rebuttal strategy",
         ]
 
     else:
@@ -94,7 +95,7 @@ def build_strategy(cases, query, outcome_score):
             "Challenge applicability of adverse precedents",
             "Focus on factual distinctions",
             "Introduce new legal grounds if possible",
-            "Explore settlement or alternative remedies"
+            "Explore settlement or alternative remedies",
         ]
 
     # =========================================
@@ -141,5 +142,5 @@ def build_strategy(cases, query, outcome_score):
         "risks": risks,
         "case_strategy": case_refs,
         "steps": steps,
-        "text": result_text
+        "text": result_text,
     }

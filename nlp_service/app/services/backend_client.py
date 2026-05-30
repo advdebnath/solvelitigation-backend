@@ -1,5 +1,6 @@
-import requests
 from typing import Dict
+
+import requests
 
 
 class BackendClient:

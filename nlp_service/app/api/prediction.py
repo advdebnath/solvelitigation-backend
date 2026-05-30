@@ -1,15 +1,12 @@
 # (from fastapi import APIRouter
-from fastapi import APIRouter
-from pydantic import BaseModel
-from typing import Optional, Union
 import logging
+from typing import Optional, Union
 
 # 🔥 NEW ENGINE
-from app.services.semantic_engine import (
-    semantic_search,
-    generate_answer,
-    build_argument
-)
+from app.services.semantic_engine import (build_argument, generate_answer,
+                                          semantic_search)
+from fastapi import APIRouter
+from pydantic import BaseModel
 
 router = APIRouter()
 logger = logging.getLogger(__name__)
@@ -17,6 +14,7 @@ logger = logging.getLogger(__name__)
 # ============================================
 # 🔥 SAFE IMPORTS
 # ============================================
+
 
 def safe_import():
     global predict_advanced, predict, predict_with_judge
@@ -28,6 +26,7 @@ def safe_import():
 
     try:
         from app.ml.predict_advanced import predict_advanced
+
         ADVANCED_AVAILABLE = True
         logger.info("✅ Advanced model loaded")
     except Exception as e:
@@ -35,16 +34,19 @@ def safe_import():
 
     try:
         from app.ml.predict import predict
+
         logger.info("✅ Basic model loaded")
     except Exception as e:
         logger.error(f"❌ Basic model missing: {e}")
 
     try:
         from app.ml.judge_predict import predict_with_judge
+
         JUDGE_AVAILABLE = True
         logger.info("✅ Judge model loaded")
     except Exception as e:
         logger.warning(f"⚠️ Judge model not available: {e}")
+
 
 safe_import()
 
@@ -52,16 +54,20 @@ safe_import()
 # 🔥 REQUEST MODELS
 # ============================================
 
+
 class PredictRequest(BaseModel):
     text: str
     judge: Optional[str] = None
 
+
 class QueryRequest(BaseModel):
     query: str
+
 
 # ============================================
 # 🔥 HELPERS
 # ============================================
+
 
 def normalize_probability(value: Union[int, float, None]) -> int:
     try:
@@ -78,9 +84,11 @@ def normalize_probability(value: Union[int, float, None]) -> int:
     except Exception:
         return 50
 
+
 # ============================================
 # 🔥 PREDICTION API
 # ============================================
+
 
 @router.post("/predict-outcome")
 async def predict_outcome(req: PredictRequest):
@@ -120,9 +128,7 @@ async def predict_outcome(req: PredictRequest):
         label = "Win" if final_prob > 50 else "Lose"
 
         confidence = (
-            "High" if final_prob > 75 else
-            "Medium" if final_prob > 55 else
-            "Low"
+            "High" if final_prob > 75 else "Medium" if final_prob > 55 else "Low"
         )
 
         return {
@@ -133,17 +139,19 @@ async def predict_outcome(req: PredictRequest):
                 "finalProbability": final_prob,
                 "label": label,
                 "confidence": confidence,
-                "model": "ml+judge" if judge_prob else model_used
-            }
+                "model": "ml+judge" if judge_prob else model_used,
+            },
         }
 
     except Exception as e:
         logger.exception("❌ CRITICAL ERROR")
         return {"success": False, "error": str(e)}
 
+
 # ============================================
 # 🔥 🔥 INTELLIGENT LEGAL ENGINE APIs
 # ============================================
+
 
 @router.post("/semantic/search")
 async def semantic_search_api(req: QueryRequest):
@@ -154,6 +162,7 @@ async def semantic_search_api(req: QueryRequest):
         logger.error(e)
         return {"success": False, "error": str(e)}
 
+
 @router.post("/semantic/answer")
 async def semantic_answer_api(req: QueryRequest):
     try:
@@ -162,6 +171,7 @@ async def semantic_answer_api(req: QueryRequest):
     except Exception as e:
         logger.error(e)
         return {"success": False, "error": str(e)}
+
 
 @router.post("/semantic/argument")
 async def semantic_argument_api(req: QueryRequest):

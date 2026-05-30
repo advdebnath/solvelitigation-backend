@@ -4,33 +4,17 @@ import re
 # 🔹 KEYWORDS
 # =========================
 
-ACT_KEYWORDS = [
-    "act,",
-    "act ",
-    "code of",
-    "regulation",
-    "statute"
-]
+ACT_KEYWORDS = ["act,", "act ", "code of", "regulation", "statute"]
 
-RULE_KEYWORDS = [
-    "rules,",
-    "rules ",
-    "rule ",
-    "framed under"
-]
+RULE_KEYWORDS = ["rules,", "rules ", "rule ", "framed under"]
 
-NOTIFICATION_KEYWORDS = [
-    "notification no",
-    "gazette",
-    "issued by",
-    "hereby notified"
-]
+NOTIFICATION_KEYWORDS = ["notification no", "gazette", "issued by", "hereby notified"]
 
 CIRCULAR_KEYWORDS = [
     "circular no",
     "rbi circular",
     "office memorandum",
-    "guidelines issued"
+    "guidelines issued",
 ]
 
 JUDGMENT_KEYWORDS = [
@@ -39,12 +23,13 @@ JUDGMENT_KEYWORDS = [
     "judgment",
     "appellant",
     "respondent",
-    "versus"
+    "versus",
 ]
 
 # =========================
 # 🔥 DETECTION ENGINE
 # =========================
+
 
 def detect_document_type_from_text(text: str) -> str:
     if not text:
@@ -52,13 +37,7 @@ def detect_document_type_from_text(text: str) -> str:
 
     t = text.lower()
 
-    scores = {
-        "ACT": 0,
-        "RULE": 0,
-        "NOTIFICATION": 0,
-        "CIRCULAR": 0,
-        "JUDGMENT": 0
-    }
+    scores = {"ACT": 0, "RULE": 0, "NOTIFICATION": 0, "CIRCULAR": 0, "JUDGMENT": 0}
 
     def count_hits(keywords, label):
         for k in keywords:

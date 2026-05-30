@@ -5,146 +5,66 @@ import re
 # =========================================================
 
 ACT_REGISTRY = {
-
     "INDIAN PENAL CODE": {
-        "canonical":
-            "Indian Penal Code, 1860",
-
-        "short":
-            "IPC",
-
-        "category":
-            "Criminal",
-
-        "patterns": [
-            r"\bIPC\b",
-            r"\bIndian Penal Code\b"
-        ]
+        "canonical": "Indian Penal Code, 1860",
+        "short": "IPC",
+        "category": "Criminal",
+        "patterns": [r"\bIPC\b", r"\bIndian Penal Code\b"],
     },
-
     "CRPC": {
-        "canonical":
-            "Code Of Criminal Procedure, 1973",
-
-        "short":
-            "CrPC",
-
-        "category":
-            "Criminal",
-
-        "patterns": [
-            r"\bCrPC\b",
-            r"\bCode Of Criminal Procedure\b"
-        ]
+        "canonical": "Code Of Criminal Procedure, 1973",
+        "short": "CrPC",
+        "category": "Criminal",
+        "patterns": [r"\bCrPC\b", r"\bCode Of Criminal Procedure\b"],
     },
-
     "CPC": {
-        "canonical":
-            "Code Of Civil Procedure, 1908",
-
-        "short":
-            "CPC",
-
-        "category":
-            "Civil",
-
-        "patterns": [
-            r"\bCPC\b",
-            r"\bCode Of Civil Procedure\b"
-        ]
+        "canonical": "Code Of Civil Procedure, 1908",
+        "short": "CPC",
+        "category": "Civil",
+        "patterns": [r"\bCPC\b", r"\bCode Of Civil Procedure\b"],
     },
-
     "CONSTITUTION": {
-        "canonical":
-            "Constitution Of India",
-
-        "short":
-            "Constitution",
-
-        "category":
-            "Constitutional",
-
+        "canonical": "Constitution Of India",
+        "short": "Constitution",
+        "category": "Constitutional",
         "patterns": [
             r"\bConstitution Of India\b",
             r"\bConstitution\b",
-        ]
+        ],
     },
-
     "EVIDENCE": {
-        "canonical":
-            "Indian Evidence Act, 1872",
-
-        "short":
-            "Evidence Act",
-
-        "category":
-            "Civil",
-
-        "patterns": [
-            r"\bEvidence Act\b",
-            r"\bIndian Evidence Act\b"
-        ]
+        "canonical": "Indian Evidence Act, 1872",
+        "short": "Evidence Act",
+        "category": "Civil",
+        "patterns": [r"\bEvidence Act\b", r"\bIndian Evidence Act\b"],
     },
-
     "NEGOTIABLE": {
-        "canonical":
-            "Negotiable Instruments Act, 1881",
-
-        "short":
-            "NI Act",
-
-        "category":
-            "Criminal",
-
-        "patterns": [
-            r"\bNI Act\b",
-            r"\bNegotiable Instruments Act\b"
-        ]
+        "canonical": "Negotiable Instruments Act, 1881",
+        "short": "NI Act",
+        "category": "Criminal",
+        "patterns": [r"\bNI Act\b", r"\bNegotiable Instruments Act\b"],
     },
-
     "WAKF": {
-        "canonical":
-            "Wakf Act, 1995",
-
-        "short":
-            "Wakf Act",
-
-        "category":
-            "Civil",
-
-        "patterns": [
-            r"\bWakf\b",
-            r"\bWakf Act\b"
-        ]
+        "canonical": "Wakf Act, 1995",
+        "short": "Wakf Act",
+        "category": "Civil",
+        "patterns": [r"\bWakf\b", r"\bWakf Act\b"],
     },
-
     "CONTRACT": {
-        "canonical":
-            "Indian Contract Act, 1872",
-
-        "short":
-            "Contract Act",
-
-        "category":
-            "Civil",
-
-        "patterns": [
-            r"\bContract Act\b",
-            r"\bIndian Contract Act\b"
-        ]
-    }
+        "canonical": "Indian Contract Act, 1872",
+        "short": "Contract Act",
+        "category": "Civil",
+        "patterns": [r"\bContract Act\b", r"\bIndian Contract Act\b"],
+    },
 }
 
 # =========================================================
 # 🔥 STRICT ACT CONFIDENCE ENGINE
 # =========================================================
 
-def calculate_act_confidence(
 
-    act_name="",
-    text="",
-    matched_sections=None,
-    category=None
+def calculate_act_confidence(
+    act_name="", text="", matched_sections=None, category=None
 ):
 
     if matched_sections is None:
@@ -169,14 +89,13 @@ def calculate_act_confidence(
     # -----------------------------------------------------
 
     short_tokens = [
-
         "ipc",
         "crpc",
         "constitution",
         "wakf",
         "contract act",
         "evidence act",
-        "ni act"
+        "ni act",
     ]
 
     for token in short_tokens:
@@ -191,10 +110,7 @@ def calculate_act_confidence(
 
     if matched_sections:
 
-        score += min(
-            30,
-            len(matched_sections) * 10
-        )
+        score += min(30, len(matched_sections) * 10)
 
     # -----------------------------------------------------
     # 🔥 CATEGORY CONSISTENCY
@@ -202,42 +118,21 @@ def calculate_act_confidence(
 
     if category == "Criminal":
 
-        criminal_words = [
-            "fir",
-            "bail",
-            "accused",
-            "conviction",
-            "sentence"
-        ]
+        criminal_words = ["fir", "bail", "accused", "conviction", "sentence"]
 
         if any(x in text_lower for x in criminal_words):
 
-            if any(x in act_lower for x in [
-                "penal",
-                "criminal",
-                "ndps",
-                "pocso"
-            ]):
+            if any(x in act_lower for x in ["penal", "criminal", "ndps", "pocso"]):
 
                 score += 20
 
     if category == "Civil":
 
-        civil_words = [
-            "property",
-            "wakf",
-            "agreement",
-            "tenancy",
-            "partition"
-        ]
+        civil_words = ["property", "wakf", "agreement", "tenancy", "partition"]
 
         if any(x in text_lower for x in civil_words):
 
-            if any(x in act_lower for x in [
-                "wakf",
-                "contract",
-                "property"
-            ]):
+            if any(x in act_lower for x in ["wakf", "contract", "property"]):
 
                 score += 20
 
@@ -245,11 +140,7 @@ def calculate_act_confidence(
     # 🔥 WEAK ACT PENALTY
     # -----------------------------------------------------
 
-    weak_words = [
-        "procedure",
-        "miscellaneous",
-        "general"
-    ]
+    weak_words = ["procedure", "miscellaneous", "general"]
 
     if any(x in act_lower for x in weak_words):
 
@@ -264,41 +155,30 @@ def calculate_act_confidence(
 # 🔥 NORMALIZATION
 # =========================================================
 
+
 def normalize_text(text):
 
-    text = re.sub(
-        r"\s+",
-        " ",
-        text
-    )
+    text = re.sub(r"\s+", " ", text)
 
     return text.strip()
+
 
 # =========================================================
 # 🔥 SECTION LINK BOOST
 # =========================================================
 
 SECTION_ACT_MAP = {
-
-    "482":
-        "Code Of Criminal Procedure, 1973",
-
-    "138":
-        "Negotiable Instruments Act, 1881",
-
-    "302":
-        "Indian Penal Code, 1860",
-
-    "83":
-        "Wakf Act, 1995",
-
-    "85":
-        "Wakf Act, 1995"
+    "482": "Code Of Criminal Procedure, 1973",
+    "138": "Negotiable Instruments Act, 1881",
+    "302": "Indian Penal Code, 1860",
+    "83": "Wakf Act, 1995",
+    "85": "Wakf Act, 1995",
 }
 
 # =========================================================
 # 🔥 EXTRACT ACTS
 # =========================================================
+
 
 def extract_acts(text):
 
@@ -306,14 +186,7 @@ def extract_acts(text):
 
         if not text:
 
-            return {
-
-                "acts": [],
-
-                "matched_sections": [],
-
-                "confidence": 0
-            }
+            return {"acts": [], "matched_sections": [], "confidence": 0}
 
         text = normalize_text(text)
 
@@ -329,14 +202,7 @@ def extract_acts(text):
 
             for pattern in config["patterns"]:
 
-                matches = re.findall(
-
-                    pattern,
-
-                    text,
-
-                    re.I
-                )
+                matches = re.findall(pattern, text, re.I)
 
                 if matches:
 
@@ -347,14 +213,10 @@ def extract_acts(text):
                 canonical = config["canonical"]
 
                 confidence = calculate_act_confidence(
-
                     act_name=canonical,
-
                     text=text,
-
                     matched_sections=[],
-
-                    category=config["category"]
+                    category=config["category"],
                 )
 
                 if confidence < 45:
@@ -362,21 +224,11 @@ def extract_acts(text):
                     continue
 
                 found[canonical] = {
-
-                    "act_name":
-                        canonical,
-
-                    "short_name":
-                        config["short"],
-
-                    "category":
-                        config["category"],
-
-                    "score":
-                        score,
-
-                    "confidence":
-                        confidence
+                    "act_name": canonical,
+                    "short_name": config["short"],
+                    "category": config["category"],
+                    "score": score,
+                    "confidence": confidence,
                 }
 
         # =================================================
@@ -385,31 +237,13 @@ def extract_acts(text):
 
         matched_sections = []
 
-        section_matches = re.findall(
+        section_matches = re.findall(r"Section[s]?\s+(\d+[A-Za-z]*)", text, re.I)
 
-            r"Section[s]?\s+(\d+[A-Za-z]*)",
+        article_matches = re.findall(r"Article\s+(\d+[A-Za-z]*)", text, re.I)
 
-            text,
+        matched_sections.extend(section_matches)
 
-            re.I
-        )
-
-        article_matches = re.findall(
-
-            r"Article\s+(\d+[A-Za-z]*)",
-
-            text,
-
-            re.I
-        )
-
-        matched_sections.extend(
-            section_matches
-        )
-
-        matched_sections.extend(
-            article_matches
-        )
+        matched_sections.extend(article_matches)
 
         for sec in matched_sections:
 
@@ -427,7 +261,7 @@ def extract_acts(text):
 
                 if boosted_act in found:
 
-                    found[boosted_act]["score"] += (5 * frequency)
+                    found[boosted_act]["score"] += 5 * frequency
 
                 else:
 
@@ -448,32 +282,17 @@ def extract_acts(text):
                             short_name = cfg["short"]
 
                     found[boosted_act] = {
-
-                        "act_name":
-                            boosted_act,
-
-                        "short_name":
-                            short_name,
-
-                        "category":
-                            category,
-
-                        "score":
-                            5
+                        "act_name": boosted_act,
+                        "short_name": short_name,
+                        "category": category,
+                        "score": 5,
                     }
 
         # =================================================
         # 🔥 SORT BY SCORE
         # =================================================
 
-        acts = sorted(
-
-            found.values(),
-
-            key=lambda x: x["score"],
-
-            reverse=True
-        )
+        acts = sorted(found.values(), key=lambda x: x["score"], reverse=True)
 
         # =================================================
         # 🔥 REMOVE INTERNAL SCORE
@@ -497,47 +316,24 @@ def extract_acts(text):
 
             confidence += 20
 
-        confidence = min(
-            confidence,
-            95
-        )
+        confidence = min(confidence, 95)
 
         result = {
-
-            "acts":
-                acts,
-
-            "matched_sections":
-                list(
-                    set(matched_sections)
-                ),
-
-            "confidence":
-                confidence
+            "acts": acts,
+            "matched_sections": list(set(matched_sections)),
+            "confidence": confidence,
         }
 
-        print(
-            "✅ Acts Extracted:",
-            result
-        )
+        print("✅ Acts Extracted:", result)
 
         return result
 
     except Exception as e:
 
-        print(
-            "❌ ACT EXTRACTION ERROR:",
-            e
-        )
+        print("❌ ACT EXTRACTION ERROR:", e)
 
-        return {
+        return {"acts": [], "matched_sections": [], "confidence": 0}
 
-            "acts": [],
-
-            "matched_sections": [],
-
-            "confidence": 0
-        }
 
 # =========================================================
 # 🔥 DIRECT TEST
@@ -559,6 +355,4 @@ if __name__ == "__main__":
     was discussed.
     """
 
-    print(
-        extract_acts(sample)
-    )
+    print(extract_acts(sample))

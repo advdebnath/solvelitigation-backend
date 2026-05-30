@@ -1,4 +1,5 @@
 import pickle
+
 from pymongo import MongoClient
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.linear_model import LogisticRegression
@@ -7,6 +8,7 @@ MONGO_URI = "mongodb://sl_app:Debnath%401966@127.0.0.1:27017/solvelitigation"
 
 client = MongoClient(MONGO_URI)
 db = client["solvelitigation"]
+
 
 def extract_outcome(text):
     if not text:
@@ -17,6 +19,7 @@ def extract_outcome(text):
     if "dismissed" in t:
         return 0
     return None
+
 
 def load_data():
     X, y = [], []
@@ -30,6 +33,7 @@ def load_data():
             y.append(outcome)
 
     return X, y
+
 
 def train():
     X, y = load_data()
@@ -48,6 +52,7 @@ def train():
         pickle.dump((vectorizer, model), f)
 
     print("✅ Model trained and saved")
+
 
 if __name__ == "__main__":
     train()

@@ -1,12 +1,11 @@
 import subprocess
 
+
 def extract_text(pdf_path, html_path=None):
     try:
         print("📄 Extracting PDF:", pdf_path)
 
-        output = subprocess.check_output(
-            ["pdftotext", pdf_path, "-"]
-        )
+        output = subprocess.check_output(["pdftotext", pdf_path, "-"])
 
         text = output.decode("utf-8")
 

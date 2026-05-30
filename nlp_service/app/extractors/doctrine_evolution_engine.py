@@ -1,34 +1,22 @@
 import re
 from collections import defaultdict
 
-
 # =========================================================
 # 🔥 KNOWN DOCTRINES
 # =========================================================
 
 KNOWN_DOCTRINES = [
-
     "natural justice",
-
     "constitutional mandate",
-
     "rule of law",
-
     "burden of proof",
-
     "mens rea",
-
     "proportionality",
-
     "legitimate expectation",
-
     "procedural fairness",
-
     "due process",
-
-    "arbitrariness"
+    "arbitrariness",
 ]
-
 
 
 # =========================================================
@@ -36,30 +24,14 @@ KNOWN_DOCTRINES = [
 # =========================================================
 
 EVOLUTION_SIGNALS = {
-
-    "relied upon":
-        "Precedent Reliance",
-
-    "followed":
-        "Precedent Followed",
-
-    "distinguished":
-        "Doctrine Distinguished",
-
-    "overruled":
-        "Doctrine Overruled",
-
-    "clarified":
-        "Doctrine Clarified",
-
-    "expanded":
-        "Doctrine Expanded",
-
-    "reconsidered":
-        "Doctrine Reconsidered",
-
-    "reaffirmed":
-        "Doctrine Reaffirmed"
+    "relied upon": "Precedent Reliance",
+    "followed": "Precedent Followed",
+    "distinguished": "Doctrine Distinguished",
+    "overruled": "Doctrine Overruled",
+    "clarified": "Doctrine Clarified",
+    "expanded": "Doctrine Expanded",
+    "reconsidered": "Doctrine Reconsidered",
+    "reaffirmed": "Doctrine Reaffirmed",
 }
 
 
@@ -67,13 +39,10 @@ EVOLUTION_SIGNALS = {
 # 🔥 CLEAN
 # =========================================================
 
+
 def clean_text(text):
 
-    text = re.sub(
-        r"\s+",
-        " ",
-        str(text)
-    )
+    text = re.sub(r"\s+", " ", str(text))
 
     return text.strip()
 
@@ -81,6 +50,7 @@ def clean_text(text):
 # =========================================================
 # 🔥 DETECT DOCTRINES
 # =========================================================
+
 
 def detect_doctrines(text):
 
@@ -92,9 +62,7 @@ def detect_doctrines(text):
 
         if doctrine in lower:
 
-            findings.append(
-                doctrine
-            )
+            findings.append(doctrine)
 
     return findings
 
@@ -103,45 +71,24 @@ def detect_doctrines(text):
 # 🔥 BUILD EVOLUTION
 # =========================================================
 
-def build_doctrine_evolution(
 
-    doctrine,
+def build_doctrine_evolution(doctrine, year, context):
 
-    year,
-
-    context
-):
-
-    return {
-
-        "year":
-            year,
-
-        "principle":
-            clean_text(
-                context[:400]
-            )
-    }
+    return {"year": year, "principle": clean_text(context[:400])}
 
 
 # =========================================================
 # 🔥 EXTRACT EVOLUTION
 # =========================================================
 
-def extract_doctrine_evolution(
 
-    text,
-
-    year=None
-):
+def extract_doctrine_evolution(text, year=None):
 
     try:
 
         text = clean_text(text)
 
-        doctrines = detect_doctrines(
-            text
-        )
+        doctrines = detect_doctrines(text)
 
         evolution = defaultdict(list)
 
@@ -149,12 +96,7 @@ def extract_doctrine_evolution(
         # 🔥 SPLIT SENTENCES
         # =================================================
 
-        sentences = re.split(
-
-            r'(?<=[.!?])\s+',
-
-            text
-        )
+        sentences = re.split(r"(?<=[.!?])\s+", text)
 
         evolution_events = []
 
@@ -166,18 +108,13 @@ def extract_doctrine_evolution(
 
                 if signal in lower_sentence:
 
-                    evolution_events.append({
-
-                        "signal":
-                            signal,
-
-                        "meaning":
-                            meaning,
-
-                        "context":
-                            clean_text(sentence[:500])
-                    })
-
+                    evolution_events.append(
+                        {
+                            "signal": signal,
+                            "meaning": meaning,
+                            "context": clean_text(sentence[:500]),
+                        }
+                    )
 
             lower = sentence.lower()
 
@@ -186,15 +123,7 @@ def extract_doctrine_evolution(
                 if doctrine in lower:
 
                     evolution[doctrine].append(
-
-                        build_doctrine_evolution(
-
-                            doctrine,
-
-                            year,
-
-                            sentence
-                        )
+                        build_doctrine_evolution(doctrine, year, sentence)
                     )
 
         # =================================================
@@ -205,27 +134,11 @@ def extract_doctrine_evolution(
 
         for doctrine, timeline in evolution.items():
 
-            final.append({
+            final.append({"doctrine": doctrine, "timeline": timeline})
 
-                "doctrine":
-                    doctrine,
+        result = {"doctrine_evolution": final, "confidence": 95}
 
-                "timeline":
-                    timeline
-            })
-
-        result = {
-
-            "doctrine_evolution":
-                final,
-
-            "confidence":
-                95
-        }
-
-        print(
-            "✅ Doctrine Evolution Extracted:"
-        )
+        print("✅ Doctrine Evolution Extracted:")
 
         print(result)
 
@@ -233,17 +146,9 @@ def extract_doctrine_evolution(
 
     except Exception as e:
 
-        print(
-            "❌ Doctrine Evolution Error:",
-            str(e)
-        )
+        print("❌ Doctrine Evolution Error:", str(e))
 
-        return {
-
-            "doctrine_evolution": [],
-
-            "confidence": 0
-        }
+        return {"doctrine_evolution": [], "confidence": 0}
 
 
 # =========================================================
@@ -263,12 +168,4 @@ if __name__ == "__main__":
     Due process prevents arbitrariness.
     """
 
-    print(
-
-        extract_doctrine_evolution(
-
-            sample,
-
-            year=2024
-        )
-    )
+    print(extract_doctrine_evolution(sample, year=2024))

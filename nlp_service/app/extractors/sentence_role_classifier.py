@@ -1,15 +1,12 @@
 import re
 from typing import Dict
 
-
 # =========================================================
 # 🔥 JURISPRUDENTIAL ROLE PATTERNS
 # =========================================================
 
 ROLE_PATTERNS = {
-
     "FACTS": [
-
         r"\bfacts?\b",
         r"\bbrief facts\b",
         r"\bbackground\b",
@@ -24,9 +21,7 @@ ROLE_PATTERNS = {
         r"\bthe respondent contended\b",
         r"\bthe appellant contended\b",
     ],
-
     "PROCEDURAL_HISTORY": [
-
         r"\bchallenge in the present appeal\b",
         r"\bappeal is directed against\b",
         r"\bimpugned judgment\b",
@@ -45,49 +40,37 @@ ROLE_PATTERNS = {
         r"\bdivision bench\b",
         r"\btribunal held\b",
     ],
-
     "ARGUMENT": [
-
         r"\blearned counsel\b",
         r"\bsubmitted\b",
         r"\bcontended\b",
         r"\bargued\b",
         r"\bit was urged\b",
     ],
-
     "ISSUE": [
-
         r"\bquestion for consideration\b",
         r"\bissue\b",
         r"\bpoint for determination\b",
     ],
-
     "PRECEDENT": [
-
         r"\brelied upon\b",
         r"\bplaced reliance\b",
         r"\b[A-Z][A-Za-z]+\s+v\.\s+[A-Z]",
         r"\bthis court held\b",
     ],
-
     "DOCTRINE": [
-
         r"\bit is well settled\b",
         r"\bsettled law\b",
         r"\bthe legal position\b",
     ],
-
     "ANALYSIS": [
-
         r"\bwe have considered\b",
         r"\bon perusal\b",
         r"\bafter hearing\b",
         r"\bin our opinion\b",
         r"\bwe are of the view\b",
     ],
-
     "FINDING": [
-
         r"\bwe are satisfied\b",
         r"\bwe find\b",
         r"\bwe are of the opinion\b",
@@ -96,9 +79,7 @@ ROLE_PATTERNS = {
         r"\bthe contention cannot be accepted\b",
         r"\bthe submission is rejected\b",
     ],
-
     "RATIO": [
-
         r"\bwe hold\b",
         r"\bwe accordingly hold\b",
         r"\bit is held\b",
@@ -110,9 +91,7 @@ ROLE_PATTERNS = {
         r"\bwe find that\b",
         r"\bit follows that\b",
     ],
-
     "OPERATIVE": [
-
         r"\bappeal is allowed\b",
         r"\bappeal is dismissed\b",
         r"\bpetition is allowed\b",
@@ -122,31 +101,24 @@ ROLE_PATTERNS = {
         r"\bacquitted\b",
         r"\bset aside\b",
         r"\bquashed\b",
-    ]
+    ],
 }
-
 
 
 # =========================================================
 # 🔥 MAIN ROLE CLASSIFIER
 # =========================================================
 
+
 def classify_sentence_role(sentence: str) -> Dict:
 
     if not sentence:
 
-        return {
-
-            "role": "UNKNOWN",
-            "confidence": 0,
-            "matched_patterns": []
-        }
+        return {"role": "UNKNOWN", "confidence": 0, "matched_patterns": []}
 
     lower = sentence.lower()
 
-    sentence_length = len(
-        sentence.split()
-    )
+    sentence_length = len(sentence.split())
 
     best_role = "UNKNOWN"
 
@@ -172,11 +144,7 @@ def classify_sentence_role(sentence: str) -> Dict:
 
             score += 15
 
-        if role in [
-            "OPERATIVE",
-            "RATIO",
-            "FINDING"
-        ]:
+        if role in ["OPERATIVE", "RATIO", "FINDING"]:
 
             score += 10
 
@@ -193,11 +161,7 @@ def classify_sentence_role(sentence: str) -> Dict:
             matched_patterns = role_matches
 
     return {
-
         "role": best_role,
-
         "confidence": min(best_score, 95),
-
-        "matched_patterns": matched_patterns
+        "matched_patterns": matched_patterns,
     }
-

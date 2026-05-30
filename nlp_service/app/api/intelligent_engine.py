@@ -1,15 +1,14 @@
+from app.services.embedding_service import generate_embedding
+from app.services.faiss_service import fetch_documents, search_by_embedding
+from bson import ObjectId
 from fastapi import APIRouter
 from pymongo import MongoClient
-from bson import ObjectId
-
-from app.services.embedding_service import generate_embedding
-from app.services.faiss_service import search_by_embedding, fetch_documents
 
 router = APIRouter()
 
-db = MongoClient(
-    "mongodb://sl_app:Debnath%401966@127.0.0.1:27017/solvelitigation"
-)["solvelitigation"]
+db = MongoClient("mongodb://sl_app:Debnath%401966@127.0.0.1:27017/solvelitigation")[
+    "solvelitigation"
+]
 
 
 # ============================================
@@ -53,8 +52,10 @@ def synthesize(docs):
 
     return {
         "topic": ", ".join(points) if points else "Legal Issue",
-        "explanation": " ".join(explanations) if explanations else "No explanation available",
-        "cases": cases
+        "explanation": (
+            " ".join(explanations) if explanations else "No explanation available"
+        ),
+        "cases": cases,
     }
 
 
@@ -118,10 +119,7 @@ def predict_outcome(data):
 
 def build_citation_links(data):
     return [
-        {
-            "case": c,
-            "url": f"/judgment/search?citation={c.replace(' ', '%20')}"
-        }
+        {"case": c, "url": f"/judgment/search?citation={c.replace(' ', '%20')}"}
         for c in data["cases"]
     ]
 
@@ -203,5 +201,5 @@ def intelligent_answer(data: dict):
         "confidence": confidence,
         "answer": answer,
         "sources": structured["cases"],
-        "citations": build_citation_links(structured)
+        "citations": build_citation_links(structured),
     }

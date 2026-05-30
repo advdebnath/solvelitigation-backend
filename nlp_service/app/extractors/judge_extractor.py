@@ -2,11 +2,11 @@
 # 🔥 FINAL PRODUCTION JUDGE EXTRACTOR
 # =========================================================
 
-import fitz
 import re
-from app.utils.ocr_legal_normalizer import normalize_ocr_legal_text
-import pytesseract
 
+import fitz
+import pytesseract
+from app.utils.ocr_legal_normalizer import normalize_ocr_legal_text
 from PIL import Image
 
 # =========================================================
@@ -14,12 +14,11 @@ from PIL import Image
 # =========================================================
 
 INVALID_JUDGE_TERMS = [
-
     "O R D E R",
     "ORDER",
     "JUDGMENT",
-        "J U D G M E N T",
-        "O R D E R",
+    "J U D G M E N T",
+    "O R D E R",
     "Facts",
     "Issue",
     "Held",
@@ -35,6 +34,7 @@ INVALID_JUDGE_TERMS = [
 # 🔥 CANONICAL JUDGE HEADER NORMALIZER
 # =========================================================
 
+
 def canonical_judge_header_normalizer(text):
 
     if not text:
@@ -45,95 +45,48 @@ def canonical_judge_header_normalizer(text):
     # =====================================================
     # 🔥 SHARED OCR LEGAL NORMALIZATION
     # =====================================================
-    text = normalize_ocr_legal_text(
-        text
-    )
+    text = normalize_ocr_legal_text(text)
     # -----------------------------------------------------
     # 🔒 COLLAPSE OCR-SPACED LETTERS
     # -----------------------------------------------------
 
     replacements = {
-
-        r"J\s*U\s*D\s*G\s*M\s*E\s*N\s*T":
-            "JUDGMENT",
-
-        r"O\s*R\s*D\s*E\s*R":
-            "ORDER",
-
-        r"C\s*O\s*R\s*A\s*M":
-            "CORAM",
-
-        r"H\s*O\s*N\s*'?\s*B\s*L\s*E":
-            "HONBLE",
-
-        r"J\s*U\s*S\s*T\s*I\s*C\s*E":
-            "JUSTICE"
+        r"J\s*U\s*D\s*G\s*M\s*E\s*N\s*T": "JUDGMENT",
+        r"O\s*R\s*D\s*E\s*R": "ORDER",
+        r"C\s*O\s*R\s*A\s*M": "CORAM",
+        r"H\s*O\s*N\s*'?\s*B\s*L\s*E": "HONBLE",
+        r"J\s*U\s*S\s*T\s*I\s*C\s*E": "JUSTICE",
     }
 
     for pattern, repl in replacements.items():
 
-        text = re.sub(
-            pattern,
-            repl,
-            text,
-            flags=re.I
-        )
+        text = re.sub(pattern, repl, text, flags=re.I)
 
     # -----------------------------------------------------
     # 🔒 REMOVE SIGNATURE GARBAGE
     # -----------------------------------------------------
 
-    text = re.sub(
-        r"Digitally signed by.*?Reason:",
-        " ",
-        text,
-        flags=re.I | re.S
-    )
+    text = re.sub(r"Digitally signed by.*?Reason:", " ", text, flags=re.I | re.S)
 
-    text = re.sub(
-        r"Signature Not Verified",
-        " ",
-        text,
-        flags=re.I
-    )
+    text = re.sub(r"Signature Not Verified", " ", text, flags=re.I)
 
     # -----------------------------------------------------
     # 🔒 NORMALIZE LINE STRUCTURE
     # -----------------------------------------------------
 
-    text = re.sub(
-        r"\n{3,}",
-        "\n\n",
-        text
-    )
+    text = re.sub(r"\n{3,}", "\n\n", text)
 
-    text = re.sub(
-        r"[ \t]{2,}",
-        " ",
-        text
-    )
+    text = re.sub(r"[ \t]{2,}", " ", text)
 
     # -----------------------------------------------------
     # 🔒 FIX JUDGE NAME SPACING
     # -----------------------------------------------------
 
-    text = re.sub(
-        r"\bD\s*r\b",
-        "Dr",
-        text
-    )
+    text = re.sub(r"\bD\s*r\b", "Dr", text)
 
-    text = re.sub(
-        r"\bM\s*r\b",
-        "Mr",
-        text
-    )
+    text = re.sub(r"\bM\s*r\b", "Mr", text)
 
-    text = re.sub(
-        r"\bJ\s*\.\b",
-        "J.",
-        text
-    )
+    text = re.sub(r"\bJ\s*\.\b", "J.", text)
 
     return text
 
@@ -141,6 +94,7 @@ def canonical_judge_header_normalizer(text):
 # =========================================================
 # 🔥 CLEAN NAME
 # =========================================================
+
 
 def clean_name(name):
 
@@ -150,168 +104,71 @@ def clean_name(name):
 
     if isinstance(name, str):
 
-        name = re.sub(
-            r"H\s*O\s*N\s*'?\s*B\s*L\s*E",
-            "HONBLE",
-            name,
-            flags=re.I
-        )
+        name = re.sub(r"H\s*O\s*N\s*'?\s*B\s*L\s*E", "HONBLE", name, flags=re.I)
 
-        name = re.sub(
-            r"J\s*U\s*S\s*T\s*I\s*C\s*E",
-            "JUSTICE",
-            name,
-            flags=re.I
-        )
+        name = re.sub(r"J\s*U\s*S\s*T\s*I\s*C\s*E", "JUSTICE", name, flags=re.I)
 
-        name = re.sub(
-            r"C\s*O\s*R\s*A\s*M",
-            "CORAM",
-            name,
-            flags=re.I
-        )
+        name = re.sub(r"C\s*O\s*R\s*A\s*M", "CORAM", name, flags=re.I)
 
-        name = re.sub(
-            r"\n+",
-            " ",
-            name
-        )
+        name = re.sub(r"\n+", " ", name)
 
-        name = re.sub(
-            r"\s{2,}",
-            " ",
-            name
-        ).strip()
+        name = re.sub(r"\s{2,}", " ", name).strip()
 
         # =============================================
         # 🔒 OCR HEADING STRIPPING LOCK
         # =============================================
 
-        name = re.sub(
-            r"\bJUDGMENT\b",
-            "",
-            name,
-            flags=re.I
-        )
+        name = re.sub(r"\bJUDGMENT\b", "", name, flags=re.I)
 
-        name = re.sub(
-            r"\bORDER\b",
-            "",
-            name,
-            flags=re.I
-        )
+        name = re.sub(r"\bORDER\b", "", name, flags=re.I)
 
-        name = re.sub(
-            r"Digitally signed by.*",
-            "",
-            name,
-            flags=re.I
-        )
+        name = re.sub(r"Digitally signed by.*", "", name, flags=re.I)
 
-        name = re.sub(
-            r"Date\s*:.*",
-            "",
-            name,
-            flags=re.I
-        )
+        name = re.sub(r"Date\s*:.*", "", name, flags=re.I)
 
-        name = re.sub(
-            r"Reason\s*:.*",
-            "",
-            name,
-            flags=re.I
-        )
+        name = re.sub(r"Reason\s*:.*", "", name, flags=re.I)
 
-        name = re.sub(
-            r"\bCrl\.?A\.?\b.*",
-            "",
-            name,
-            flags=re.I
-        )
+        name = re.sub(r"\bCrl\.?A\.?\b.*", "", name, flags=re.I)
 
-        name = re.sub(
-            r"\bAppellant\b|\bRespondent\b",
-            "",
-            name,
-            flags=re.I
-        )
+        name = re.sub(r"\bAppellant\b|\bRespondent\b", "", name, flags=re.I)
 
-        name = re.sub(
-            r"\s{2,}",
-            " ",
-            name
-        ).strip()
+        name = re.sub(r"\s{2,}", " ", name).strip()
 
     if not isinstance(name, str):
 
         return ""
 
-
     # =============================================
     # 🔥 FIX COMPACT JUDGE INITIALS
     # =============================================
 
-    name = re.sub(
-        r"\b([A-Z])\.([A-Z])\.([A-Z][a-z]+)",
-        r"\1.\2. \3",
-        name
-    )
+    name = re.sub(r"\b([A-Z])\.([A-Z])\.([A-Z][a-z]+)", r"\1.\2. \3", name)
 
-    name = re.sub(
-        r"\b([A-Z])\.([A-Z][a-z]+)",
-        r"\1. \2",
-        name
-    )
+    name = re.sub(r"\b([A-Z])\.([A-Z][a-z]+)", r"\1. \2", name)
 
-    name = re.sub(
-        r"\s+",
-        " ",
-        name
-    ).strip()
+    name = re.sub(r"\s+", " ", name).strip()
 
     # =============================================
     # REMOVE HONORIFICS
     # =============================================
 
-    name = re.sub(
-        r"HON'?BLE",
-        "",
-        name,
-        flags=re.I
-    )
+    name = re.sub(r"HON'?BLE", "", name, flags=re.I)
 
-    name = re.sub(
-        r"\bMR\b\.?|\bMS\b\.?|\bMRS\b\.?",
-        "",
-        name,
-        flags=re.I
-    )
+    name = re.sub(r"\bMR\b\.?|\bMS\b\.?|\bMRS\b\.?", "", name, flags=re.I)
 
-    name = re.sub(
-        r"\bJUSTICE\b",
-        "",
-        name,
-        flags=re.I
-    )
+    name = re.sub(r"\bJUSTICE\b", "", name, flags=re.I)
 
-    name = re.sub(
-        r",?\s*J\.?$",
-        "",
-        name,
-        flags=re.I
-    )
+    name = re.sub(r",?\s*J\.?$", "", name, flags=re.I)
 
-    name = re.sub(
-        r"^\W+|\W+$",
-        "",
-        name
-    )
+    name = re.sub(r"^\W+|\W+$", "", name)
 
     return name.strip()
+
 
 # =========================================================
 # 🔥 VALIDATION
 # =========================================================
+
 
 def valid_name(name):
 
@@ -325,14 +182,9 @@ def valid_name(name):
     # 🔥 OCR SPACE NORMALIZATION
     # =============================================
 
-    compact_upper = re.sub(
-        r"\s+",
-        "",
-        upper
-    )
+    compact_upper = re.sub(r"\s+", "", upper)
 
     bad_words = [
-
         "SUPREME COURT",
         "HIGH COURT",
         "APPEAL",
@@ -354,7 +206,6 @@ def valid_name(name):
         "ARTICLE",
         "LIMITED",
         "COMMISSIONER",
-
         "HONBLE",
         "HON'BLE",
         "JUSTICE",
@@ -409,7 +260,6 @@ def valid_name(name):
         "PRONOUNCED ON",
         "RESERVED ON",
         "DELIVERED ON",
-
         "STATE",
         "UNION OF INDIA",
         "GOVERNMENT",
@@ -419,27 +269,19 @@ def valid_name(name):
         "GUJARAT",
         "MAHARASHTRA",
         "RESPONDENTS",
-        "APPELLANTS"
+        "APPELLANTS",
     ]
 
     for word in bad_words:
 
-        normalized_word = re.sub(
-            r"\\s+",
-            "",
-            word.upper()
-        )
+        normalized_word = re.sub(r"\\s+", "", word.upper())
 
-        if (
-            upper.strip() == word
-            or normalized_word in compact_upper
-        ):
+        if upper.strip() == word or normalized_word in compact_upper:
             return False
 
     # =============================================
     # HUMAN NAME STRUCTURE
     # =============================================
-
 
     # =============================================
     # 🔥 CONTEXTUAL COURT NOISE FIREWALL
@@ -458,14 +300,10 @@ def valid_name(name):
         "AT DELHI",
         "AT CALCUTTA",
         "AT MADRAS",
-        "AT GUWAHATI"
+        "AT GUWAHATI",
     ]
 
-    normalized_name = re.sub(
-        r"\s+",
-        " ",
-        upper
-    ).strip()
+    normalized_name = re.sub(r"\s+", " ", upper).strip()
 
     for fragment in invalid_fragments:
 
@@ -476,17 +314,12 @@ def valid_name(name):
 
     if len(tokens) < 2:
 
-        compact_judge_pattern = re.fullmatch(
-            r"(?:[A-Z]\.){1,5}[A-Z][a-z]+",
-            tokens[0]
-        ) if tokens else None
-        initials_pattern = re.fullmatch(
-            r"[A-Z]\.",
-            tokens[0]
-        ) if tokens else None
+        compact_judge_pattern = (
+            re.fullmatch(r"(?:[A-Z]\.){1,5}[A-Z][a-z]+", tokens[0]) if tokens else None
+        )
+        initials_pattern = re.fullmatch(r"[A-Z]\.", tokens[0]) if tokens else None
 
         if not compact_judge_pattern and not initials_pattern:
-
 
             return False
 
@@ -494,28 +327,19 @@ def valid_name(name):
 
         return False
 
-
     # =============================================
     # 🔥 SEMANTIC NOISE SUPPRESSION
     # =============================================
 
     invalid_semantic_patterns = [
-
         # =============================================
         # 🔥 SUPREME COURT SIGNATURE BLOCKS
         # =============================================
-
         r"\(\s*([A-Z][A-Z\.\s]{5,120})\s*\)",
-
         r"\b([A-Z]\.[A-Z][A-Za-z\.]{1,40})\b",
-
         r"(?:J\s*U\s*D\s*G\s*M\s*E\s*N\s*T|ORDER)?\s*(?:\n|\r|\s){0,10}(Dr\.?\s+)?([A-Z][A-Za-z\.\s]{3,70}?)\s*,\s*J\.?\b",
-
         r"\bHON'?BLE\s+MR\.?\s+JUSTICE\s+([A-Za-z\.\s]{3,120})",
-
         r"\bHON'?BLE\s+MS\.?\s+JUSTICE\s+([A-Za-z\.\s]{3,120})",
-
-
         "impugned",
         "judgmen",
         "judgment",
@@ -534,7 +358,7 @@ def valid_name(name):
         "appeal",
         "order",
         "reserved on",
-        "pronounced on"
+        "pronounced on",
     ]
 
     lower_name = name.lower()
@@ -545,10 +369,7 @@ def valid_name(name):
 
             return False
 
-    lowercase_tokens = [
-        t for t in tokens
-        if t.islower()
-    ]
+    lowercase_tokens = [t for t in tokens if t.islower()]
 
     if len(lowercase_tokens) >= 3:
 
@@ -570,18 +391,17 @@ def valid_name(name):
     # ALPHABETIC STRUCTURE
     # =============================================
 
-    if not re.fullmatch(
-        r"[A-Za-z\.\s\-]+",
-        name
-    ):
+    if not re.fullmatch(r"[A-Za-z\.\s\-]+", name):
 
         return False
 
     return True
 
+
 # =========================================================
 # 🔥 OCR PAGE
 # =========================================================
+
 
 def ocr_page(page):
 
@@ -589,11 +409,7 @@ def ocr_page(page):
 
         pix = page.get_pixmap(dpi=300)
 
-        img = Image.frombytes(
-            "RGB",
-            [pix.width, pix.height],
-            pix.samples
-        )
+        img = Image.frombytes("RGB", [pix.width, pix.height], pix.samples)
 
         text = pytesseract.image_to_string(img)
 
@@ -603,94 +419,66 @@ def ocr_page(page):
 
         return ""
 
+
 # =========================================================
 # 🔥 EXTRACT FROM TEXT
 # =========================================================
+
 
 def extract_names_from_text(full_text):
 
     judges = set()
 
     patterns = [
-
         # =============================================
         # 🔥 DIRECT SIGNATURE BLOCK EXTRACTION
         # =============================================
-
         r"\[\s*([A-Z][A-Za-z\.\s]{5,80})\s*\]",
-
-
         # =============================================
         # 🔥 SUPREME COURT SIGNATURE BLOCKS
         # =============================================
-
         r"\(\s*([A-Z][A-Z\.\s]{5,120})\s*\)",
-
         r"\b([A-Z]\.[A-Z][A-Za-z\.]{1,40})\b",
-
         r"(?:J\s*U\s*D\s*G\s*M\s*E\s*N\s*T|ORDER)[\s\r\n]{0,20}(?:Dr\.?\s+)?([A-Z][A-Za-z\.\s]{3,70}?)\s*,\s*J\.?\b",
-
         r"\bHON'?BLE\s+MR\.?\s+JUSTICE\s+([A-Za-z\.\s]{3,120})",
-
         r"\bHON'?BLE\s+MS\.?\s+JUSTICE\s+([A-Za-z\.\s]{3,120})",
-
-
         # =============================================
         # HON'BLE PATTERNS
         # =============================================
-
         r"HON'?BLE\s+MR\.?\s+JUSTICE\s+([A-Z][A-Z\.\s]{3,80})",
-
         r"HON'?BLE\s+MS\.?\s+JUSTICE\s+([A-Z][A-Z\.\s]{3,80})",
-
         r"HON'?BLE\s+MRS\.?\s+JUSTICE\s+([A-Z][A-Z\.\s]{3,80})",
-
         # =============================================
         # JUSTICE PATTERNS
         # =============================================
-
         r"JUSTICE\s+([A-Z][A-Z\.\s]{4,50}?)(?:\
 |,|J\\.|JJ\\.|PETITIONER|RESPONDENT|APPELLANT|ORDER|JUDGMENT)",
-
         # =============================================
         # R.F. Nariman, J.
         # =============================================
-
         r"([A-Z][A-Z\.\s]{2,80}),\s*J\.",
-
         # =============================================
         # CORAM BLOCK
         # =============================================
-
         # =============================================
         # 🔒 OCR-SAFE MULTILINE CORAM LOCK
         # =============================================
-
         r"CORAM\s*[:\-]?\s*((?:HON.?BLE|JUSTICE|J\.)[\s\S]{0,400}?)(?:For Appellant|For Petitioner|For Respondent|Appearance|JUDGMENT|ORDER)",
-
         r"BEFORE\s*[:\-]?\s*((?:HON.?BLE|JUSTICE|J\.)[\s\S]{0,400}?)(?:For Appellant|For Petitioner|For Respondent|Appearance|JUDGMENT|ORDER)",
-
         r"CORAM\s*[:\-]?\s*(.+?)(?:For Appellant|For Petitioner|JUDGMENT|ORDER)",
-
         # =============================================
         # BENCH BLOCK
         # =============================================
-
         r"BENCH\s*[:\-]?\s*(.+?)(?:\
 |For Appellant|For Petitioner|JUDGMENT|ORDER)",
     ]
 
     for pattern in patterns:
 
-        matches = re.findall(
-            pattern,
-            full_text,
-            flags=re.I | re.S
-        )
+        matches = re.findall(pattern, full_text, flags=re.I | re.S)
 
         print(f"🔥 PATTERN: {pattern}")
         print(f"🔥 MATCHES: {matches}")
-
 
         for match in matches:
 
@@ -698,10 +486,7 @@ def extract_names_from_text(full_text):
 
                 match = " ".join(match)
 
-            parts = re.split(
-                  r"\\n|,|AND|&",
-                str(match)
-            )
+            parts = re.split(r"\\n|,|AND|&", str(match))
 
             for part in parts:
 
@@ -713,8 +498,6 @@ def extract_names_from_text(full_text):
                 print("🧪 CLEANED NAME:")
                 print(name)
 
-
-
                 candidate_clean = name.strip()
 
                 # -----------------------------------------
@@ -722,27 +505,19 @@ def extract_names_from_text(full_text):
                 # -----------------------------------------
 
                 candidate_clean = re.sub(
-                    r"\b([A-Z])\.([A-Z])\.([A-Z][a-z]+)",
-                    r"\1.\2. \3",
-                    candidate_clean
+                    r"\b([A-Z])\.([A-Z])\.([A-Z][a-z]+)", r"\1.\2. \3", candidate_clean
                 )
 
                 candidate_clean = re.sub(
-                    r"\b([A-Z])\.([A-Z][a-z]+)",
-                    r"\1. \2",
-                    candidate_clean
+                    r"\b([A-Z])\.([A-Z][a-z]+)", r"\1. \2", candidate_clean
                 )
 
                 candidate_clean = re.sub(
-                    r"\b([A-Z])\.([A-Z])\.([A-Z][a-z]+)",
-                    r"\1.\2. \3",
-                    candidate_clean
+                    r"\b([A-Z])\.([A-Z])\.([A-Z][a-z]+)", r"\1.\2. \3", candidate_clean
                 )
 
                 candidate_clean = re.sub(
-                    r"\b([A-Z])\.([A-Z][a-z]+)",
-                    r"\1. \2",
-                    candidate_clean
+                    r"\b([A-Z])\.([A-Z][a-z]+)", r"\1. \2", candidate_clean
                 )
 
                 # =====================================
@@ -752,9 +527,7 @@ def extract_names_from_text(full_text):
                 # =====================================
 
                 if candidate_clean.upper() in [
-
-                    item.upper()
-                    for item in INVALID_JUDGE_TERMS
+                    item.upper() for item in INVALID_JUDGE_TERMS
                 ]:
                     continue
 
@@ -763,7 +536,6 @@ def extract_names_from_text(full_text):
                 # =====================================
 
                 fragment_terms = [
-
                     "DONE TO",
                     "COMPLAINANT",
                     "APPELLANT",
@@ -771,19 +543,14 @@ def extract_names_from_text(full_text):
                     "PETITIONER",
                     "ORDER",
                     "JUDGMENT",
-        "J U D G M E N T",
-        "O R D E R",
+                    "J U D G M E N T",
+                    "O R D E R",
                     "VERSUS",
                 ]
 
                 upper_candidate = candidate_clean.upper()
 
-                if any(
-
-                    term in upper_candidate
-
-                    for term in fragment_terms
-                ):
+                if any(term in upper_candidate for term in fragment_terms):
                     continue
 
                 # =====================================
@@ -793,7 +560,6 @@ def extract_names_from_text(full_text):
                 if valid_name(candidate_clean):
 
                     invalid_fragments = [
-
                         "however",
                         "therefore",
                         "video piracy",
@@ -807,14 +573,12 @@ def extract_names_from_text(full_text):
                         "sub inspector",
                         "advocate",
                         "counsel",
-
                     ]
 
                     candidate_lower = candidate_clean.lower()
 
                     if any(
-                        fragment in candidate_lower
-                        for fragment in invalid_fragments
+                        fragment in candidate_lower for fragment in invalid_fragments
                     ):
                         continue
 
@@ -823,8 +587,6 @@ def extract_names_from_text(full_text):
 
                     if len(candidate_clean.split()) > 4:
                         continue
-
-
 
                     tokens = candidate_clean.split()
 
@@ -837,7 +599,7 @@ def extract_names_from_text(full_text):
                         "By",
                         "For",
                         "With",
-                        "From"
+                        "From",
                     }
 
                     if (
@@ -846,7 +608,6 @@ def extract_names_from_text(full_text):
                         and tokens[1] in invalid_second_tokens
                     ):
                         continue
-
 
                     if len(tokens) < 2:
                         continue
@@ -857,31 +618,19 @@ def extract_names_from_text(full_text):
                     if re.match(r"^[A-Z]\.$", tokens[-1]):
                         continue
 
-                    invalid_singletons = {
-                        "On",
-                        "To",
-                        "Of",
-                        "In",
-                        "At",
-                        "By",
-                        "For"
-                    }
+                    invalid_singletons = {"On", "To", "Of", "In", "At", "By", "For"}
 
-                    if any(
-                        token in invalid_singletons
-                        for token in tokens
-                    ):
+                    if any(token in invalid_singletons for token in tokens):
                         continue
 
                     advocate_context = [
                         "learned counsel",
                         "appearing on behalf",
                         "for the appellant",
-                        "for the respondent"
+                        "for the respondent",
                     ]
 
                     nearby_window = full_text.lower()
-
 
                     reject_candidate = False
 
@@ -891,23 +640,22 @@ def extract_names_from_text(full_text):
 
                             if ctx in nearby_window:
 
-                                if candidate_clean.startswith("V.") or candidate_clean.startswith("M."):
+                                if candidate_clean.startswith(
+                                    "V."
+                                ) or candidate_clean.startswith("M."):
 
                                     reject_candidate = True
 
                     if reject_candidate:
                         continue
 
-
-
-                    if re.match(r"^[A-Z]\.\s+(on|to|of|in|at|by|for|with|from)$", candidate_clean.lower()):
+                    if re.match(
+                        r"^[A-Z]\.\s+(on|to|of|in|at|by|for|with|from)$",
+                        candidate_clean.lower(),
+                    ):
                         continue
 
-                    judges.add(
-                        candidate_clean.title()
-                    )
-
-
+                    judges.add(candidate_clean.title())
 
     print("🔥 FINAL EXTRACTED JUDGES:", judges)
 
@@ -917,9 +665,11 @@ def extract_names_from_text(full_text):
 
     return sorted(list(judges))
 
+
 # =========================================================
 # 🔥 MAIN
 # =========================================================
+
 
 def extract_judges(pdf_path):
 
@@ -927,15 +677,9 @@ def extract_judges(pdf_path):
 
         fitz.TOOLS.mupdf_display_errors(False)
 
-        if (
-            not isinstance(pdf_path, str)
-            or "\n" in pdf_path
-            or len(pdf_path) > 300
-        ):
+        if not isinstance(pdf_path, str) or "\n" in pdf_path or len(pdf_path) > 300:
 
-            print(
-                "⚠️ INVALID PDF PATH RECEIVED IN JUDGE EXTRACTOR"
-            )
+            print("⚠️ INVALID PDF PATH RECEIVED IN JUDGE EXTRACTOR")
 
             print(str(pdf_path)[:500])
 
@@ -946,8 +690,6 @@ def extract_judges(pdf_path):
         collected = []
 
         early_judge_pool = set()
-
-
 
         # =====================================================
         # 🔥 REPEATED HEADER DETECTION ENGINE
@@ -980,7 +722,6 @@ def extract_judges(pdf_path):
 
                 print("🔥 EARLY HEADER JUDGES:", early_judges)
 
-
             page_lines = text.splitlines()
 
             # ================================================
@@ -989,19 +730,13 @@ def extract_judges(pdf_path):
 
             total_lines = len(page_lines)
 
-            dynamic_zone_size = max(
-                4,
-                int(total_lines * 0.10)
-            )
+            dynamic_zone_size = max(4, int(total_lines * 0.10))
 
             header_lines = page_lines[:dynamic_zone_size]
 
             footer_lines = page_lines[-dynamic_zone_size:]
 
-            body_lines = page_lines[
-                dynamic_zone_size:-dynamic_zone_size
-            ]
-
+            body_lines = page_lines[dynamic_zone_size:-dynamic_zone_size]
 
             header_text = "\n".join(header_lines)
 
@@ -1013,52 +748,30 @@ def extract_judges(pdf_path):
             # 🔥 HEADER / FOOTER SANITIZATION
             # ================================================
 
+            body_text = re.sub(r"http[s]?://\\S+", " ", body_text, flags=re.I)
             body_text = re.sub(
-                r"http[s]?://\\S+",
-                " ",
-                body_text,
-                flags=re.I
+                r"Page\\s+\\d+\\s+of\\s+\\d+", " ", body_text, flags=re.I
             )
-            body_text = re.sub(
-                r"Page\\s+\\d+\\s+of\\s+\\d+",
-                " ",
-                body_text,
-                flags=re.I
-            )
-
 
             # ================================================
             # 🔥 METADATA-ZONE ISOLATION ENGINE
             # ================================================
 
             metadata_patterns = [
-
-        # =============================================
-        # 🔥 SUPREME COURT SIGNATURE BLOCKS
-        # =============================================
-
-        r"\(\s*([A-Z][A-Z\.\s]{5,120})\s*\)",
-
-        r"\b([A-Z]\.[A-Z][A-Za-z\.]{1,40})\b",
-
-        r"\b([A-Z][A-Z\s]{3,120})\s*,\s*J\.?\b",
-
-        r"\bHON'?BLE\s+MR\.?\s+JUSTICE\s+([A-Za-z\.\s]{3,120})",
-
-        r"\bHON'?BLE\s+MS\.?\s+JUSTICE\s+([A-Za-z\.\s]{3,120})",
-
-
+                # =============================================
+                # 🔥 SUPREME COURT SIGNATURE BLOCKS
+                # =============================================
+                r"\(\s*([A-Z][A-Z\.\s]{5,120})\s*\)",
+                r"\b([A-Z]\.[A-Z][A-Za-z\.]{1,40})\b",
+                r"\b([A-Z][A-Z\s]{3,120})\s*,\s*J\.?\b",
+                r"\bHON'?BLE\s+MR\.?\s+JUSTICE\s+([A-Za-z\.\s]{3,120})",
+                r"\bHON'?BLE\s+MS\.?\s+JUSTICE\s+([A-Za-z\.\s]{3,120})",
                 r"For\\s+Petitioner(?:\\(s\\))?.*?(?=For\\s+Respondent|JUDGMENT|ORDER)",
-
                 r"For\\s+Respondent(?:\\(s\\))?.*?(?=JUDGMENT|ORDER)",
-
                 r"Appearance\\s*:.*?(?=JUDGMENT|ORDER)",
-
                 r"Advocate\\s*:.*?(?=JUDGMENT|ORDER)",
-
                 r"Counsel\\s*:.*?(?=JUDGMENT|ORDER)",
-
-                r"Present\\s*:.*?(?=JUDGMENT|ORDER)"
+                r"Present\\s*:.*?(?=JUDGMENT|ORDER)",
             ]
 
             metadata_zone = {
@@ -1066,28 +779,30 @@ def extract_judges(pdf_path):
                 "appearance": [],
                 "bench": [],
                 "parties": [],
-                "procedural": []
+                "procedural": [],
             }
 
             isolated_metadata_blocks = []
 
             for meta_pattern in metadata_patterns:
 
-                matches = re.findall(
-                    meta_pattern,
-                    body_text,
-                    flags=re.I | re.S
-                )
+                matches = re.findall(meta_pattern, body_text, flags=re.I | re.S)
 
                 if matches:
 
-                    if "petitioner" in meta_pattern.lower() or "respondent" in meta_pattern.lower():
+                    if (
+                        "petitioner" in meta_pattern.lower()
+                        or "respondent" in meta_pattern.lower()
+                    ):
                         metadata_zone["appearance"].extend(matches)
 
                     elif "appearance" in meta_pattern.lower():
                         metadata_zone["appearance"].extend(matches)
 
-                    elif "advocate" in meta_pattern.lower() or "counsel" in meta_pattern.lower():
+                    elif (
+                        "advocate" in meta_pattern.lower()
+                        or "counsel" in meta_pattern.lower()
+                    ):
                         metadata_zone["advocates"].extend(matches)
 
                     elif "present" in meta_pattern.lower():
@@ -1095,54 +810,31 @@ def extract_judges(pdf_path):
 
                     isolated_metadata_blocks.extend(matches)
 
-                body_text = re.sub(
-                    meta_pattern,
-                    " ",
-                    body_text,
-                    flags=re.I | re.S
-                )
-
+                body_text = re.sub(meta_pattern, " ", body_text, flags=re.I | re.S)
 
             # ================================================
             # 🔥 OPERATIVE-ZONE INTELLIGENCE ENGINE
             # ================================================
 
             operative_patterns = [
-
-        # =============================================
-        # 🔥 SUPREME COURT SIGNATURE BLOCKS
-        # =============================================
-
-        r"\(\s*([A-Z][A-Z\.\s]{5,120})\s*\)",
-
-        r"\b([A-Z]\.[A-Z][A-Za-z\.]{1,40})\b",
-
-        r"\b([A-Z][A-Z\s]{3,120})\s*,\s*J\.?\b",
-
-        r"\bHON'?BLE\s+MR\.?\s+JUSTICE\s+([A-Za-z\.\s]{3,120})",
-
-        r"\bHON'?BLE\s+MS\.?\s+JUSTICE\s+([A-Za-z\.\s]{3,120})",
-
-
+                # =============================================
+                # 🔥 SUPREME COURT SIGNATURE BLOCKS
+                # =============================================
+                r"\(\s*([A-Z][A-Z\.\s]{5,120})\s*\)",
+                r"\b([A-Z]\.[A-Z][A-Za-z\.]{1,40})\b",
+                r"\b([A-Z][A-Z\s]{3,120})\s*,\s*J\.?\b",
+                r"\bHON'?BLE\s+MR\.?\s+JUSTICE\s+([A-Za-z\.\s]{3,120})",
+                r"\bHON'?BLE\s+MS\.?\s+JUSTICE\s+([A-Za-z\.\s]{3,120})",
                 r"appeal[s]?\\s+(?:is\\s+)?allowed",
-
                 r"appeal[s]?\\s+(?:is\\s+)?dismissed",
-
                 r"petition[s]?\\s+(?:is\\s+)?allowed",
-
                 r"petition[s]?\\s+(?:is\\s+)?dismissed",
-
                 r"matter\\s+(?:is\\s+)?remanded",
-
                 r"conviction\\s+(?:is\\s+)?set\\s+aside",
-
                 r"sentence\\s+(?:is\\s+)?modified",
-
                 r"bail\\s+(?:is\\s+)?granted",
-
                 r"disposed\\s+of",
-
-                r"SLP\\s+(?:is\\s+)?dismissed"
+                r"SLP\\s+(?:is\\s+)?dismissed",
             ]
 
             operative_zone = []
@@ -1156,17 +848,13 @@ def extract_judges(pdf_path):
                 "granted": 85,
                 "disposed": 60,
                 "notice": 20,
-                "list after": 5
+                "list after": 5,
             }
 
             operative_rankings = []
             for operative_pattern in operative_patterns:
 
-                operative_matches = re.findall(
-                    operative_pattern,
-                    body_text,
-                    flags=re.I
-                )
+                operative_matches = re.findall(operative_pattern, body_text, flags=re.I)
 
                 if operative_matches:
 
@@ -1187,7 +875,6 @@ def extract_judges(pdf_path):
                                 score = weight
 
                                 break
-
 
                         if "allowed" in lower_match or "dismissed" in lower_match:
                             operative_type = "final_disposition"
@@ -1247,58 +934,42 @@ def extract_judges(pdf_path):
                         elif operative_ontology == "SLP_REJECTED":
                             relief_class = "SPECIAL_LEAVE_DENIED"
 
-
                         outcome_signature = (
-                            operative_ontology + "|" +
-                            relief_class + "|" +
-                            operative_type
+                            operative_ontology
+                            + "|"
+                            + relief_class
+                            + "|"
+                            + operative_type
                         )
 
                         outcome_graph_memory = {
                             "ontology": operative_ontology,
                             "relief_class": relief_class,
                             "operative_type": operative_type,
-                            "outcome_signature": outcome_signature
+                            "outcome_signature": outcome_signature,
                         }
 
-                        operative_rankings.append({
-                            "text": match,
-                            "score": score,
-                            "ontology": operative_ontology,
-                            "relief_class": relief_class,
-                            "graph_memory": outcome_graph_memory
-                        })
-
-
-
+                        operative_rankings.append(
+                            {
+                                "text": match,
+                                "score": score,
+                                "ontology": operative_ontology,
+                                "relief_class": relief_class,
+                                "graph_memory": outcome_graph_memory,
+                            }
+                        )
 
                 if operative_matches:
 
                     operative_zone.extend(operative_matches)
 
-            body_text = re.sub(
-                r"[ \\t]+",
-                " ",
-                body_text
+            body_text = re.sub(r"[ \\t]+", " ", body_text)
 
-            )
+            body_text = re.sub(r"SUPREME COURT OF INDIA", " ", body_text, flags=re.I)
 
-            body_text = re.sub(
-                r"SUPREME COURT OF INDIA",
-                " ",
-                body_text,
-                flags=re.I
-            )
-
-            body_text = re.sub(
-                r"HIGH COURT OF[^\\n]*",
-                " ",
-                body_text,
-                flags=re.I
-            )
+            body_text = re.sub(r"HIGH COURT OF[^\\n]*", " ", body_text, flags=re.I)
 
             text = body_text
-
 
             if i == 0:
 
@@ -1340,7 +1011,6 @@ def extract_judges(pdf_path):
 
                 print("🔥 EARLY HEADER JUDGES:", early_judges)
 
-
             ocr_text = ocr_page(page)
 
             if ocr_text and len(ocr_text) > len(text):
@@ -1358,8 +1028,6 @@ def extract_judges(pdf_path):
 
         judges = extract_names_from_text(full_text)
 
-        
-
         # =====================================================
         # 🔥 LAST-STAGE GLOBAL JUDGE CANONICALIZATION
         # =====================================================
@@ -1372,13 +1040,10 @@ def extract_judges(pdf_path):
                 continue
 
             j = re.sub(
-                r'^(Dr|Hon.?ble|Mr|Mrs|Ms|Justice)\.?\s+',
-                '',
-                j,
-                flags=re.I
+                r"^(Dr|Hon.?ble|Mr|Mrs|Ms|Justice)\.?\s+", "", j, flags=re.I
             ).strip()
 
-            j = re.sub(r'\s+', ' ', j).strip()
+            j = re.sub(r"\s+", " ", j).strip()
 
             canonical_final.add(j)
 
@@ -1389,7 +1054,6 @@ def extract_judges(pdf_path):
 
         # return judges
 
-        
         # =====================================================
         # 🔥 GLOBAL REPEATED HEADER / FOOTER SUPPRESSION
         # =====================================================
@@ -1410,19 +1074,13 @@ def extract_judges(pdf_path):
 
         cleaned_collected = []
 
-
-
         for text_block in collected:
 
             cleaned_lines = []
 
             for line in text_block.splitlines():
 
-                normalized_line = re.sub(
-                    r"[ \\t]+",
-                    " ",
-                    line
-                ).strip()
+                normalized_line = re.sub(r"[ \\t]+", " ", line).strip()
 
                 if normalized_line in repeated_structural_lines:
                     continue
@@ -1446,15 +1104,12 @@ def extract_judges(pdf_path):
         # 🔥 CANONICAL JUDGE HEADER NORMALIZATION
         # ================================================
 
-        final_text = canonical_judge_header_normalizer(
-            final_text
-        )
+        final_text = canonical_judge_header_normalizer(final_text)
 
         print("🔥 CANONICALIZED JUDGE TEXT:")
         print(final_text[:4000])
 
         judges = extract_names_from_text(final_text)
-
 
         judges.extend(list(early_judge_pool))
 
@@ -1491,19 +1146,14 @@ def extract_judges(pdf_path):
             # 🔥 BENCH FAST-PATH PRESERVATION ENGINE
             # -------------------------------------------------
 
-            if re.fullmatch(
-                r"[A-Za-z\.\s]+",
-                candidate
-            ) and (
-                "." in candidate
-                or len(candidate.split()) >= 2
+            if re.fullmatch(r"[A-Za-z\.\s]+", candidate) and (
+                "." in candidate or len(candidate.split()) >= 2
             ):
 
                 validated_judges.append(candidate.strip())
                 continue
 
             rejection_terms = [
-
                 "offence",
                 "evidence",
                 "trial court",
@@ -1517,13 +1167,10 @@ def extract_judges(pdf_path):
                 "sentence",
                 "prima facie",
                 "criminal appeal",
-                "order dated"
+                "order dated",
             ]
 
-            if any(
-                term in lower_candidate
-                for term in rejection_terms
-            ):
+            if any(term in lower_candidate for term in rejection_terms):
                 continue
 
             # -------------------------------------------------
@@ -1535,85 +1182,52 @@ def extract_judges(pdf_path):
             # 🔥 OCR NOISE STRIPPING BEFORE VALIDATION
             # -------------------------------------------------
 
-            candidate = re.sub(
-                r"\.{2,}",
-                " ",
-                candidate
-            )
+            candidate = re.sub(r"\.{2,}", " ", candidate)
 
-            candidate = re.sub(
-                r"[,;:]+",
-                " ",
-                candidate
-            )
+            candidate = re.sub(r"[,;:]+", " ", candidate)
 
-            candidate = re.sub(
-                r"\b[lLiIjJnN]{1,4}\b",
-                " ",
-                candidate
-            )
+            candidate = re.sub(r"\b[lLiIjJnN]{1,4}\b", " ", candidate)
 
-            candidate = re.sub(
-                r"[^A-Za-z\.\s]",
-                " ",
-                candidate
-            )
+            candidate = re.sub(r"[^A-Za-z\.\s]", " ", candidate)
 
             candidate = re.sub(
                 r"\b([a-z])\.([a-z])\.([a-z]+)",
                 lambda m: f"{m.group(1).upper()}.{m.group(2).upper()}. {m.group(3).title()}",
                 candidate,
-                flags=re.I
+                flags=re.I,
             )
 
-            candidate = re.sub(
-                r"\s+",
-                " ",
-                candidate
-            ).strip()
+            candidate = re.sub(r"\s+", " ", candidate).strip()
 
             print("🔥 CANONICALIZED JUDGE TEXT:", candidate)
 
             if not re.search(
                 r"(justice|judge|chief justice|cj|dr\.?|mr\.?|ms\.?|mrs\.?)",
                 candidate,
-                flags=re.I
+                flags=re.I,
             ):
 
-                capital_words = re.findall(
-                    r"\b[A-Za-z][A-Za-z\.]+\b",
-                    candidate
-                )
+                capital_words = re.findall(r"\b[A-Za-z][A-Za-z\.]+\b", candidate)
 
                 if len(capital_words) < 2:
                     print("❌ REJECTED JUDGE STRUCTURE:", candidate)
                     continue
                     continue
 
-            
             # -------------------------------------------------
             # 🔥 HONORIFIC CANONICALIZATION
             # -------------------------------------------------
 
             candidate = re.sub(
-                r'^(Dr|Hon.?ble|Mr|Mrs|Ms|Justice)\.?\s+',
-                '',
-                candidate,
-                flags=re.I
+                r"^(Dr|Hon.?ble|Mr|Mrs|Ms|Justice)\.?\s+", "", candidate, flags=re.I
             ).strip()
 
-            candidate = re.sub(
-                r'\s+',
-                ' ',
-                candidate
-            ).strip()
-
+            candidate = re.sub(r"\s+", " ", candidate).strip()
 
             validated_judges.append(candidate)
 
         judges = validated_judges
 
-        
         # =====================================================
         # 🔥 FINAL GLOBAL JUDGE CANONICALIZATION
         # =====================================================
@@ -1626,20 +1240,16 @@ def extract_judges(pdf_path):
                 continue
 
             j = re.sub(
-                r'^(Dr|Hon.?ble|Mr|Mrs|Ms|Justice)\.?\s+',
-                '',
-                j,
-                flags=re.I
+                r"^(Dr|Hon.?ble|Mr|Mrs|Ms|Justice)\.?\s+", "", j, flags=re.I
             ).strip()
 
-            j = re.sub(r'\s+', ' ', j).strip()
+            j = re.sub(r"\s+", " ", j).strip()
 
             # =====================================================
             # 🔥 HARD INVALID JUDGE FILTER
             # =====================================================
 
             invalid_fragments = [
-
                 "his cour",
                 "high cour",
                 "court",
@@ -1660,11 +1270,9 @@ def extract_judges(pdf_path):
                 "justice of",
                 "for appellant",
                 "for respondent",
-
                 # =====================================
                 # 🔥 JUDGE POLLUTION BLOCKLIST
                 # =====================================
-
                 "since deceased",
                 "through lrs",
                 "through legal representatives",
@@ -1678,7 +1286,7 @@ def extract_judges(pdf_path):
                 "minor through",
                 "next friend",
                 "applicant",
-                "complainant"
+                "complainant",
             ]
 
             lower_j = j.lower()
@@ -1705,15 +1313,12 @@ def extract_judges(pdf_path):
         print("🔥 FINAL VALIDATED JUDGES:")
         print(judges)
 
-
         judges = sorted(list(set(judges)))
 
         print("✅ FINAL NORMALIZED JUDGES:")
         print(judges)
 
         return judges
-
-
 
     except Exception as e:
 

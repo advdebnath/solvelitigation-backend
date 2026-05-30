@@ -1,5 +1,6 @@
 import re
 
+
 # -------------------------------
 # 1. CATEGORY DETECTION (STRONG)
 # -------------------------------
@@ -17,6 +18,7 @@ def classify_category_strict(text: str) -> str:
 
     return "Civil"  # safe default
 
+
 # -------------------------------
 # 2. COURT DETECTION (ROBUST)
 # -------------------------------
@@ -32,6 +34,7 @@ def detect_court_strict(text: str) -> str:
 
     return "SUPREME COURT OF INDIA"  # better default
 
+
 # -------------------------------
 # 3. POINTS OF LAW (NO MORE 'GENERAL ISSUE')
 # -------------------------------
@@ -44,6 +47,7 @@ POINT_MAP = [
     (r"NEGLIGENCE|LIABILITY", "Tort / Liability"),
     (r"TAX|INCOME TAX|CIT", "Taxation"),
 ]
+
 
 def extract_points_smart(text: str):
     t = text.upper()
@@ -59,6 +63,7 @@ def extract_points_smart(text: str):
 
     return list(set(points))
 
+
 # -------------------------------
 # 4. ACT DETECTION (BASIC UPGRADE)
 # -------------------------------
@@ -69,6 +74,7 @@ ACT_MAP = [
     (r"CPC|CIVIL PROCEDURE", "CPC"),
     (r"CONTRACT", "Indian Contract Act"),
 ]
+
 
 def detect_acts_smart(text: str):
     t = text.upper()

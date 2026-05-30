@@ -1,11 +1,7 @@
+from app.services.embedding_service import generate_embedding
+from app.services.faiss_service import fetch_documents, search_by_embedding
 from fastapi import APIRouter
 from pydantic import BaseModel
-
-from app.services.embedding_service import generate_embedding
-from app.services.faiss_service import (
-    search_by_embedding,
-    fetch_documents
-)
 
 router = APIRouter()
 
@@ -40,10 +36,7 @@ def search(req: SearchRequest):
         # =========================================
         # 🔥 STEP 2: FAISS SEARCH
         # =========================================
-        results = search_by_embedding(
-            embedding,
-            top_k=req.top_k
-        )
+        results = search_by_embedding(embedding, top_k=req.top_k)
 
         if not results:
             return {"success": True, "results": []}
@@ -53,15 +46,8 @@ def search(req: SearchRequest):
         # =========================================
         final_results = fetch_documents(results)
 
-        return {
-            "success": True,
-            "count": len(final_results),
-            "results": final_results
-        }
+        return {"success": True, "count": len(final_results), "results": final_results}
 
     except Exception as e:
         print("❌ SEARCH API ERROR:", e)
-        return {
-            "success": False,
-            "error": str(e)
-        }
+        return {"success": False, "error": str(e)}

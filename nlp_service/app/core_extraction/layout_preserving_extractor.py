@@ -2,13 +2,14 @@
 # 🔥 ENTERPRISE LAYOUT-PRESERVING LEGAL EXTRACTOR
 # =========================================================
 
-import fitz
 import re
 
+import fitz
 
 # =========================================================
 # 🔥 SPAN NORMALIZER
 # =========================================================
+
 
 def normalize_span_text(text):
 
@@ -27,6 +28,7 @@ def normalize_span_text(text):
 # =========================================================
 # 🔥 STRUCTURED PAGE EXTRACTION
 # =========================================================
+
 
 def extract_layout_preserved_text(pdf_path):
 
@@ -57,9 +59,7 @@ def extract_layout_preserved_text(pdf_path):
 
                 for span in spans:
 
-                    span_text = normalize_span_text(
-                        span.get("text", "")
-                    )
+                    span_text = normalize_span_text(span.get("text", ""))
 
                     if not span_text:
                         continue
@@ -68,33 +68,21 @@ def extract_layout_preserved_text(pdf_path):
 
                 if line_parts:
 
-                    reconstructed_line = " ".join(
-                        line_parts
-                    )
+                    reconstructed_line = " ".join(line_parts)
 
                     reconstructed_line = re.sub(
-                        r"\s+([,.;:])",
-                        r"\1",
-                        reconstructed_line
+                        r"\s+([,.;:])", r"\1", reconstructed_line
                     )
 
-                    page_lines.append(
-                        reconstructed_line
-                    )
+                    page_lines.append(reconstructed_line)
 
         page_text = "\n".join(page_lines)
 
         reconstructed_pages.append(page_text)
 
-    final_text = "\n\n".join(
-        reconstructed_pages
-    )
+    final_text = "\n\n".join(reconstructed_pages)
 
-    final_text = re.sub(
-        r'\n{3,}',
-        '\n\n',
-        final_text
-    )
+    final_text = re.sub(r"\n{3,}", "\n\n", final_text)
 
     print("✅ ENTERPRISE LAYOUT EXTRACTION COMPLETE")
 
@@ -116,9 +104,6 @@ if __name__ == "__main__":
 
         sys.exit(1)
 
-    result = extract_layout_preserved_text(
-        sys.argv[1]
-    )
+    result = extract_layout_preserved_text(sys.argv[1])
 
     print(result[:12000])
-

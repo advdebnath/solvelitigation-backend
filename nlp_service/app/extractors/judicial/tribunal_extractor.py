@@ -4,65 +4,30 @@
 
 import re
 
-from app.extractors.judicial.shared_utils import (
-    normalize_ocr,
-    clean_case_number,
-    build_case_object
-)
-
+from app.extractors.judicial.shared_utils import (build_case_object,
+                                                  clean_case_number,
+                                                  normalize_ocr)
 
 TRIBUNAL_PATTERNS = [
-
     # =====================================================
     # 🔥 CENTRAL ADMINISTRATIVE TRIBUNAL
     # =====================================================
-
-    (
-        r'(OA\s*NO\.?\s*[\d\/\-]+\s*OF\s*\d{4})',
-        "SERVICE"
-    ),
-
-    (
-        r'(TA\s*NO\.?\s*[\d\/\-]+\s*OF\s*\d{4})',
-        "SERVICE"
-    ),
-
+    (r"(OA\s*NO\.?\s*[\d\/\-]+\s*OF\s*\d{4})", "SERVICE"),
+    (r"(TA\s*NO\.?\s*[\d\/\-]+\s*OF\s*\d{4})", "SERVICE"),
     # =====================================================
     # 🔥 NCLT / NCLAT
     # =====================================================
-
-    (
-        r'(CP\s*\(IB\)\s*NO\.?\s*[\d\/A-Z\-]+\s*OF\s*\d{4})',
-        "INSOLVENCY"
-    ),
-
-    (
-        r'(IA\s*\(IB\)\s*NO\.?\s*[\d\/A-Z\-]+\s*OF\s*\d{4})',
-        "INSOLVENCY"
-    ),
-
-    (
-        r'(COMPANY\s+PETITION\s+NO\.?\s*[\d\/\-]+\s*OF\s*\d{4})',
-        "COMPANY"
-    ),
-
+    (r"(CP\s*\(IB\)\s*NO\.?\s*[\d\/A-Z\-]+\s*OF\s*\d{4})", "INSOLVENCY"),
+    (r"(IA\s*\(IB\)\s*NO\.?\s*[\d\/A-Z\-]+\s*OF\s*\d{4})", "INSOLVENCY"),
+    (r"(COMPANY\s+PETITION\s+NO\.?\s*[\d\/\-]+\s*OF\s*\d{4})", "COMPANY"),
     # =====================================================
     # 🔥 ITAT
     # =====================================================
-
-    (
-        r'(ITA\s*NO\.?\s*[\d\/A-Z\-]+\s*OF\s*\d{4})',
-        "TAX"
-    ),
-
+    (r"(ITA\s*NO\.?\s*[\d\/A-Z\-]+\s*OF\s*\d{4})", "TAX"),
     # =====================================================
     # 🔥 GST
     # =====================================================
-
-    (
-        r'(GST\s+APPEAL\s+NO\.?\s*[\d\/\-]+\s*OF\s*\d{4})',
-        "GST"
-    )
+    (r"(GST\s+APPEAL\s+NO\.?\s*[\d\/\-]+\s*OF\s*\d{4})", "GST"),
 ]
 
 
@@ -76,11 +41,7 @@ def extract_tribunal_case_number(text):
 
         try:
 
-            matches = re.findall(
-                pattern,
-                upper,
-                flags=re.I
-            )
+            matches = re.findall(pattern, upper, flags=re.I)
 
         except Exception as e:
 
@@ -96,19 +57,14 @@ def extract_tribunal_case_number(text):
             print("🔥 TRIBUNAL MATCH:")
             print(value)
 
-            if re.search(r'\d{2,}', value):
+            if re.search(r"\d{2,}", value):
 
                 return build_case_object(
-
                     case_number=value,
-
                     court_type="TRIBUNAL",
-
                     case_type=case_type,
-
                     confidence=93,
-
-                    source="TRIBUNAL_EXTRACTOR_V2"
+                    source="TRIBUNAL_EXTRACTOR_V2",
                 )
 
     return None

@@ -1,5 +1,6 @@
 import re
 
+
 # ============================================
 # 🔥 DECISION DETECTION (STRONG)
 # ============================================
@@ -21,6 +22,7 @@ def infer_decision(text: str):
 
     return "Decision rendered"
 
+
 # ============================================
 # 🔥 ISSUE DETECTION
 # ============================================
@@ -37,6 +39,7 @@ def extract_issue(text: str):
         return "Whether offence of murder is established"
 
     return "Legal issue involved"
+
 
 # ============================================
 # 🔥 IMPROVED HEADNOTE GENERATOR
@@ -65,9 +68,10 @@ def generate_headnote(category, acts, points, full_text=None):
         important_points = []
 
         for p in points:
-            if any(k in p.lower() for k in [
-                "contract", "breach", "liability", "cheque", "murder"
-            ]):
+            if any(
+                k in p.lower()
+                for k in ["contract", "breach", "liability", "cheque", "murder"]
+            ):
                 important_points.append(p)
 
         if not important_points:

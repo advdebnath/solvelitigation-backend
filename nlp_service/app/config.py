@@ -1,5 +1,5 @@
-from pydantic_settings import BaseSettings, SettingsConfigDict
 from pydantic import Field
+from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
 class Settings(BaseSettings):
@@ -30,16 +30,12 @@ class Settings(BaseSettings):
     # ===============================
     # 🔗 BACKEND CALLBACK
     # ===============================
-    BACKEND_CALLBACK_URL: str = Field(
-        ..., description="Backend NLP callback URL"
-    )
+    BACKEND_CALLBACK_URL: str = Field(..., description="Backend NLP callback URL")
 
     # ===============================
     # 📂 UPLOAD DIRECTORY
     # ===============================
-    UPLOAD_BASE_DIR: str = Field(
-        ..., description="Base directory for uploaded PDFs"
-    )
+    UPLOAD_BASE_DIR: str = Field(..., description="Base directory for uploaded PDFs")
 
     # ===============================
     # 🧠 SERVICE NAME
@@ -58,7 +54,7 @@ class Settings(BaseSettings):
     model_config = SettingsConfigDict(
         env_file=".env",
         env_file_encoding="utf-8",
-        extra="allow"   # ✅ allows unknown env vars (fixes your crash)
+        extra="allow",  # ✅ allows unknown env vars (fixes your crash)
     )
 
 

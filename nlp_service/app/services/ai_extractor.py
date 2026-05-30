@@ -16,10 +16,10 @@ def extract_legal_metadata(text: str) -> Dict:
             "distinguished": [],
             "followed": [],
             "affirmed": [],
-            "reversed": []
+            "reversed": [],
         },
         "summary": None,
-        "confidence": 0.6
+        "confidence": 0.6,
     }
 
     text_lower = text.lower()
@@ -49,7 +49,7 @@ def extract_legal_metadata(text: str) -> Dict:
         r"GST Act",
         r"Companies Act",
         r"Transfer of Property Act",
-        r"Constitution of India"
+        r"Constitution of India",
     ]
 
     for pattern in act_patterns:
@@ -86,7 +86,7 @@ def extract_legal_metadata(text: str) -> Dict:
         "distinguished": r"distinguished",
         "followed": r"followed",
         "affirmed": r"affirmed",
-        "reversed": r"reversed"
+        "reversed": r"reversed",
     }
 
     for relation, pattern in relation_patterns.items():

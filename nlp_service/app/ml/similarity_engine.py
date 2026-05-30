@@ -1,6 +1,6 @@
-from sentence_transformers import SentenceTransformer
 import numpy as np
 from pymongo import MongoClient
+from sentence_transformers import SentenceTransformer
 
 MONGO_URI = "mongodb://sl_app:Debnath%401966@127.0.0.1:27017/solvelitigation"
 
@@ -24,9 +24,7 @@ def cosine_similarity(a, b):
 def find_similar_cases(text, top_k=5):
     query_embedding = model.encode(text)
 
-    judgments = list(db.judgments.find({
-        "embedding": {"$exists": True}
-    }).limit(500))
+    judgments = list(db.judgments.find({"embedding": {"$exists": True}}).limit(500))
 
     scored = []
 
@@ -73,5 +71,5 @@ def decide_from_similar(text):
         "category": category,
         "acts": acts,
         "pointsOfLaw": points,
-        "headnote": headnote
+        "headnote": headnote,
     }

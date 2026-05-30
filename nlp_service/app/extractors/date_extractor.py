@@ -1,5 +1,6 @@
 import re
 from datetime import datetime
+
 from dateutil import parser
 
 # =========================================================
@@ -7,7 +8,6 @@ from dateutil import parser
 # =========================================================
 
 MONTHS = {
-
     "JANUARY": "01",
     "FEBRUARY": "02",
     "MARCH": "03",
@@ -19,43 +19,37 @@ MONTHS = {
     "SEPTEMBER": "09",
     "OCTOBER": "10",
     "NOVEMBER": "11",
-    "DECEMBER": "12"
+    "DECEMBER": "12",
 }
 
 # =========================================================
 # 🔥 FORMAT DATE
 # =========================================================
 
+
 def format_date(day, month, year):
 
     try:
 
-        month_num = MONTHS.get(
-            month.upper()
-        )
+        month_num = MONTHS.get(month.upper())
 
         if not month_num:
 
             return None
 
-        dt = datetime.strptime(
+        dt = datetime.strptime(f"{year}-{month_num}-{int(day):02d}", "%Y-%m-%d")
 
-            f"{year}-{month_num}-{int(day):02d}",
-
-            "%Y-%m-%d"
-        )
-
-        return dt.strftime(
-            "%Y-%m-%d"
-        )
+        return dt.strftime("%Y-%m-%d")
 
     except Exception:
 
         return None
 
+
 # =========================================================
 # 🔥 YEAR VALIDATION
 # =========================================================
+
 
 def is_valid_year(year):
 
@@ -70,10 +64,10 @@ def is_valid_year(year):
         return False
 
 
-
 # =========================================================
 # 🔥 UNIVERSAL DATE NORMALIZER
 # =========================================================
+
 
 def normalize_any_date(raw):
 
@@ -94,39 +88,24 @@ def normalize_any_date(raw):
 
         raw = raw.replace("l", "1")
 
-        raw = re.sub(
-            r"\s+",
-            " ",
-            raw
-        ).strip()
+        raw = re.sub(r"\s+", " ", raw).strip()
 
         # =================================================
         # 🔥 REMOVE LABELS
         # =================================================
 
         raw = re.sub(
-
             r"^(DATED|DATE|PRONOUNCED ON|DELIVERED ON|NEW DELHI)\s*[:\-;,]*\s*",
-
             "",
-
             raw,
-
-            flags=re.I
+            flags=re.I,
         )
 
         # =================================================
         # 🔥 SMART PARSE
         # =================================================
 
-        dt = parser.parse(
-
-            raw,
-
-            fuzzy=True,
-
-            dayfirst=True
-        )
+        dt = parser.parse(raw, fuzzy=True, dayfirst=True)
 
         # =================================================
         # 🔥 YEAR VALIDATION
@@ -146,6 +125,7 @@ def normalize_any_date(raw):
 # 🔒 AUTHORITATIVE JUDGMENT YEAR LOCK
 # =========================================================
 
+
 def build_authoritative_year(date_value):
 
     try:
@@ -153,11 +133,7 @@ def build_authoritative_year(date_value):
         if not date_value:
             return None
 
-        dt = parser.parse(
-            str(date_value),
-            fuzzy=True,
-            dayfirst=True
-        )
+        dt = parser.parse(str(date_value), fuzzy=True, dayfirst=True)
 
         year = dt.year
 
@@ -175,19 +151,14 @@ def build_authoritative_year(date_value):
 # 🔥 EXTRACT JUDGMENT DATE
 # =========================================================
 
+
 def extract_judgment_date(text):
 
     try:
 
         if not text:
 
-            return {
-
-                "date": None,
-
-                "confidence": 0
-            }
-
+            return {"date": None, "confidence": 0}
 
         if not isinstance(text, str):
             text = str(text)
@@ -198,9 +169,7 @@ def extract_judgment_date(text):
 
         footer_zone = text[-10000:]
 
-        print(
-            "📅 FOOTER DATE SCAN ACTIVE"
-        )
+        print("📅 FOOTER DATE SCAN ACTIVE")
 
         # =================================================
         # 🔥 FOOTER LINES
@@ -212,11 +181,7 @@ def extract_judgment_date(text):
         # 🔥 REVERSE FOOTER SCAN
         # =================================================
 
-        for idx, line in reversed(
-
-            list(enumerate(footer_lines))
-
-        ):
+        for idx, line in reversed(list(enumerate(footer_lines))):
 
             clean = line.strip()
 
@@ -230,7 +195,7 @@ def extract_judgment_date(text):
                 r"^(DATED|DATE|PRONOUNCED ON|DELIVERED ON)\s*[:\-]*\s*",
                 "",
                 upper,
-                flags=re.I
+                flags=re.I,
             )
 
             if not upper:
@@ -249,30 +214,22 @@ def extract_judgment_date(text):
             # 🔥 MUST CONTAIN MONTH
             # =============================================
 
-            has_month = any(
-                month in upper
-                for month in MONTHS
-            )
+            has_month = any(month in upper for month in MONTHS)
 
             if not has_month:
 
                 continue
 
-            print(
-                "📅 Footer Candidate:",
-                upper
-            )
+            print("📅 Footer Candidate:", upper)
 
             # =============================================
             # 🔥 PURE FOOTER DATE PRIORITY
             # =============================================
 
             pure_match = re.search(
-
                 r"^(JANUARY|FEBRUARY|MARCH|APRIL|MAY|JUNE|JULY|AUGUST|SEPTEMBER|OCTOBER|NOVEMBER|DECEMBER)[\s\.,;:-]+(\d{1,2})[\s\.,;:-]+(\d{4})",
-
                 upper,
-                re.I
+                re.I,
             )
 
             if pure_match:
@@ -288,11 +245,9 @@ def extract_judgment_date(text):
                 # =============================================
 
                 reverse_match = re.search(
-
                     r"^(\d{1,2})[\s\.,;:-]+(JANUARY|FEBRUARY|MARCH|APRIL|MAY|JUNE|JULY|AUGUST|SEPTEMBER|OCTOBER|NOVEMBER|DECEMBER)[\s\.,;:-]+(\d{4})",
-
                     upper,
-                    re.I
+                    re.I,
                 )
 
                 if not reverse_match:
@@ -302,56 +257,25 @@ def extract_judgment_date(text):
                 month = reverse_match.group(2)
                 year = reverse_match.group(3)
 
-                month = re.sub(
-                    r"[^A-Z]",
-                    "",
-                    month.upper()
-                )
+                month = re.sub(r"[^A-Z]", "", month.upper())
 
-                day = re.sub(
-                    r"\D",
-                    "",
-                    day
-                )
+                day = re.sub(r"\D", "", day)
 
-                year = re.sub(
-                    r"\D",
-                    "",
-                    year
-                )
+                year = re.sub(r"\D", "", year)
 
                 print(
-                    "📅 Parsed Footer Date:",
-                    {
-                        "day": day,
-                        "month": month,
-                        "year": year
-                    }
+                    "📅 Parsed Footer Date:", {"day": day, "month": month, "year": year}
                 )
 
                 if is_valid_year(year):
 
-                    formatted = format_date(
-                        day,
-                        month,
-                        year
-                    )
+                    formatted = format_date(day, month, year)
 
                     if formatted:
 
-                        result = {
+                        result = {"date": formatted, "confidence": 99}
 
-                            "date":
-                                formatted,
-
-                            "confidence":
-                                99
-                        }
-
-                        print(
-                            "✅ Footer Judgment Date:",
-                            result
-                        )
+                        print("✅ Footer Judgment Date:", result)
 
                         return result
 
@@ -360,11 +284,9 @@ def extract_judgment_date(text):
             # =============================================
 
             match = re.search(
-
                 r"(JANUARY|FEBRUARY|MARCH|APRIL|MAY|JUNE|JULY|AUGUST|SEPTEMBER|OCTOBER|NOVEMBER|DECEMBER).*?(\d{1,2}).*?(\d{4})",
-
                 upper,
-                re.I
+                re.I,
             )
 
             if not match:
@@ -375,60 +297,29 @@ def extract_judgment_date(text):
             day = match.group(2)
             year = match.group(3)
 
-            month = re.sub(
-                r"[^A-Z]",
-                "",
-                month.upper()
-            )
+            month = re.sub(r"[^A-Z]", "", month.upper())
 
-            day = re.sub(
-                r"\D",
-                "",
-                day
-            )
+            day = re.sub(r"\D", "", day)
 
-            year = re.sub(
-                r"\D",
-                "",
-                year
-            )
+            year = re.sub(r"\D", "", year)
 
             print(
-                "📅 Parsed OCR Footer Date:",
-                {
-                    "day": day,
-                    "month": month,
-                    "year": year
-                }
+                "📅 Parsed OCR Footer Date:", {"day": day, "month": month, "year": year}
             )
 
             if not is_valid_year(year):
 
                 continue
 
-            formatted = format_date(
-                day,
-                month,
-                year
-            )
+            formatted = format_date(day, month, year)
 
             if not formatted:
 
                 continue
 
-            result = {
+            result = {"date": formatted, "confidence": 95}
 
-                "date":
-                    formatted,
-
-                "confidence":
-                    95
-            }
-
-            print(
-                "✅ OCR Footer Judgment Date:",
-                result
-            )
+            print("✅ OCR Footer Judgment Date:", result)
 
             return result
 
@@ -436,12 +327,7 @@ def extract_judgment_date(text):
         # 🔥 FALLBACK NUMERIC
         # =================================================
 
-        numeric = re.findall(
-
-            r"(\d{1,2})[\-\/](\d{1,2})[\-\/](\d{4})",
-
-            text
-        )
+        numeric = re.findall(r"(\d{1,2})[\-\/](\d{1,2})[\-\/](\d{4})", text)
 
         for item in reversed(numeric):
 
@@ -449,28 +335,11 @@ def extract_judgment_date(text):
 
             try:
 
-                dt = datetime.strptime(
+                dt = datetime.strptime(f"{year}-{month}-{day}", "%Y-%m-%d")
 
-                    f"{year}-{month}-{day}",
+                result = {"date": dt.strftime("%Y-%m-%d"), "confidence": 60}
 
-                    "%Y-%m-%d"
-                )
-
-                result = {
-
-                    "date":
-                        dt.strftime(
-                            "%Y-%m-%d"
-                        ),
-
-                    "confidence":
-                        60
-                }
-
-                print(
-                    "✅ Numeric Judgment Date:",
-                    result
-                )
+                print("✅ Numeric Judgment Date:", result)
 
                 return result
 
@@ -486,40 +355,20 @@ def extract_judgment_date(text):
 
         if universal:
 
-            result = {
+            result = {"date": universal, "confidence": 85}
 
-                "date": universal,
-
-                "confidence": 85
-            }
-
-            print(
-                "✅ Universal Date Parser:",
-                result
-            )
+            print("✅ Universal Date Parser:", result)
 
             return result
 
-        return {
-
-            "date": None,
-
-            "confidence": 0
-        }
+        return {"date": None, "confidence": 0}
 
     except Exception as e:
 
-        print(
-            "❌ DATE EXTRACTION ERROR:",
-            e
-        )
+        print("❌ DATE EXTRACTION ERROR:", e)
 
-        return {
+        return {"date": None, "confidence": 0}
 
-            "date": None,
-
-            "confidence": 0
-        }
 
 # =========================================================
 # 🔥 DIRECT TEST
@@ -532,6 +381,4 @@ if __name__ == "__main__":
     APRIL 05, 2021.
     """
 
-    print(
-        extract_judgment_date(sample)
-    )
+    print(extract_judgment_date(sample))

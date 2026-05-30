@@ -4,13 +4,11 @@
 
 import re
 
-
 # =========================================================
 # 🔥 LEGAL RECONSTRUCTION DICTIONARY
 # =========================================================
 
 LEGAL_RECONSTRUCTIONS = {
-
     "con inued": "continued",
     "de en ion": "detention",
     "convic s": "convicts",
@@ -62,13 +60,14 @@ LEGAL_RECONSTRUCTIONS = {
     "judicia ": "judicial",
     "cons itu ional": "constitutional",
     "adminis ra ive": "administrative",
-    "cons idera ion": "consideration"
+    "cons idera ion": "consideration",
 }
 
 
 # =========================================================
 # 🔥 SEMANTIC OCR COLLAPSE ENGINE
 # =========================================================
+
 
 def repair_fragmented_legal_terms(text):
 
@@ -83,85 +82,42 @@ def repair_fragmented_legal_terms(text):
 
     for wrong, correct in LEGAL_RECONSTRUCTIONS.items():
 
-        repaired = re.sub(
-            re.escape(wrong),
-            correct,
-            repaired,
-            flags=re.I
-        )
+        repaired = re.sub(re.escape(wrong), correct, repaired, flags=re.I)
 
     # -----------------------------------------------------
     # 🔥 SAFE LEGAL TOKEN RECONSTRUCTION
     # -----------------------------------------------------
 
     SAFE_FRAGMENT_PATTERNS = [
-
-        (r'\bhe\s+convic\s+has\s+los\b',
-         'the convict has lost'),
-
-        (r'\bprema\s+ure\s+release\b',
-         'premature release'),
-
-        (r'\bmaybe\b',
-         'may be'),
-
-        (r'\bconsi\s+dered\b',
-         'considered'),
-
-        (r'\bpo\s+en\s+iali\s+y\b',
-         'potentiality'),
-
-        (r'\bfrui\s+ful\b',
-         'fruitful'),
-
-        (r'\bsocie\s+y\b',
-         'society'),
-
-        (r'\bau\s+hori\s+ies\b',
-         'authorities'),
-
-        (r'\bhe\s+convict\b',
-         'the convict'),
-
-        (r'\blos\s+his\b',
-         'lost his')
+        (r"\bhe\s+convic\s+has\s+los\b", "the convict has lost"),
+        (r"\bprema\s+ure\s+release\b", "premature release"),
+        (r"\bmaybe\b", "may be"),
+        (r"\bconsi\s+dered\b", "considered"),
+        (r"\bpo\s+en\s+iali\s+y\b", "potentiality"),
+        (r"\bfrui\s+ful\b", "fruitful"),
+        (r"\bsocie\s+y\b", "society"),
+        (r"\bau\s+hori\s+ies\b", "authorities"),
+        (r"\bhe\s+convict\b", "the convict"),
+        (r"\blos\s+his\b", "lost his"),
     ]
 
     for pattern, replacement in SAFE_FRAGMENT_PATTERNS:
 
-        repaired = re.sub(
-            pattern,
-            replacement,
-            repaired,
-            flags=re.I
-        )
-
+        repaired = re.sub(pattern, replacement, repaired, flags=re.I)
 
     # -----------------------------------------------------
     # 🔥 OCR LINE BREAK REPAIR
     # -----------------------------------------------------
 
-    repaired = re.sub(
-        r'([a-z])\n([a-z])',
-        r'\1\2',
-        repaired
-    )
+    repaired = re.sub(r"([a-z])\n([a-z])", r"\1\2", repaired)
 
     # -----------------------------------------------------
     # 🔥 MULTISPACE COLLAPSE
     # -----------------------------------------------------
 
-    repaired = re.sub(
-        r'[ \t]+',
-        ' ',
-        repaired
-    )
+    repaired = re.sub(r"[ \t]+", " ", repaired)
 
-    repaired = re.sub(
-        r'\n{3,}',
-        '\n\n',
-        repaired
-    )
+    repaired = re.sub(r"\n{3,}", "\n\n", repaired)
 
     return repaired.strip()
 
@@ -170,25 +126,20 @@ def repair_fragmented_legal_terms(text):
 # 🔥 MAIN ENGINE
 # =========================================================
 
+
 def reconstruct_legal_ocr_text(text):
 
     try:
 
-        repaired = repair_fragmented_legal_terms(
-            text
-        )
+        repaired = repair_fragmented_legal_terms(text)
 
-        print(
-            "✅ LEGAL OCR RECONSTRUCTION COMPLETE"
-        )
+        print("✅ LEGAL OCR RECONSTRUCTION COMPLETE")
 
         return repaired
 
     except Exception as e:
 
-        print(
-            "❌ LEGAL OCR RECONSTRUCTION ERROR:"
-        )
+        print("❌ LEGAL OCR RECONSTRUCTION ERROR:")
 
         print(str(e))
 
@@ -206,6 +157,4 @@ if __name__ == "__main__":
     prema ure release may be cons idered by Governmen au hori ies.
     """
 
-    print(
-        reconstruct_legal_ocr_text(sample)
-    )
+    print(reconstruct_legal_ocr_text(sample))

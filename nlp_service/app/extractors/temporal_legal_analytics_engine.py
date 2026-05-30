@@ -5,10 +5,7 @@
 from collections import defaultdict
 
 
-def generate_temporal_legal_analytics(
-    doctrine_data_list
-):
-
+def generate_temporal_legal_analytics(doctrine_data_list):
     """
     Generate doctrine evolution timelines.
     """
@@ -21,15 +18,9 @@ def generate_temporal_legal_analytics(
         # 🔥 INPUT SAFETY
         # =====================================================
 
-        if not isinstance(
-            doctrine_data_list,
-            list
-        ):
+        if not isinstance(doctrine_data_list, list):
 
-            return {
-                "temporal_analysis": {},
-                "confidence": 40
-            }
+            return {"temporal_analysis": {}, "confidence": 40}
 
         # =====================================================
         # 🔥 PROCESS DOCTRINES
@@ -43,23 +34,14 @@ def generate_temporal_legal_analytics(
 
             if isinstance(item, str):
 
-                item = {
-                    "doctrine": item,
-                    "timeline": []
-                }
+                item = {"doctrine": item, "timeline": []}
 
             if not isinstance(item, dict):
                 continue
 
-            doctrine = item.get(
-                "doctrine",
-                "unknown"
-            )
+            doctrine = item.get("doctrine", "unknown")
 
-            timeline = item.get(
-                "timeline",
-                []
-            )
+            timeline = item.get("timeline", [])
 
             # =================================================
             # 🔥 TIMELINE SAFETY
@@ -67,10 +49,7 @@ def generate_temporal_legal_analytics(
 
             if isinstance(timeline, str):
 
-                timeline = [{
-                    "year": None,
-                    "principle": timeline
-                }]
+                timeline = [{"year": None, "principle": timeline}]
 
             if not isinstance(timeline, list):
                 continue
@@ -87,30 +66,16 @@ def generate_temporal_legal_analytics(
 
                 if isinstance(entry, str):
 
-                    entry = {
-                        "year": None,
-                        "principle": entry
-                    }
+                    entry = {"year": None, "principle": entry}
 
                 if not isinstance(entry, dict):
                     continue
 
-                year = entry.get(
-                    "year",
-                    None
-                )
+                year = entry.get("year", None)
 
-                principle = entry.get(
-                    "principle",
-                    ""
-                )
+                principle = entry.get("principle", "")
 
-                temporal_map[doctrine].append({
-
-                    "year": year,
-
-                    "principle": principle
-                })
+                temporal_map[doctrine].append({"year": year, "principle": principle})
 
         # =====================================================
         # 🔥 SORT
@@ -119,37 +84,19 @@ def generate_temporal_legal_analytics(
         for doctrine in temporal_map:
 
             temporal_map[doctrine] = sorted(
-
-                temporal_map[doctrine],
-
-                key=lambda x:
-                    x.get("year") or 0
+                temporal_map[doctrine], key=lambda x: x.get("year") or 0
             )
 
         # =====================================================
         # 🔥 RESPONSE
         # =====================================================
 
-        return {
-
-            "temporal_analysis":
-                dict(temporal_map),
-
-            "confidence":
-                95
-        }
+        return {"temporal_analysis": dict(temporal_map), "confidence": 95}
 
     except Exception as e:
 
-        print(
-            "❌ Temporal Analytics Error:"
-        )
+        print("❌ Temporal Analytics Error:")
 
         print(e)
 
-        return {
-
-            "temporal_analysis": {},
-
-            "confidence": 40
-        }
+        return {"temporal_analysis": {}, "confidence": 40}

@@ -10,7 +10,6 @@ SECTION_MEANINGS = {
     "307": "attempt to murder",
     "326": "grievous hurt",
     "420": "cheating",
-
     "73": "compensation for breach of contract",
     "74": "penalty damages",
 }
@@ -52,6 +51,7 @@ def detect_outcome(text):
 # 🔥 NORMALIZE SECTIONS
 # ============================================
 
+
 def normalize_sections(sections):
     result = []
 
@@ -74,6 +74,7 @@ def normalize_sections(sections):
 # 🔥 BUILD SECTION STRING
 # ============================================
 
+
 def build_section_string(primary, common):
     if not primary:
         return ""
@@ -81,12 +82,17 @@ def build_section_string(primary, common):
     if common:
         return f"Sections {', '.join(primary)} r/w {', '.join(common)}"
 
-    return f"Section {primary[0]}" if len(primary) == 1 else f"Sections {', '.join(primary)}"
+    return (
+        f"Section {primary[0]}"
+        if len(primary) == 1
+        else f"Sections {', '.join(primary)}"
+    )
 
 
 # ============================================
 # 🔥 DETECT LEGAL ISSUE
 # ============================================
+
 
 def detect_issue(primary_sections):
     for sec in primary_sections:
@@ -99,6 +105,7 @@ def detect_issue(primary_sections):
 # ============================================
 # 🔥 DETECT SERVICE / CIVIL ISSUES
 # ============================================
+
 
 def detect_context_issue(text, category):
     t = text.lower()
@@ -125,6 +132,7 @@ def detect_context_issue(text, category):
 # ============================================
 # 🔥 MAIN FUNCTION (FINAL ENGINE)
 # ============================================
+
 
 def extract_point_of_law(text, category, acts, sections):
     section_nums = normalize_sections(sections)

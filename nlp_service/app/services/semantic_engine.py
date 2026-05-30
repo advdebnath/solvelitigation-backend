@@ -4,12 +4,15 @@ from sentence_transformers import SentenceTransformer
 
 MONGO_URI = "mongodb://sl_app:Debnath%401966@127.0.0.1:27017/solvelitigation"
 
+
 # ================= DB =================
 def get_db():
     return MongoClient(MONGO_URI)["solvelitigation"]
 
+
 # ================= MODEL =================
 _model = None
+
 
 def get_model():
     global _model
@@ -18,6 +21,7 @@ def get_model():
         _model = SentenceTransformer("all-MiniLM-L6-v2")
         print("✅ Model ready")
     return _model
+
 
 # ================= SIMILARITY =================
 def cosine_similarity(a, b):
@@ -28,6 +32,7 @@ def cosine_similarity(a, b):
         return 0
 
     return np.dot(a, b) / (np.linalg.norm(a) * np.linalg.norm(b) + 1e-9)
+
 
 # ================= SEARCH =================
 def semantic_search(query, limit=5):
@@ -41,17 +46,20 @@ def semantic_search(query, limit=5):
     for doc in db.judgments.find({"embedding": {"$exists": True}}):
         score = cosine_similarity(query_emb, doc.get("embedding", []))
 
-        results.append({
-            "score": float(score),
-            "case": doc.get("caseNumber"),
-            "headnote": doc.get("headnote"),
-            "category": doc.get("category"),
-            "points": doc.get("pointsOfLaw", [])
-        })
+        results.append(
+            {
+                "score": float(score),
+                "case": doc.get("caseNumber"),
+                "headnote": doc.get("headnote"),
+                "category": doc.get("category"),
+                "points": doc.get("pointsOfLaw", []),
+            }
+        )
 
     results = sorted(results, key=lambda x: x["score"], reverse=True)
 
     return results[:limit]
+
 
 # ================= ANSWER BUILDER =================
 def generate_answer(query):
@@ -67,6 +75,7 @@ def generate_answer(query):
 
     return answer
 
+
 # ================= ARGUMENT BUILDER =================
 def build_argument(query):
     results = semantic_search(query, limit=5)
@@ -74,9 +83,6 @@ def build_argument(query):
     arguments = []
 
     for r in results:
-        arguments.append({
-            "point": r["headnote"],
-            "support": r["points"]
-        })
+        arguments.append({"point": r["headnote"], "support": r["points"]})
 
     return arguments

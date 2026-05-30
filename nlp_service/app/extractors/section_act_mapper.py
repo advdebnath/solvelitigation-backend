@@ -6,164 +6,99 @@ from collections import defaultdict
 # =========================================================
 
 ACT_RULES = {
-
     "Constitution Of India": {
-
         "allowed_types": ["Article"],
-
         "category": "Constitutional",
-
         "keywords": [
             "writ",
             "jurisdiction",
             "fundamental rights",
             "article 226",
             "article 227",
-            "judicial review"
-        ]
+            "judicial review",
+        ],
     },
-
     "Indian Penal Code, 1860": {
-
         "allowed_types": ["Section"],
-
         "category": "Criminal",
-
         "keywords": [
             "offence",
             "murder",
             "homicide",
             "assault",
             "accused",
-            "conviction"
-        ]
+            "conviction",
+        ],
     },
-
     "Code Of Criminal Procedure, 1973": {
-
         "allowed_types": ["Section"],
-
         "category": "Criminal",
-
         "keywords": [
             "fir",
             "bail",
             "charge sheet",
             "investigation",
             "custody",
-            "trial"
-        ]
+            "trial",
+        ],
     },
-
     "Code Of Civil Procedure, 1908": {
-
         "allowed_types": ["Section"],
-
         "category": "Civil",
-
-        "keywords": [
-            "plaintiff",
-            "defendant",
-            "civil suit",
-            "injunction"
-        ]
+        "keywords": ["plaintiff", "defendant", "civil suit", "injunction"],
     },
-
     "Wakf Act, 1995": {
-
         "allowed_types": ["Section"],
-
         "category": "Civil",
-
-        "keywords": [
-            "wakf",
-            "mutawalli",
-            "tribunal",
-            "tenant",
-            "wakf board",
-            "mosque"
-        ]
+        "keywords": ["wakf", "mutawalli", "tribunal", "tenant", "wakf board", "mosque"],
     },
-
     "Indian Contract Act, 1872": {
-
         "allowed_types": ["Section"],
-
         "category": "Civil",
-
-        "keywords": [
-            "contract",
-            "agreement",
-            "breach",
-            "consideration"
-        ]
-    }
+        "keywords": ["contract", "agreement", "breach", "consideration"],
+    },
 }
 
 # =========================================================
 # 🔥 ONTOLOGY VALIDATION
 # =========================================================
 
-def validate_ontology(
-    item
-):
 
-    act_name = item.get(
-        "act",
-        ""
-    )
+def validate_ontology(item):
 
-    section_type = item.get(
-        "type",
-        ""
-    )
+    act_name = item.get("act", "")
+
+    section_type = item.get("type", "")
 
     if not act_name:
         return False
 
-    rule = ACT_RULES.get(
-        act_name
-    )
+    rule = ACT_RULES.get(act_name)
 
     if not rule:
         return True
 
-    allowed = rule.get(
-        "allowed_types",
-        []
-    )
+    allowed = rule.get("allowed_types", [])
 
     return section_type in allowed
+
 
 # =========================================================
 # 🔥 CONTEXT SCORING
 # =========================================================
 
-def calculate_context_score(
-    item,
-    full_text=""
-):
+
+def calculate_context_score(item, full_text=""):
 
     text = full_text.lower()
 
     score = 0
 
-    act_name = item.get(
-        "act",
-        ""
-    )
+    act_name = item.get("act", "")
 
-    section = str(
-        item.get(
-            "section",
-            ""
-        )
-    )
+    section = str(item.get("section", ""))
 
-    section_type = item.get(
-        "type",
-        ""
-    )
+    section_type = item.get("type", "")
 
     # -----------------------------------------------------
     # 🔥 ONTOLOGY BOOST
@@ -177,10 +112,7 @@ def calculate_context_score(
     # 🔥 CONSTITUTIONAL ARTICLE BOOST
     # -----------------------------------------------------
 
-    if (
-        section_type == "Article"
-        and act_name == "Constitution Of India"
-    ):
+    if section_type == "Article" and act_name == "Constitution Of India":
 
         score += 80
 
@@ -198,83 +130,45 @@ def calculate_context_score(
         .strip()
     )
 
-    act_hits = (
-        text.count(act_name.lower())
-        +
-        text.count(normalized_act)
-    )
+    act_hits = text.count(act_name.lower()) + text.count(normalized_act)
 
-    score += min(
-        120,
-        act_hits * 15
-    )
+    score += min(120, act_hits * 15)
 
     # -----------------------------------------------------
     # 🔥 SECTION REPETITION
     # -----------------------------------------------------
 
-    section_hits = len(
+    section_hits = len(re.findall(rf"\b{re.escape(section)}\b", text))
 
-        re.findall(
-
-            rf'\b{re.escape(section)}\b',
-
-            text
-        )
-    )
-
-    score += min(
-        40,
-        section_hits * 5
-    )
+    score += min(40, section_hits * 5)
 
     # -----------------------------------------------------
     # 🔥 KEYWORD CONTEXT
     # -----------------------------------------------------
 
-    rule = ACT_RULES.get(
-        act_name,
-        {}
-    )
+    rule = ACT_RULES.get(act_name, {})
 
-    keywords = rule.get(
-        "keywords",
-        []
-    )
+    keywords = rule.get("keywords", [])
 
     for word in keywords:
 
-        hits = text.count(
-            word.lower()
-        )
+        hits = text.count(word.lower())
 
-        score += min(
-            30,
-            hits * 4
-        )
+        score += min(30, hits * 4)
 
     # -----------------------------------------------------
     # 🔥 JURISDICTION SIGNALS
     # -----------------------------------------------------
 
-    if (
-        "civil appeal" in text
-        and rule.get("category") == "Civil"
-    ):
+    if "civil appeal" in text and rule.get("category") == "Civil":
 
         score += 25
 
-    if (
-        "criminal appeal" in text
-        and rule.get("category") == "Criminal"
-    ):
+    if "criminal appeal" in text and rule.get("category") == "Criminal":
 
         score += 25
 
-    if (
-        "writ petition" in text
-        and act_name == "Constitution Of India"
-    ):
+    if "writ petition" in text and act_name == "Constitution Of India":
 
         score += 25
 
@@ -282,24 +176,15 @@ def calculate_context_score(
     # 🔥 CATEGORY CONFLICT PENALTY
     # -----------------------------------------------------
 
-    if (
-        "civil appeal" in text
-        and rule.get("category") == "Criminal"
-    ):
+    if "civil appeal" in text and rule.get("category") == "Criminal":
 
         score -= 40
 
-    if (
-        "criminal appeal" in text
-        and rule.get("category") == "Civil"
-    ):
+    if "criminal appeal" in text and rule.get("category") == "Civil":
 
         score -= 40
 
-    if (
-        "writ petition" in text
-        and rule.get("category") == "Criminal"
-    ):
+    if "writ petition" in text and rule.get("category") == "Criminal":
 
         score -= 30
 
@@ -307,33 +192,23 @@ def calculate_context_score(
     # 🔥 HARD LEGAL INVALIDATION
     # -----------------------------------------------------
 
-    if (
-        act_name == "Constitution Of India"
-        and section_type != "Article"
-    ):
+    if act_name == "Constitution Of India" and section_type != "Article":
 
         score = 0
 
     return score
 
+
 # =========================================================
 # 🔥 MAIN HYBRID ENGINE
 # =========================================================
 
-def enrich_sections_with_acts(
-    sections,
-    full_text=""
-):
+
+def enrich_sections_with_acts(sections, full_text=""):
 
     if not sections:
 
-        return {
-
-            "acts": [],
-            "categories": [],
-            "mapped_sections": [],
-            "confidence": 0
-        }
+        return {"acts": [], "categories": [], "mapped_sections": [], "confidence": 0}
 
     cleaned = []
 
@@ -350,16 +225,11 @@ def enrich_sections_with_acts(
         # 🔥 ONTOLOGY VALIDATION
         # -------------------------------------------------
 
-        valid = validate_ontology(
-            item
-        )
+        valid = validate_ontology(item)
 
         if not valid:
 
-            print(
-                "❌ INVALID LEGAL MAPPING:",
-                item
-            )
+            print("❌ INVALID LEGAL MAPPING:", item)
 
             continue
 
@@ -367,11 +237,7 @@ def enrich_sections_with_acts(
         # 🔥 HYBRID CONTEXT SCORE
         # -------------------------------------------------
 
-        context_score = calculate_context_score(
-
-            item,
-            full_text
-        )
+        context_score = calculate_context_score(item, full_text)
 
         # -------------------------------------------------
         # 🔥 CONTEXT FILTER
@@ -381,55 +247,27 @@ def enrich_sections_with_acts(
 
             print(
                 "❌ LOW CONTEXT SCORE:",
-                {
-                    "item": item,
-                    "calculated_score": context_score
-                }
+                {"item": item, "calculated_score": context_score},
             )
 
             continue
 
-        act_name = item.get(
-            "act",
-            ""
-        )
+        act_name = item.get("act", "")
 
-        rule = ACT_RULES.get(
-            act_name,
-            {}
-        )
+        rule = ACT_RULES.get(act_name, {})
 
-        category = rule.get(
-            "category",
-            "General"
-        )
+        category = rule.get("category", "General")
 
         enriched = {
-
-            "type":
-                item.get("type"),
-
-            "section":
-                item.get("section"),
-
-            "act":
-                act_name,
-
-            "normalized_section":
-                str(
-                    item.get("section")
-                ).strip(),
-
-            "category":
-                category,
-
-            "context_score":
-                context_score
+            "type": item.get("type"),
+            "section": item.get("section"),
+            "act": act_name,
+            "normalized_section": str(item.get("section")).strip(),
+            "category": category,
+            "context_score": context_score,
         }
 
-        cleaned.append(
-            enriched
-        )
+        cleaned.append(enriched)
 
         acts.add(act_name)
 
@@ -440,30 +278,19 @@ def enrich_sections_with_acts(
     # -----------------------------------------------------
 
     return {
-
-        "acts":
-            sorted(list(acts)),
-
-        "categories":
-            sorted(list(categories)),
-
-        "mapped_sections":
-            cleaned,
-
-        "confidence":
-            min(
-                95,
-                60 + len(cleaned) * 5
-            )
+        "acts": sorted(list(acts)),
+        "categories": sorted(list(categories)),
+        "mapped_sections": cleaned,
+        "confidence": min(95, 60 + len(cleaned) * 5),
     }
+
 
 # =========================================================
 # 🔥 LEGACY SUPPORT
 # =========================================================
 
-def extract_act_names(
-    mapped_sections
-):
+
+def extract_act_names(mapped_sections):
 
     acts = set()
 
@@ -480,9 +307,11 @@ def extract_act_names(
 
     return sorted(list(acts))
 
+
 # =========================================================
 # 🔥 FALLBACK CATEGORY INFERENCE
 # =========================================================
+
 
 def infer_category_from_act(act_names):
 
@@ -497,18 +326,10 @@ def infer_category_from_act(act_names):
     if "service" in text:
         return "Service"
 
-    if (
-        "tax" in text
-        or "gst" in text
-        or "income tax" in text
-    ):
+    if "tax" in text or "gst" in text or "income tax" in text:
         return "Taxation"
 
-    if (
-        "companies act" in text
-        or "sebi" in text
-        or "insolvency" in text
-    ):
+    if "companies act" in text or "sebi" in text or "insolvency" in text:
         return "Corporate"
 
     return "Civil"
@@ -519,9 +340,7 @@ def infer_category_from_sections(sections):
     if not sections:
         return "Civil"
 
-    text = " ".join(
-        [str(s) for s in sections]
-    ).lower()
+    text = " ".join([str(s) for s in sections]).lower()
 
     if "302" in text or "420" in text:
         return "Criminal"
@@ -553,9 +372,4 @@ def infer_category_from_case_number(case_number):
 
 def is_ontology_eligible(category):
 
-    return category not in [
-        None,
-        "",
-        "Unknown"
-    ]
-
+    return category not in [None, "", "Unknown"]

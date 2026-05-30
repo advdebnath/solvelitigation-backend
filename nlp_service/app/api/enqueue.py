@@ -1,9 +1,8 @@
-from fastapi import APIRouter, HTTPException
-from pydantic import BaseModel
-from bson import ObjectId
-
 # ✅ IMPORT TASK
 from app.tasks.judgment_task import process_judgment
+from bson import ObjectId
+from fastapi import APIRouter, HTTPException
+from pydantic import BaseModel
 
 router = APIRouter()
 
@@ -37,8 +36,8 @@ async def enqueue_task(req: IngestionRequest):
         # =========================================
         task = process_judgment.apply_async(
             args=[ingestion_id],
-            queue="celery",         # must match worker queue
-            retry=False          # prevent duplicate enqueue issues
+            queue="celery",  # must match worker queue
+            retry=False,  # prevent duplicate enqueue issues
         )
 
         print(f"🚀 TASK SENT TO CELERY: {task.id}")
@@ -47,7 +46,7 @@ async def enqueue_task(req: IngestionRequest):
             "success": True,
             "status": "ENQUEUED",
             "ingestionId": ingestion_id,
-            "taskId": str(task.id)
+            "taskId": str(task.id),
         }
 
     except HTTPException:
@@ -56,7 +55,4 @@ async def enqueue_task(req: IngestionRequest):
     except Exception as e:
         print("❌ ENQUEUE ERROR:", str(e))
 
-        raise HTTPException(
-            status_code=500,
-            detail="Failed to enqueue task"
-        )
+        raise HTTPException(status_code=500, detail="Failed to enqueue task")

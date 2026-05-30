@@ -1,5 +1,6 @@
 import re
 
+
 def extract_highlights(text, sections):
     paragraphs = re.split(r"\n{2,}", text)
 
@@ -18,10 +19,7 @@ def extract_highlights(text, sections):
             ]
 
             if any(p in para_lower for p in patterns):
-                highlights.append({
-                    "section": sec,
-                    "text": para.strip()
-                })
+                highlights.append({"section": sec, "text": para.strip()})
                 break
 
     return highlights[:20]  # limit

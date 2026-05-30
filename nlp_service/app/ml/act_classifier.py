@@ -59,14 +59,13 @@ SECTION_MAP = {
     304: ACT_NAMES["IPC"],
     420: ACT_NAMES["IPC"],
     34: ACT_NAMES["IPC"],
-
     # NI Act
     138: ACT_NAMES["NI"],
-
     # Contract Act
     73: ACT_NAMES["CONTRACT"],
     74: ACT_NAMES["CONTRACT"],
 }
+
 
 # ============================================
 # 🔥 MAIN DETECTION FUNCTION (FINAL)

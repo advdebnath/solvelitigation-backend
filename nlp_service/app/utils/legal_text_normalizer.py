@@ -1,12 +1,10 @@
 import re
 
-
 # =========================================================
 # 🔥 OCR HEADER / FOOTER POLLUTION PATTERNS
 # =========================================================
 
 HEADER_FOOTER_PATTERNS = [
-
     r"Downloaded\s+on\s*[:-].*",
     r"Page\s+\d+\s+of\s+\d+",
     r"\b\d+\s*$",
@@ -44,24 +42,11 @@ def remove_header_footer_pollution(text):
 
     for pattern in HEADER_FOOTER_PATTERNS:
 
-        cleaned = re.sub(
-            pattern,
-            " ",
-            cleaned,
-            flags=re.I
-        )
+        cleaned = re.sub(pattern, " ", cleaned, flags=re.I)
 
-    cleaned = re.sub(
-        r"\n{2,}",
-        "\n",
-        cleaned
-    )
+    cleaned = re.sub(r"\n{2,}", "\n", cleaned)
 
-    cleaned = re.sub(
-        r"[ \t]{2,}",
-        " ",
-        cleaned
-    )
+    cleaned = re.sub(r"[ \t]{2,}", " ", cleaned)
 
     return cleaned.strip()
 
@@ -71,33 +56,15 @@ def remove_header_footer_pollution(text):
 # =========================================================
 
 CITATION_PATTERNS = {
-
-    r"\bAIR\s*(\d{4})\s*SC\s*(\d+)\b":
-        r"AIR \1 SC \2",
-
-    r"\bAIR\s*(\d{4})\s*([A-Z][a-zA-Z]+)\s*(\d+)\b":
-        r"AIR \1 \2 \3",
-
-    r"\b\((\d{4})\)\s*(\d+)\s*SCC\s*(\d+)\b":
-        r"(\1) \2 SCC \3",
-
-    r"\b\((\d{4})\)\s*(\d+)\s*SCR\s*(\d+)\b":
-        r"(\1) \2 SCR \3",
-
-    r"\b(\d{4})\s*SCC\s*OnLine\s*SC\s*(\d+)\b":
-        r"\1 SCC OnLine SC \2",
-
-    r"\b(\d{4})\s*SCC\s*OnLine\s*Del\s*(\d+)\b":
-        r"\1 SCC OnLine Del \2",
-
-    r"\b(\d{4})\s*CriLJ\s*(\d+)\b":
-        r"\1 CriLJ \2",
-
-    r"\bMANU/[A-Z]{2}/\d{4}/\d+\b":
-        lambda m: m.group(0).upper(),
-
-    r"\bNeutral\s+Citation\s+No\.?\s*[:\-]?\s*([A-Z0-9:\-/]+)":
-        r"Neutral Citation No. \1"
+    r"\bAIR\s*(\d{4})\s*SC\s*(\d+)\b": r"AIR \1 SC \2",
+    r"\bAIR\s*(\d{4})\s*([A-Z][a-zA-Z]+)\s*(\d+)\b": r"AIR \1 \2 \3",
+    r"\b\((\d{4})\)\s*(\d+)\s*SCC\s*(\d+)\b": r"(\1) \2 SCC \3",
+    r"\b\((\d{4})\)\s*(\d+)\s*SCR\s*(\d+)\b": r"(\1) \2 SCR \3",
+    r"\b(\d{4})\s*SCC\s*OnLine\s*SC\s*(\d+)\b": r"\1 SCC OnLine SC \2",
+    r"\b(\d{4})\s*SCC\s*OnLine\s*Del\s*(\d+)\b": r"\1 SCC OnLine Del \2",
+    r"\b(\d{4})\s*CriLJ\s*(\d+)\b": r"\1 CriLJ \2",
+    r"\bMANU/[A-Z]{2}/\d{4}/\d+\b": lambda m: m.group(0).upper(),
+    r"\bNeutral\s+Citation\s+No\.?\s*[:\-]?\s*([A-Z0-9:\-/]+)": r"Neutral Citation No. \1",
 }
 
 
@@ -110,18 +77,9 @@ def normalize_legal_citations(text):
 
     for pattern, replacement in CITATION_PATTERNS.items():
 
-        normalized = re.sub(
-            pattern,
-            replacement,
-            normalized,
-            flags=re.I
-        )
+        normalized = re.sub(pattern, replacement, normalized, flags=re.I)
 
-    normalized = re.sub(
-        r"\s{2,}",
-        " ",
-        normalized
-    )
+    normalized = re.sub(r"\s{2,}", " ", normalized)
 
     return normalized.strip()
 
@@ -131,39 +89,17 @@ def normalize_legal_citations(text):
 # =========================================================
 
 PARTY_NAME_REPAIRS = {
-
-    r"\bversu[s5]\b":
-        "versus",
-
-    r"\bv[\./]s[\./]?\b":
-        "versus",
-
-    r"\bpeti\s*tioner[s]?\b":
-        "petitioner",
-
-    r"\brespon\s*dent[s]?\b":
-        "respondent",
-
-    r"\bappel\s*lant[s]?\b":
-        "appellant",
-
-    r"\baccu\s*sed\b":
-        "accused",
-
-    r"\bstate\s+of\s+([A-Z][a-z]+)\b":
-        lambda m: f"State of {m.group(1)}",
-
-    r"\bunion\s+of\s+india\b":
-        "Union of India",
-
-    r"\bhigh\s+cour[t]?\s+of\s+([A-Z][a-zA-Z\s]+)\b":
-        lambda m: f"High Court of {m.group(1).strip()}",
-
-    r"\bsupreme\s+cour[t]?\s+of\s+india\b":
-        "Supreme Court of India",
-
-    r"\bthrough\s+its\s+.*?\b":
-        "through its authorized representative"
+    r"\bversu[s5]\b": "versus",
+    r"\bv[\./]s[\./]?\b": "versus",
+    r"\bpeti\s*tioner[s]?\b": "petitioner",
+    r"\brespon\s*dent[s]?\b": "respondent",
+    r"\bappel\s*lant[s]?\b": "appellant",
+    r"\baccu\s*sed\b": "accused",
+    r"\bstate\s+of\s+([A-Z][a-z]+)\b": lambda m: f"State of {m.group(1)}",
+    r"\bunion\s+of\s+india\b": "Union of India",
+    r"\bhigh\s+cour[t]?\s+of\s+([A-Z][a-zA-Z\s]+)\b": lambda m: f"High Court of {m.group(1).strip()}",
+    r"\bsupreme\s+cour[t]?\s+of\s+india\b": "Supreme Court of India",
+    r"\bthrough\s+its\s+.*?\b": "through its authorized representative",
 }
 
 
@@ -176,12 +112,7 @@ def normalize_party_and_case_titles(text):
 
     for pattern, replacement in PARTY_NAME_REPAIRS.items():
 
-        normalized = re.sub(
-            pattern,
-            replacement,
-            normalized,
-            flags=re.I
-        )
+        normalized = re.sub(pattern, replacement, normalized, flags=re.I)
 
     # -----------------------------------------------------
     # 🔥 FIX BROKEN VERSUS LINES
@@ -191,7 +122,7 @@ def normalize_party_and_case_titles(text):
         r"\b([A-Z][A-Za-z0-9\.,&\-\s]+)\s+v(?:ersu[s5]|s\.?)\s+([A-Z][A-Za-z0-9\.,&\-\s]+)",
         r"\1 versus \2",
         normalized,
-        flags=re.I
+        flags=re.I,
     )
 
     # -----------------------------------------------------
@@ -202,14 +133,10 @@ def normalize_party_and_case_titles(text):
         r"\b(petitioner|respondent|appellant|accused)\s+\1\b",
         r"\1",
         normalized,
-        flags=re.I
+        flags=re.I,
     )
 
-    normalized = re.sub(
-        r"\s{2,}",
-        " ",
-        normalized
-    )
+    normalized = re.sub(r"\s{2,}", " ", normalized)
 
     return normalized.strip()
 
@@ -219,7 +146,6 @@ def normalize_party_and_case_titles(text):
 # =========================================================
 
 LEGAL_PROPOSITION_PATTERNS = [
-
     r"it is held that",
     r"this court held that",
     r"we hold that",
@@ -239,7 +165,7 @@ LEGAL_PROPOSITION_PATTERNS = [
     r"binding precedent",
     r"statutory interpretation",
     r"constitutional mandate",
-    r"it is evident that"
+    r"it is evident that",
 ]
 
 
@@ -252,10 +178,7 @@ def extract_legal_propositions(text):
 
     normalized = str(text)
 
-    sentences = re.split(
-        r"(?<=[\.!?])\s+",
-        normalized
-    )
+    sentences = re.split(r"(?<=[\.!?])\s+", normalized)
 
     for sentence in sentences:
 
@@ -291,16 +214,9 @@ def extract_legal_propositions(text):
 
         if score >= 30:
 
-            propositions.append({
-                "text": sentence.strip(),
-                "score": score
-            })
+            propositions.append({"text": sentence.strip(), "score": score})
 
-    propositions = sorted(
-        propositions,
-        key=lambda x: x["score"],
-        reverse=True
-    )
+    propositions = sorted(propositions, key=lambda x: x["score"], reverse=True)
 
     return propositions[:25]
 
@@ -310,7 +226,6 @@ def extract_legal_propositions(text):
 # =========================================================
 
 RATIO_HINTS = [
-
     "it is held that",
     "we hold that",
     "the issue is answered",
@@ -321,11 +236,10 @@ RATIO_HINTS = [
     "legal principle",
     "ratio decidendi",
     "constitutional mandate",
-    "statutory interpretation"
+    "statutory interpretation",
 ]
 
 OBITER_HINTS = [
-
     "it may be noted",
     "it appears",
     "in passing",
@@ -335,17 +249,14 @@ OBITER_HINTS = [
     "for academic purposes",
     "without deciding",
     "tentative view",
-    "general observation"
+    "general observation",
 ]
 
 
 def differentiate_ratio_obiter(text):
 
     if not text:
-        return {
-            "ratio": [],
-            "obiter": []
-        }
+        return {"ratio": [], "obiter": []}
 
     ratio_sentences = []
 
@@ -353,10 +264,7 @@ def differentiate_ratio_obiter(text):
 
     normalized = str(text)
 
-    sentences = re.split(
-        r"(?<=[\.!?])\s+",
-        normalized
-    )
+    sentences = re.split(r"(?<=[\.!?])\s+", normalized)
 
     for sentence in sentences:
 
@@ -407,34 +315,17 @@ def differentiate_ratio_obiter(text):
 
         if ratio_score >= obiter_score and ratio_score >= 30:
 
-            ratio_sentences.append({
-                "text": sentence.strip(),
-                "score": ratio_score
-            })
+            ratio_sentences.append({"text": sentence.strip(), "score": ratio_score})
 
         elif obiter_score > ratio_score and obiter_score >= 25:
 
-            obiter_sentences.append({
-                "text": sentence.strip(),
-                "score": obiter_score
-            })
+            obiter_sentences.append({"text": sentence.strip(), "score": obiter_score})
 
-    ratio_sentences = sorted(
-        ratio_sentences,
-        key=lambda x: x["score"],
-        reverse=True
-    )
+    ratio_sentences = sorted(ratio_sentences, key=lambda x: x["score"], reverse=True)
 
-    obiter_sentences = sorted(
-        obiter_sentences,
-        key=lambda x: x["score"],
-        reverse=True
-    )
+    obiter_sentences = sorted(obiter_sentences, key=lambda x: x["score"], reverse=True)
 
-    return {
-        "ratio": ratio_sentences[:20],
-        "obiter": obiter_sentences[:20]
-    }
+    return {"ratio": ratio_sentences[:20], "obiter": obiter_sentences[:20]}
 
 
 # =========================================================
@@ -442,55 +333,39 @@ def differentiate_ratio_obiter(text):
 # =========================================================
 
 DOCTRINE_PATTERNS = {
-
     "natural justice": [
         "audi alteram partem",
         "bias",
         "fair hearing",
-        "principles of natural justice"
+        "principles of natural justice",
     ],
-
     "constitutional morality": [
         "constitutional morality",
         "constitutional values",
-        "transformative constitution"
+        "transformative constitution",
     ],
-
     "basic structure doctrine": [
         "basic structure",
         "constitutional amendment",
-        "judicial review"
+        "judicial review",
     ],
-
-    "procedural fairness": [
-        "due process",
-        "fair procedure",
-        "procedural safeguard"
-    ],
-
-    "personal liberty": [
-        "article 21",
-        "personal liberty",
-        "right to life"
-    ],
-
+    "procedural fairness": ["due process", "fair procedure", "procedural safeguard"],
+    "personal liberty": ["article 21", "personal liberty", "right to life"],
     "federalism": [
         "federal structure",
         "centre-state relation",
-        "distribution of powers"
+        "distribution of powers",
     ],
-
     "judicial restraint": [
         "judicial restraint",
         "limited judicial review",
-        "policy domain"
+        "policy domain",
     ],
-
     "proportionality": [
         "proportionality",
         "balancing test",
-        "least restrictive measure"
-    ]
+        "least restrictive measure",
+    ],
 }
 
 
@@ -522,20 +397,15 @@ def extract_doctrine_evolution(text):
 
         if score >= 40:
 
-            doctrine_results.append({
+            doctrine_results.append(
+                {
+                    "doctrine": doctrine,
+                    "score": score,
+                    "matched_keywords": matched_keywords,
+                }
+            )
 
-                "doctrine": doctrine,
-
-                "score": score,
-
-                "matched_keywords": matched_keywords
-            })
-
-    doctrine_results = sorted(
-        doctrine_results,
-        key=lambda x: x["score"],
-        reverse=True
-    )
+    doctrine_results = sorted(doctrine_results, key=lambda x: x["score"], reverse=True)
 
     return doctrine_results
 
@@ -545,50 +415,39 @@ def extract_doctrine_evolution(text):
 # =========================================================
 
 SEMANTIC_RELATIONSHIP_PATTERNS = {
-
     "constitutional_law": [
         "article 14",
         "article 19",
         "article 21",
         "constitutional validity",
-        "fundamental rights"
+        "fundamental rights",
     ],
-
     "criminal_law": [
         "beyond reasonable doubt",
         "criminal jurisprudence",
         "benefit of doubt",
         "conviction",
-        "acquittal"
+        "acquittal",
     ],
-
     "administrative_law": [
         "natural justice",
         "administrative action",
         "judicial review",
-        "procedural fairness"
+        "procedural fairness",
     ],
-
     "service_law": [
         "departmental proceeding",
         "dismissal",
         "reinstatement",
-        "disciplinary authority"
+        "disciplinary authority",
     ],
-
-    "taxation_law": [
-        "assessment",
-        "reassessment",
-        "input tax credit",
-        "tax liability"
-    ],
-
+    "taxation_law": ["assessment", "reassessment", "input tax credit", "tax liability"],
     "corporate_law": [
         "oppression and mismanagement",
         "shareholder",
         "board of directors",
-        "corporate governance"
-    ]
+        "corporate governance",
+    ],
 }
 
 
@@ -617,22 +476,17 @@ def build_cross_case_semantic_memory(text):
 
         if score >= 30:
 
-            semantic_clusters.append({
-
-                "cluster": cluster_name,
-
-                "score": score,
-
-                "matched_keywords": matched_keywords,
-
-                "relationship_strength":
-                    min(score, 100)
-            })
+            semantic_clusters.append(
+                {
+                    "cluster": cluster_name,
+                    "score": score,
+                    "matched_keywords": matched_keywords,
+                    "relationship_strength": min(score, 100),
+                }
+            )
 
     semantic_clusters = sorted(
-        semantic_clusters,
-        key=lambda x: x["score"],
-        reverse=True
+        semantic_clusters, key=lambda x: x["score"], reverse=True
     )
 
     return semantic_clusters
@@ -643,63 +497,42 @@ def build_cross_case_semantic_memory(text):
 # =========================================================
 
 CONFLICT_PATTERNS = [
-
     (
         "liberal_interpretation",
         [
             "beneficial legislation",
             "liberal interpretation",
             "purposive interpretation",
-            "justice oriented approach"
-        ]
+            "justice oriented approach",
+        ],
     ),
-
     (
         "strict_interpretation",
         [
             "strict interpretation",
             "literal interpretation",
             "plain meaning",
-            "strict compliance"
-        ]
+            "strict compliance",
+        ],
     ),
-
     (
         "judicial_restraint",
-        [
-            "limited judicial review",
-            "policy decision",
-            "judicial restraint"
-        ]
+        ["limited judicial review", "policy decision", "judicial restraint"],
     ),
-
     (
         "judicial_activism",
         [
             "complete justice",
             "constitutional morality",
             "transformative constitution",
-            "expansive interpretation"
-        ]
+            "expansive interpretation",
+        ],
     ),
-
     (
         "pro_accused",
-        [
-            "benefit of doubt",
-            "presumption of innocence",
-            "beyond reasonable doubt"
-        ]
+        ["benefit of doubt", "presumption of innocence", "beyond reasonable doubt"],
     ),
-
-    (
-        "victim_centric",
-        [
-            "victim rights",
-            "societal interest",
-            "collective conscience"
-        ]
-    )
+    ("victim_centric", ["victim rights", "societal interest", "collective conscience"]),
 ]
 
 
@@ -728,78 +561,49 @@ def detect_legal_conflicts(text):
 
         if score >= 30:
 
-            detected_positions.append({
-
-                "position": position_name,
-
-                "score": score,
-
-                "matched_keywords": matched_keywords
-            })
+            detected_positions.append(
+                {
+                    "position": position_name,
+                    "score": score,
+                    "matched_keywords": matched_keywords,
+                }
+            )
 
     conflicts = []
 
-    detected_names = {
-        item["position"]
-        for item in detected_positions
-    }
+    detected_names = {item["position"] for item in detected_positions}
 
     if (
         "liberal_interpretation" in detected_names
         and "strict_interpretation" in detected_names
     ):
 
-        conflicts.append({
+        conflicts.append(
+            {
+                "conflict_type": "INTERPRETATION_CONFLICT",
+                "positions": ["liberal_interpretation", "strict_interpretation"],
+            }
+        )
 
-            "conflict_type":
-                "INTERPRETATION_CONFLICT",
+    if "judicial_restraint" in detected_names and "judicial_activism" in detected_names:
 
-            "positions": [
-                "liberal_interpretation",
-                "strict_interpretation"
-            ]
-        })
+        conflicts.append(
+            {
+                "conflict_type": "JUDICIAL_APPROACH_CONFLICT",
+                "positions": ["judicial_restraint", "judicial_activism"],
+            }
+        )
 
-    if (
-        "judicial_restraint" in detected_names
-        and "judicial_activism" in detected_names
-    ):
+    if "pro_accused" in detected_names and "victim_centric" in detected_names:
 
-        conflicts.append({
+        conflicts.append(
+            {
+                "conflict_type": "CRIMINAL_JURISPRUDENCE_CONFLICT",
+                "positions": ["pro_accused", "victim_centric"],
+            }
+        )
 
-            "conflict_type":
-                "JUDICIAL_APPROACH_CONFLICT",
-
-            "positions": [
-                "judicial_restraint",
-                "judicial_activism"
-            ]
-        })
-
-    if (
-        "pro_accused" in detected_names
-        and "victim_centric" in detected_names
-    ):
-
-        conflicts.append({
-
-            "conflict_type":
-                "CRIMINAL_JURISPRUDENCE_CONFLICT",
-
-            "positions": [
-                "pro_accused",
-                "victim_centric"
-            ]
-        })
-
-    return {
-
-        "detected_positions":
-            detected_positions,
-
-        "conflicts":
-            conflicts
-    }
+    return {"detected_positions": detected_positions, "conflicts": conflicts}
 
 
 # =========================================================
@@ -807,57 +611,45 @@ def detect_legal_conflicts(text):
 # =========================================================
 
 AUTHORITY_FACTORS = {
-
     "constitutional_bench": [
         "constitution bench",
         "five-judge bench",
         "seven-judge bench",
-        "nine-judge bench"
+        "nine-judge bench",
     ],
-
     "landmark_language": [
         "landmark judgment",
         "settled law",
         "authoritative pronouncement",
-        "binding precedent"
+        "binding precedent",
     ],
-
     "constitutional_importance": [
         "article 14",
         "article 19",
         "article 21",
         "fundamental rights",
-        "constitutional validity"
+        "constitutional validity",
     ],
-
     "precedent_strength": [
         "relied upon",
         "followed",
         "affirmed",
         "approved",
-        "distinguished"
+        "distinguished",
     ],
-
     "doctrinal_influence": [
         "basic structure",
         "constitutional morality",
         "natural justice",
-        "proportionality"
-    ]
+        "proportionality",
+    ],
 }
 
 
 def calculate_jurisprudential_authority(text):
 
     if not text:
-        return {
-
-            "authority_score": 0,
-
-            "authority_level": "LOW",
-
-            "matched_factors": []
-        }
+        return {"authority_score": 0, "authority_level": "LOW", "matched_factors": []}
 
     normalized = str(text).lower()
 
@@ -881,14 +673,13 @@ def calculate_jurisprudential_authority(text):
 
         if factor_score > 0:
 
-            matched_factors.append({
-
-                "factor": factor_name,
-
-                "score": factor_score,
-
-                "matched_keywords": matched_keywords
-            })
+            matched_factors.append(
+                {
+                    "factor": factor_name,
+                    "score": factor_score,
+                    "matched_keywords": matched_keywords,
+                }
+            )
 
         score += factor_score
 
@@ -906,12 +697,9 @@ def calculate_jurisprudential_authority(text):
         authority_level = "MODERATE"
 
     return {
-
         "authority_score": score,
-
         "authority_level": authority_level,
-
-        "matched_factors": matched_factors
+        "matched_factors": matched_factors,
     }
 
 
@@ -920,51 +708,36 @@ def calculate_jurisprudential_authority(text):
 # =========================================================
 
 PRECEDENT_STATUS_PATTERNS = {
-
     "overruled": [
         "overruled",
         "stands overruled",
         "is overruled",
-        "cannot be treated as good law"
+        "cannot be treated as good law",
     ],
-
     "distinguished": [
         "distinguished on facts",
         "factually distinguishable",
-        "distinguished"
+        "distinguished",
     ],
-
-    "affirmed": [
-        "affirmed",
-        "approved",
-        "followed",
-        "relied upon"
-    ],
-
+    "affirmed": ["affirmed", "approved", "followed", "relied upon"],
     "doubted": [
         "doubted",
         "questioned",
         "requires reconsideration",
-        "referred to larger bench"
+        "referred to larger bench",
     ],
-
     "partially_overruled": [
         "partially overruled",
         "overruled to a limited extent",
-        "modified to the extent"
-    ]
+        "modified to the extent",
+    ],
 }
 
 
 def detect_precedent_reliability(text):
 
     if not text:
-        return {
-
-            "precedent_status": [],
-
-            "overall_reliability": "UNKNOWN"
-        }
+        return {"precedent_status": [], "overall_reliability": "UNKNOWN"}
 
     normalized = str(text).lower()
 
@@ -988,14 +761,13 @@ def detect_precedent_reliability(text):
 
         if score > 0:
 
-            detected_statuses.append({
-
-                "status": status_name,
-
-                "score": score,
-
-                "matched_keywords": matched_keywords
-            })
+            detected_statuses.append(
+                {
+                    "status": status_name,
+                    "score": score,
+                    "matched_keywords": matched_keywords,
+                }
+            )
 
             if status_name == "affirmed":
                 reliability_score += 20
@@ -1012,10 +784,7 @@ def detect_precedent_reliability(text):
             elif status_name == "overruled":
                 reliability_score = 0
 
-    reliability_score = max(
-        0,
-        min(reliability_score, 100)
-    )
+    reliability_score = max(0, min(reliability_score, 100))
 
     overall_reliability = "HIGH"
 
@@ -1029,15 +798,9 @@ def detect_precedent_reliability(text):
         overall_reliability = "MODERATE"
 
     return {
-
-        "precedent_status":
-            detected_statuses,
-
-        "reliability_score":
-            reliability_score,
-
-        "overall_reliability":
-            overall_reliability
+        "precedent_status": detected_statuses,
+        "reliability_score": reliability_score,
+        "overall_reliability": overall_reliability,
     }
 
 
@@ -1046,46 +809,40 @@ def detect_precedent_reliability(text):
 # =========================================================
 
 DOCTRINAL_CONSENSUS_PATTERNS = {
-
     "constitutional_protection": [
         "fundamental rights",
         "constitutional guarantee",
         "article 21",
-        "due process"
+        "due process",
     ],
-
     "natural_justice_consensus": [
         "natural justice",
         "fair hearing",
         "audi alteram partem",
-        "bias"
+        "bias",
     ],
-
     "criminal_burden_principle": [
         "beyond reasonable doubt",
         "benefit of doubt",
-        "presumption of innocence"
+        "presumption of innocence",
     ],
-
     "judicial_review_consensus": [
         "judicial review",
         "constitutional validity",
         "arbitrariness",
-        "ultra vires"
+        "ultra vires",
     ],
-
     "procedural_fairness_consensus": [
         "fair procedure",
         "procedural safeguard",
         "reasoned order",
-        "speaking order"
+        "speaking order",
     ],
-
     "proportionality_consensus": [
         "proportionality",
         "least restrictive measure",
-        "balancing test"
-    ]
+        "balancing test",
+    ],
 }
 
 
@@ -1114,29 +871,17 @@ def extract_doctrinal_consensus(text):
 
         if score >= 30:
 
-            consensus_results.append({
-
-                "doctrine_cluster":
-                    doctrine_name,
-
-                "consensus_score":
-                    min(score, 100),
-
-                "matched_keywords":
-                    matched_keywords,
-
-                "consensus_strength":
-                    (
-                        "STRONG"
-                        if score >= 60
-                        else "MODERATE"
-                    )
-            })
+            consensus_results.append(
+                {
+                    "doctrine_cluster": doctrine_name,
+                    "consensus_score": min(score, 100),
+                    "matched_keywords": matched_keywords,
+                    "consensus_strength": ("STRONG" if score >= 60 else "MODERATE"),
+                }
+            )
 
     consensus_results = sorted(
-        consensus_results,
-        key=lambda x: x["consensus_score"],
-        reverse=True
+        consensus_results, key=lambda x: x["consensus_score"], reverse=True
     )
 
     return consensus_results
@@ -1147,61 +892,43 @@ def extract_doctrinal_consensus(text):
 # =========================================================
 
 TEMPORAL_JURISPRUDENCE_PATTERNS = {
-
     "expansive_constitutionalism": [
         "transformative constitution",
         "constitutional morality",
         "expansive interpretation",
-        "living constitution"
+        "living constitution",
     ],
-
     "traditional_formalism": [
         "strict interpretation",
         "literal interpretation",
         "plain meaning rule",
-        "formal approach"
+        "formal approach",
     ],
-
-    "rights_expansion": [
-        "privacy",
-        "dignity",
-        "personal liberty",
-        "human rights"
-    ],
-
+    "rights_expansion": ["privacy", "dignity", "personal liberty", "human rights"],
     "judicial_restraint_trend": [
         "policy domain",
         "limited judicial review",
-        "judicial restraint"
+        "judicial restraint",
     ],
-
     "procedural_due_process": [
         "fair procedure",
         "due process",
         "natural justice",
-        "procedural fairness"
-    ]
+        "procedural fairness",
+    ],
 }
 
 
 def analyze_temporal_jurisprudence(text):
 
     if not text:
-        return {
-
-            "temporal_doctrines": [],
-
-            "dominant_evolutionary_trend":
-                "UNKNOWN"
-        }
+        return {"temporal_doctrines": [], "dominant_evolutionary_trend": "UNKNOWN"}
 
     normalized = str(text).lower()
 
     temporal_results = []
 
-    for doctrine_name, keywords in (
-        TEMPORAL_JURISPRUDENCE_PATTERNS.items()
-    ):
+    for doctrine_name, keywords in TEMPORAL_JURISPRUDENCE_PATTERNS.items():
 
         score = 0
 
@@ -1217,46 +944,28 @@ def analyze_temporal_jurisprudence(text):
 
         if score >= 30:
 
-            temporal_results.append({
-
-                "jurisprudential_trend":
-                    doctrine_name,
-
-                "trend_score":
-                    min(score, 100),
-
-                "matched_keywords":
-                    matched_keywords,
-
-                "evolution_strength":
-                    (
-                        "STRONG"
-                        if score >= 60
-                        else "MODERATE"
-                    )
-            })
+            temporal_results.append(
+                {
+                    "jurisprudential_trend": doctrine_name,
+                    "trend_score": min(score, 100),
+                    "matched_keywords": matched_keywords,
+                    "evolution_strength": ("STRONG" if score >= 60 else "MODERATE"),
+                }
+            )
 
     temporal_results = sorted(
-        temporal_results,
-        key=lambda x: x["trend_score"],
-        reverse=True
+        temporal_results, key=lambda x: x["trend_score"], reverse=True
     )
 
     dominant_trend = "UNKNOWN"
 
     if temporal_results:
 
-        dominant_trend = temporal_results[0][
-            "jurisprudential_trend"
-        ]
+        dominant_trend = temporal_results[0]["jurisprudential_trend"]
 
     return {
-
-        "temporal_doctrines":
-            temporal_results,
-
-        "dominant_evolutionary_trend":
-            dominant_trend
+        "temporal_doctrines": temporal_results,
+        "dominant_evolutionary_trend": dominant_trend,
     }
 
 
@@ -1265,71 +974,57 @@ def analyze_temporal_jurisprudence(text):
 # =========================================================
 
 JUDICIAL_PHILOSOPHY_PATTERNS = {
-
     "constitutional_activism": [
         "constitutional morality",
         "transformative constitution",
         "expansive interpretation",
         "complete justice",
-        "social justice"
+        "social justice",
     ],
-
     "judicial_restraint": [
         "policy domain",
         "limited judicial review",
         "judicial restraint",
-        "separation of powers"
+        "separation of powers",
     ],
-
     "rights_oriented": [
         "fundamental rights",
         "personal liberty",
         "human dignity",
         "privacy",
-        "access to justice"
+        "access to justice",
     ],
-
     "textualist_approach": [
         "plain meaning",
         "literal interpretation",
         "strict interpretation",
-        "textual interpretation"
+        "textual interpretation",
     ],
-
     "purposive_approach": [
         "purposive interpretation",
         "legislative intent",
         "beneficial construction",
-        "justice-oriented approach"
+        "justice-oriented approach",
     ],
-
     "procedural_emphasis": [
         "natural justice",
         "fair hearing",
         "procedural fairness",
-        "reasoned order"
-    ]
+        "reasoned order",
+    ],
 }
 
 
 def analyze_judicial_behaviour(text):
 
     if not text:
-        return {
-
-            "judicial_philosophies": [],
-
-            "dominant_judicial_tendency":
-                "UNKNOWN"
-        }
+        return {"judicial_philosophies": [], "dominant_judicial_tendency": "UNKNOWN"}
 
     normalized = str(text).lower()
 
     philosophy_results = []
 
-    for philosophy_name, keywords in (
-        JUDICIAL_PHILOSOPHY_PATTERNS.items()
-    ):
+    for philosophy_name, keywords in JUDICIAL_PHILOSOPHY_PATTERNS.items():
 
         score = 0
 
@@ -1345,46 +1040,28 @@ def analyze_judicial_behaviour(text):
 
         if score >= 30:
 
-            philosophy_results.append({
-
-                "judicial_tendency":
-                    philosophy_name,
-
-                "tendency_score":
-                    min(score, 100),
-
-                "matched_keywords":
-                    matched_keywords,
-
-                "behaviour_strength":
-                    (
-                        "STRONG"
-                        if score >= 60
-                        else "MODERATE"
-                    )
-            })
+            philosophy_results.append(
+                {
+                    "judicial_tendency": philosophy_name,
+                    "tendency_score": min(score, 100),
+                    "matched_keywords": matched_keywords,
+                    "behaviour_strength": ("STRONG" if score >= 60 else "MODERATE"),
+                }
+            )
 
     philosophy_results = sorted(
-        philosophy_results,
-        key=lambda x: x["tendency_score"],
-        reverse=True
+        philosophy_results, key=lambda x: x["tendency_score"], reverse=True
     )
 
     dominant_tendency = "UNKNOWN"
 
     if philosophy_results:
 
-        dominant_tendency = philosophy_results[0][
-            "judicial_tendency"
-        ]
+        dominant_tendency = philosophy_results[0]["judicial_tendency"]
 
     return {
-
-        "judicial_philosophies":
-            philosophy_results,
-
-        "dominant_judicial_tendency":
-            dominant_tendency
+        "judicial_philosophies": philosophy_results,
+        "dominant_judicial_tendency": dominant_tendency,
     }
 
 
@@ -1393,72 +1070,58 @@ def analyze_judicial_behaviour(text):
 # =========================================================
 
 ARGUMENT_INTELLIGENCE_PATTERNS = {
-
     "strong_constitutional_argument": [
         "fundamental rights",
         "article 14",
         "article 19",
         "article 21",
         "constitutional guarantee",
-        "constitutional violation"
+        "constitutional violation",
     ],
-
     "procedural_vulnerability": [
         "violation of natural justice",
         "absence of hearing",
         "procedural irregularity",
         "non-speaking order",
-        "lack of jurisdiction"
+        "lack of jurisdiction",
     ],
-
     "strong_criminal_defence": [
         "benefit of doubt",
         "presumption of innocence",
         "beyond reasonable doubt",
-        "false implication"
+        "false implication",
     ],
-
     "state_interest_argument": [
         "public interest",
         "state security",
         "societal interest",
-        "collective conscience"
+        "collective conscience",
     ],
-
     "precedent_support_strength": [
         "binding precedent",
         "settled law",
         "authoritative pronouncement",
-        "constitution bench"
+        "constitution bench",
     ],
-
     "equitable_relief_support": [
         "balance of convenience",
         "irreparable injury",
         "equity",
-        "interests of justice"
-    ]
+        "interests of justice",
+    ],
 }
 
 
 def analyze_litigation_strategy(text):
 
     if not text:
-        return {
-
-            "strategic_arguments": [],
-
-            "dominant_litigation_strategy":
-                "UNKNOWN"
-        }
+        return {"strategic_arguments": [], "dominant_litigation_strategy": "UNKNOWN"}
 
     normalized = str(text).lower()
 
     strategic_results = []
 
-    for strategy_name, keywords in (
-        ARGUMENT_INTELLIGENCE_PATTERNS.items()
-    ):
+    for strategy_name, keywords in ARGUMENT_INTELLIGENCE_PATTERNS.items():
 
         score = 0
 
@@ -1474,46 +1137,28 @@ def analyze_litigation_strategy(text):
 
         if score >= 30:
 
-            strategic_results.append({
-
-                "litigation_strategy":
-                    strategy_name,
-
-                "strategy_score":
-                    min(score, 100),
-
-                "matched_keywords":
-                    matched_keywords,
-
-                "strategic_strength":
-                    (
-                        "STRONG"
-                        if score >= 60
-                        else "MODERATE"
-                    )
-            })
+            strategic_results.append(
+                {
+                    "litigation_strategy": strategy_name,
+                    "strategy_score": min(score, 100),
+                    "matched_keywords": matched_keywords,
+                    "strategic_strength": ("STRONG" if score >= 60 else "MODERATE"),
+                }
+            )
 
     strategic_results = sorted(
-        strategic_results,
-        key=lambda x: x["strategy_score"],
-        reverse=True
+        strategic_results, key=lambda x: x["strategy_score"], reverse=True
     )
 
     dominant_strategy = "UNKNOWN"
 
     if strategic_results:
 
-        dominant_strategy = strategic_results[0][
-            "litigation_strategy"
-        ]
+        dominant_strategy = strategic_results[0]["litigation_strategy"]
 
     return {
-
-        "strategic_arguments":
-            strategic_results,
-
-        "dominant_litigation_strategy":
-            dominant_strategy
+        "strategic_arguments": strategic_results,
+        "dominant_litigation_strategy": dominant_strategy,
     }
 
 
@@ -1522,38 +1167,26 @@ def analyze_litigation_strategy(text):
 # =========================================================
 
 OCR_REPAIR_MAP = {
-
     "cons i u ion": "constitution",
-
     "prosecu ion": "prosecution",
-
     "responden s": "respondents",
-
     "judgmen": "judgment",
-
     "publi c servan": "public servant",
-
     "appe l an ": "appellant",
-
     "pe i ioner": "petitioner",
-
     "cons i u ional": "constitutional",
-
     "adminis ra ive": "administrative",
-
     "depar men ": "department",
-
     "governmen ": "government",
-
     "ar ic e": "article",
-
-    "cons i u ional cour": "constitutional court"
+    "cons i u ional cour": "constitutional court",
 }
 
 
 # =========================================================
 # 🔥 TOKEN STITCH ENGINE
 # =========================================================
+
 
 def stitch_broken_tokens(text):
 
@@ -1564,61 +1197,31 @@ def stitch_broken_tokens(text):
 
     for broken, fixed in OCR_REPAIR_MAP.items():
 
-        repaired = re.sub(
-            re.escape(broken),
-            fixed,
-            repaired,
-            flags=re.I
-        )
+        repaired = re.sub(re.escape(broken), fixed, repaired, flags=re.I)
 
     # -----------------------------------------------------
     # 🔥 SEMANTIC PARAGRAPH CONTINUITY ENGINE
     # -----------------------------------------------------
 
-    repaired = re.sub(
-        r"(?<=[a-z,])\n(?=[a-z])",
-        " ",
-        repaired
-    )
+    repaired = re.sub(r"(?<=[a-z,])\n(?=[a-z])", " ", repaired)
 
     repaired = re.sub(
-        r"(?<=[a-z])\n(?=and\b|or\b|but\b|because\b)",
-        " ",
-        repaired,
-        flags=re.I
+        r"(?<=[a-z])\n(?=and\b|or\b|but\b|because\b)", " ", repaired, flags=re.I
     )
 
-    repaired = re.sub(
-        r"(?<=\w)-\s*\n\s*(?=\w)",
-        "",
-        repaired
-    )
+    repaired = re.sub(r"(?<=\w)-\s*\n\s*(?=\w)", "", repaired)
 
-    repaired = re.sub(
-        r"(?<=[a-z])\s*\n\s*(?=[a-z])",
-        " ",
-        repaired
-    )
+    repaired = re.sub(r"(?<=[a-z])\s*\n\s*(?=[a-z])", " ", repaired)
 
-    repaired = re.sub(
-        r"(?<=\.)\n(?=[a-z])",
-        " ",
-        repaired
-    )
+    repaired = re.sub(r"(?<=\.)\n(?=[a-z])", " ", repaired)
 
-
-    repaired = re.sub(
-        r"\n{2,}",
-        "\n",
-        repaired
-    )
+    repaired = re.sub(r"\n{2,}", "\n", repaired)
 
     # -----------------------------------------------------
     # 🔥 PREFIX-LOSS OCR RECONSTRUCTION ENGINE
     # -----------------------------------------------------
 
     PREFIX_FIXES = {
-
         "he ": "the ",
         "ha ": "that ",
         "his ": "this ",
@@ -1631,17 +1234,14 @@ def stitch_broken_tokens(text):
         "wi h": "with",
         "s a e": "state",
         "cour ": "court ",
-        "ac ": "act "
+        "ac ": "act ",
     }
 
     repaired = " " + repaired
 
     for broken, fixed in PREFIX_FIXES.items():
 
-        repaired = repaired.replace(
-            " " + broken,
-            " " + fixed
-        )
+        repaired = repaired.replace(" " + broken, " " + fixed)
 
     repaired = repaired.strip()
 
@@ -1650,49 +1250,24 @@ def stitch_broken_tokens(text):
     # -----------------------------------------------------
 
     FUSED_REPAIRS = {
-
-        "heconstitution":
-            "the constitution",
-
-        "heindian":
-            "the indian",
-
-        "hehigh":
-            "the high",
-
-        "hesupreme":
-            "the supreme",
-
-        "hecourt":
-            "the court",
-
-        "heact":
-            "the act",
-
-        "hesociety":
-            "the society",
-
-        "heappeal":
-            "the appeal",
-
-        "heaccused":
-            "the accused",
-
-        "heprosecution":
-            "the prosecution",
-
-        "hepublic":
-            "the public"
+        "heconstitution": "the constitution",
+        "heindian": "the indian",
+        "hehigh": "the high",
+        "hesupreme": "the supreme",
+        "hecourt": "the court",
+        "heact": "the act",
+        "hesociety": "the society",
+        "heappeal": "the appeal",
+        "heaccused": "the accused",
+        "heprosecution": "the prosecution",
+        "hepublic": "the public",
     }
 
     repaired_lower = repaired.lower()
 
     for broken, fixed in FUSED_REPAIRS.items():
 
-        repaired_lower = repaired_lower.replace(
-            broken,
-            fixed
-        )
+        repaired_lower = repaired_lower.replace(broken, fixed)
 
     repaired = repaired_lower
 
@@ -1708,10 +1283,7 @@ def stitch_broken_tokens(text):
 
         normalized = line.strip().lower()
 
-        if (
-            normalized
-            and normalized not in seen_lines
-        ):
+        if normalized and normalized not in seen_lines:
             cleaned_lines.append(line.strip())
             seen_lines.add(normalized)
 
@@ -1721,185 +1293,82 @@ def stitch_broken_tokens(text):
     # 🔥 MULTI-SPACE CLEANUP
     # -----------------------------------------------------
 
-    repaired = re.sub(
-        r"\s+",
-        " ",
-        repaired
-    )
-
+    repaired = re.sub(r"\s+", " ", repaired)
 
     # ======================================================
     # 🔥 MID-WORD FRACTURE RECOVERY ENGINE
     # ======================================================
 
     MID_WORD_RECOVERY = {
-
         # -------------------------------------------------
         # LEGAL TERMS
         # -------------------------------------------------
-
-        r"\binforma\s+ion\b":
-            "information",
-
-        r"\bapplica\s+ion\b":
-            "application",
-
-        r"\bprohibi\s+ion\b":
-            "prohibition",
-
-        r"\bconvic\s+ion\b":
-            "conviction",
-
-        r"\bpeti\s+ion\b":
-            "petition",
-
-        r"\bappea\s+l\b":
-            "appeal",
-
-        r"\binterfere\s+nce\b":
-            "interference",
-
-        r"\bjudg\s+ment\b":
-            "judgment",
-
-        r"\bargu\s+ment\b":
-            "argument",
-
-        r"\bdocu\s+ment\b":
-            "document",
-
+        r"\binforma\s+ion\b": "information",
+        r"\bapplica\s+ion\b": "application",
+        r"\bprohibi\s+ion\b": "prohibition",
+        r"\bconvic\s+ion\b": "conviction",
+        r"\bpeti\s+ion\b": "petition",
+        r"\bappea\s+l\b": "appeal",
+        r"\binterfere\s+nce\b": "interference",
+        r"\bjudg\s+ment\b": "judgment",
+        r"\bargu\s+ment\b": "argument",
+        r"\bdocu\s+ment\b": "document",
         # -------------------------------------------------
         # LEGAL PHRASES
         # -------------------------------------------------
-
-        r"\bsec\s+ions\b":
-            "sections",
-
-        r"\bchar\s+ge\s+sheet\b":
-            "charge-sheet",
-
-        r"\bbail\s+applica\s+ion\b":
-            "bail application",
-
-        r"\bfirst\s+informa\s+ion\s+report\b":
-            "first information report",
-
+        r"\bsec\s+ions\b": "sections",
+        r"\bchar\s+ge\s+sheet\b": "charge-sheet",
+        r"\bbail\s+applica\s+ion\b": "bail application",
+        r"\bfirst\s+informa\s+ion\s+report\b": "first information report",
         # -------------------------------------------------
         # CRIMINAL SECTIONS
         # -------------------------------------------------
-
-        r"\b498[\-\s]?a\b":
-            "498A",
-
-        r"\b304[\-\s]?b\b":
-            "304B",
-
-        r"\b120[\-\s]?b\b":
-            "120B",
-
-        r"\b34\b":
-            "34",
+        r"\b498[\-\s]?a\b": "498A",
+        r"\b304[\-\s]?b\b": "304B",
+        r"\b120[\-\s]?b\b": "120B",
+        r"\b34\b": "34",
     }
 
     for pattern, replacement in MID_WORD_RECOVERY.items():
 
-        repaired = re.sub(
-            pattern,
-            replacement,
-            repaired,
-            flags=re.I
-        )
-
-
-
+        repaired = re.sub(pattern, replacement, repaired, flags=re.I)
 
     # ======================================================
     # 🔥 PERMANENT LEGAL TOKEN RECONSTRUCTION ENGINE
     # ======================================================
 
     LEGAL_PHRASE_REPAIRS = {
-
-        "cons i u ion":
-            "constitution",
-
-        "cons i":
-            "consti",
-
-        "sec ion":
-            "section",
-
-        "ar icle":
-            "article",
-
-        "public servan":
-            "public servant",
-
-        "high cour":
-            "high court",
-
-        "supreme cour":
-            "supreme court",
-
-        "maharash ra":
-            "maharashtra",
-
-        "co-opera ive":
-            "co-operative",
-
-        "ques ion":
-            "question",
-
-        "gran ed":
-            "granted",
-
-        "he high cour":
-            "the high court",
-
-        "his appeal":
-            "this appeal",
-
-        "appea ":
-            "appeal ",
-
-        "judgmen":
-            "judgment",
-
-        "prosecu ion":
-            "prosecution",
-
-        "corrup ion":
-            "corruption",
-
-        "wi h":
-            "with",
-
-        "sta e":
-            "state",
-
-        "governmen":
-            "government",
-
-        "depar men":
-            "department",
-
-        "argumen":
-            "argument",
-
-        "respondan":
-            "respondent",
-
-        "appellan":
-            "appellant"
+        "cons i u ion": "constitution",
+        "cons i": "consti",
+        "sec ion": "section",
+        "ar icle": "article",
+        "public servan": "public servant",
+        "high cour": "high court",
+        "supreme cour": "supreme court",
+        "maharash ra": "maharashtra",
+        "co-opera ive": "co-operative",
+        "ques ion": "question",
+        "gran ed": "granted",
+        "he high cour": "the high court",
+        "his appeal": "this appeal",
+        "appea ": "appeal ",
+        "judgmen": "judgment",
+        "prosecu ion": "prosecution",
+        "corrup ion": "corruption",
+        "wi h": "with",
+        "sta e": "state",
+        "governmen": "government",
+        "depar men": "department",
+        "argumen": "argument",
+        "respondan": "respondent",
+        "appellan": "appellant",
     }
 
     repaired_lower = repaired.lower()
 
     for broken, fixed in LEGAL_PHRASE_REPAIRS.items():
 
-        repaired_lower = repaired_lower.replace(
-            broken,
-            fixed
-        )
+        repaired_lower = repaired_lower.replace(broken, fixed)
 
     repaired = repaired_lower
 
@@ -1921,7 +1390,6 @@ def stitch_broken_tokens(text):
     # Permanently disabled for semantic stability.
     # ======================================================
 
-
     return repaired.strip()
 
 
@@ -1935,40 +1403,24 @@ def stitch_broken_tokens(text):
 # =========================================================
 
 HEADER_NOISE_PATTERNS = [
-
     r"http://JUDIS\.NIC\.IN",
-
     r"SUPREME COURT OF INDIA",
-
     r"HIGH COURT OF [A-Z ]+",
-
     r"Page\s+\d+\s+of\s+\d+",
-
     r"PETITIONER:",
-
     r"RESPONDENT:",
-
     r"DATE OF JUDGMENT:.*",
-
     r"BENCH:",
-
     r"CORAM:",
-
     r"JUDGMENT:?$",
-
     r"ORDER:?$",
-
     r"Downloaded\s+on",
-
     r"\bRESPONDENT\b",
-
     r"\bPETITIONER\b",
-
 ]
 
 
 def remove_header_noise(text):
-
     """
     Non-destructive enterprise header firewall.
 
@@ -2003,11 +1455,7 @@ def remove_header_noise(text):
 
         for pattern in HEADER_NOISE_PATTERNS:
 
-            if re.search(
-                pattern,
-                line,
-                flags=re.I
-            ):
+            if re.search(pattern, line, flags=re.I):
                 skip = True
                 break
 
@@ -2017,8 +1465,6 @@ def remove_header_noise(text):
         cleaned_lines.append(original_line)
 
     return "\\n".join(cleaned_lines)
-
-
 
 
 def normalize_legal_text(text):
@@ -2038,7 +1484,6 @@ def normalize_legal_text(text):
     # =========================================================
 
     OCR_REPAIRS = {
-
         r"\bhe\b": "the",
         r"\bcour\b": "court",
         r"\bhigh cour\b": "high court",
@@ -2067,76 +1512,32 @@ def normalize_legal_text(text):
         r"\bhereinaf er\b": "hereinafter",
         r"\bcommi ee\b": "committee",
         r"\bregis rars\b": "registrars",
-
         # =====================================================
         # 🔥 ADVANCED LEGAL OCR RECONSTRUCTION
         # =====================================================
-
-        r"\bcons\s*i\s*t\s*u\s*t\s*i\s*o\s*n\b":
-            "constitution",
-
-        r"\bsec\s*t\s*i\s*o\s*n\b":
-            "section",
-
-        r"\bart\s*i\s*c\s*l\s*e\b":
-            "article",
-
-        r"\bsta\s*t\s*e\b":
-            "state",
-
-        r"\bgover\s*n\s*m\s*e\s*n\s*t\b":
-            "government",
-
-        r"\blegi\s*s\s*l\s*a\s*t\s*u\s*r\s*e\b":
-            "legislature",
-
-        r"\bparlia\s*m\s*e\s*n\s*t\b":
-            "parliament",
-
-        r"\binter\s*p\s*r\s*e\s*t\s*a\s*t\s*i\s*o\s*n\b":
-            "interpretation",
-
-        r"\bjuris\s*p\s*r\s*u\s*d\s*e\s*n\s*c\s*e\b":
-            "jurisprudence",
-
-        r"\bpeti\s*t\s*i\s*o\s*n\s*e\s*r\b":
-            "petitioner",
-
-        r"\brespon\s*d\s*e\s*n\s*t\b":
-            "respondent",
-
-        r"\bappel\s*l\s*a\s*n\s*t\b":
-            "appellant",
-
-        r"\bprose\s*c\s*u\s*t\s*i\s*o\s*n\b":
-            "prosecution",
-
-        r"\bjudg\s*m\s*e\s*n\s*t\b":
-            "judgment",
-
-        r"\bmagis\s*t\s*r\s*a\s*t\s*e\b":
-            "magistrate",
-
-        r"\btribu\s*n\s*a\s*l\b":
-            "tribunal",
-
-        r"\bmunici\s*p\s*a\s*l\b":
-            "municipal",
-
-        r"\bcorpo\s*r\s*a\s*t\s*i\s*o\s*n\b":
-            "corporation"
-
+        r"\bcons\s*i\s*t\s*u\s*t\s*i\s*o\s*n\b": "constitution",
+        r"\bsec\s*t\s*i\s*o\s*n\b": "section",
+        r"\bart\s*i\s*c\s*l\s*e\b": "article",
+        r"\bsta\s*t\s*e\b": "state",
+        r"\bgover\s*n\s*m\s*e\s*n\s*t\b": "government",
+        r"\blegi\s*s\s*l\s*a\s*t\s*u\s*r\s*e\b": "legislature",
+        r"\bparlia\s*m\s*e\s*n\s*t\b": "parliament",
+        r"\binter\s*p\s*r\s*e\s*t\s*a\s*t\s*i\s*o\s*n\b": "interpretation",
+        r"\bjuris\s*p\s*r\s*u\s*d\s*e\s*n\s*c\s*e\b": "jurisprudence",
+        r"\bpeti\s*t\s*i\s*o\s*n\s*e\s*r\b": "petitioner",
+        r"\brespon\s*d\s*e\s*n\s*t\b": "respondent",
+        r"\bappel\s*l\s*a\s*n\s*t\b": "appellant",
+        r"\bprose\s*c\s*u\s*t\s*i\s*o\s*n\b": "prosecution",
+        r"\bjudg\s*m\s*e\s*n\s*t\b": "judgment",
+        r"\bmagis\s*t\s*r\s*a\s*t\s*e\b": "magistrate",
+        r"\btribu\s*n\s*a\s*l\b": "tribunal",
+        r"\bmunici\s*p\s*a\s*l\b": "municipal",
+        r"\bcorpo\s*r\s*a\s*t\s*i\s*o\s*n\b": "corporation",
     }
 
     for wrong, correct in OCR_REPAIRS.items():
 
-        text = re.sub(
-            wrong,
-            correct,
-            text,
-            flags=re.I
-        )
-
+        text = re.sub(wrong, correct, text, flags=re.I)
 
     if not text:
         return ""
@@ -2146,158 +1547,58 @@ def normalize_legal_text(text):
     # =========================================================
 
     CHARACTER_FRAGMENT_FIXES = {
-
-        r"\bhe\b":
-            "the",
-
-        r"\bha\b":
-            "that",
-
-        r"\bwi\s+h\b":
-            "with",
-
-        r"\bno\s+t\b":
-            "not",
-
-        r"\bca\s+n\s+no\b":
-            "cannot",
-
-        r"\bs\s+a\s+e\b":
-            "state",
-
-        r"\bcou\s+r\b":
-            "court",
-
-        r"\bac\b":
-            "act",
-
-        r"\bques\s+ion\b":
-            "question",
-
-        r"\bgran\s+t\b":
-            "grant",
-
-        r"\bjudgmen\s+t\b":
-            "judgment",
-
-        r"\bfur\s+her\b":
-            "further",
-
-        r"\bma\s+er\b":
-            "matter",
-
-        r"\bhere\s+fore\b":
-            "therefore",
-
-        r"\bhereinaf\s+er\b":
-            "hereinafter",
-
-        r"\bpubli\s+c\s+servan\s+t\b":
-            "public servant",
-
-        r"\bprosecu\s+ion\b":
-            "prosecution",
-
-        r"\bpreven\s+ion\b":
-            "prevention",
-
-        r"\bcorrup\s+ion\b":
-            "corruption",
-
-        r"\bjurisdic\s+ion\b":
-            "jurisdiction",
-
-        r"\binforma\s+ion\b":
-            "information",
-
-        r"\bprohibi\s+ion\b":
-            "prohibition",
-
-        r"\bappella\s+e\b":
-            "appellate",
-
-        r"\bapplica\s+ion\b":
-            "application",
-
-        r"\bconstitu\s+ional\b":
-            "constitutional",
-
-        r"\bmiscellaneous\s+bail\s+applica\s+ion\b":
-            "miscellaneous bail application",
-
-        r"\bproce\s+dure\b":
-            "procedure",
-
-        r"\btribu\s+nal\b":
-            "tribunal",
-
-        r"\bevide\s+nce\b":
-            "evidence",
-
-        r"\boffe\s+nce\b":
-            "offence",
-
-        r"\bpeti\s+ion\b":
-            "petition",
-
-        r"\bsec\s+ions\b":
-            "sections",
-
-        r"\bargu\s+ment\b":
-            "argument",
-
-        r"\bjudicia\s+l\b":
-            "judicial",
-
-        r"\bgovern\s+ment\b":
-            "government",
-
-        r"\bdepart\s+ment\b":
-            "department",
-
-        r"\badjudica\s+ion\b":
-            "adjudication",
-
-
-        r"\bconvic\s+s\b":
-            "convicts",
-
-        r"\bgovernmen\b":
-            "government",
-
-        r"\bde\s+en\s+ion\b":
-            "detention",
-
-        r"\bprema\s+ure\b":
-            "premature",
-
-        r"\bau\s+hori\s+ies\b":
-            "authorities",
-
-        r"\bfrui\s+ful\b":
-            "fruitful",
-
-        r"\bconsi\s+er\b":
-            "consider",
-
-        r"\brejec\s+ed\b":
-            "rejected",
-
-        r"\bobjec\s+ions\b":
-            "objections",
-
-        r"\bincorpora\s+ion\b":
-            "incorporation"
+        r"\bhe\b": "the",
+        r"\bha\b": "that",
+        r"\bwi\s+h\b": "with",
+        r"\bno\s+t\b": "not",
+        r"\bca\s+n\s+no\b": "cannot",
+        r"\bs\s+a\s+e\b": "state",
+        r"\bcou\s+r\b": "court",
+        r"\bac\b": "act",
+        r"\bques\s+ion\b": "question",
+        r"\bgran\s+t\b": "grant",
+        r"\bjudgmen\s+t\b": "judgment",
+        r"\bfur\s+her\b": "further",
+        r"\bma\s+er\b": "matter",
+        r"\bhere\s+fore\b": "therefore",
+        r"\bhereinaf\s+er\b": "hereinafter",
+        r"\bpubli\s+c\s+servan\s+t\b": "public servant",
+        r"\bprosecu\s+ion\b": "prosecution",
+        r"\bpreven\s+ion\b": "prevention",
+        r"\bcorrup\s+ion\b": "corruption",
+        r"\bjurisdic\s+ion\b": "jurisdiction",
+        r"\binforma\s+ion\b": "information",
+        r"\bprohibi\s+ion\b": "prohibition",
+        r"\bappella\s+e\b": "appellate",
+        r"\bapplica\s+ion\b": "application",
+        r"\bconstitu\s+ional\b": "constitutional",
+        r"\bmiscellaneous\s+bail\s+applica\s+ion\b": "miscellaneous bail application",
+        r"\bproce\s+dure\b": "procedure",
+        r"\btribu\s+nal\b": "tribunal",
+        r"\bevide\s+nce\b": "evidence",
+        r"\boffe\s+nce\b": "offence",
+        r"\bpeti\s+ion\b": "petition",
+        r"\bsec\s+ions\b": "sections",
+        r"\bargu\s+ment\b": "argument",
+        r"\bjudicia\s+l\b": "judicial",
+        r"\bgovern\s+ment\b": "government",
+        r"\bdepart\s+ment\b": "department",
+        r"\badjudica\s+ion\b": "adjudication",
+        r"\bconvic\s+s\b": "convicts",
+        r"\bgovernmen\b": "government",
+        r"\bde\s+en\s+ion\b": "detention",
+        r"\bprema\s+ure\b": "premature",
+        r"\bau\s+hori\s+ies\b": "authorities",
+        r"\bfrui\s+ful\b": "fruitful",
+        r"\bconsi\s+er\b": "consider",
+        r"\brejec\s+ed\b": "rejected",
+        r"\bobjec\s+ions\b": "objections",
+        r"\bincorpora\s+ion\b": "incorporation",
     }
 
     for wrong, correct in CHARACTER_FRAGMENT_FIXES.items():
 
-        text = re.sub(
-            wrong,
-            correct,
-            text,
-            flags=re.I
-        )
+        text = re.sub(wrong, correct, text, flags=re.I)
 
     text = stitch_broken_tokens(text)
 
@@ -2310,7 +1611,6 @@ def normalize_legal_text(text):
     # =========================================================
 
     LEGAL_TOKEN_FIXES = {
-
         "sec ion": "section",
         "cons i u ion": "constitution",
         "cour ": "court ",
@@ -2330,7 +1630,6 @@ def normalize_legal_text(text):
         "defini ion": "definition",
         "incorpora ion": "incorporation",
         "proceedings quashed": "proceedings quashed",
-
         "convic s": "convicts",
         "governmen ": "government ",
         "de en ion": "detention",
@@ -2339,19 +1638,13 @@ def normalize_legal_text(text):
         "frui ful": "fruitful",
         "rejec ed": "rejected",
         "objec ions": "objections",
-
         "high cour ": "high court ",
         "supreme cour ": "supreme court ",
     }
 
     for broken, fixed in LEGAL_TOKEN_FIXES.items():
 
-        text = re.sub(
-            re.escape(broken),
-            fixed,
-            text,
-            flags=re.I
-        )
+        text = re.sub(re.escape(broken), fixed, text, flags=re.I)
 
     # =====================================================
     # 🔥 OCR WORD RECONSTRUCTION ENGINE
@@ -2373,235 +1666,105 @@ def normalize_legal_text(text):
         r"maharash\s+ra": "maharashtra",
         r"ac\s+": "act ",
         r"ar\s+icle": "article",
-        r"sanc\s+ion": "sanction"
+        r"sanc\s+ion": "sanction",
     }
 
     for pattern, replacement in reconstruction_rules.items():
-        text = re.sub(
-            pattern,
-            replacement,
-            text,
-            flags=re.I
-        )
+        text = re.sub(pattern, replacement, text, flags=re.I)
 
     # =====================================================
     # 🔥 OPERATIVE LEGAL OCR RECOVERY ENGINE
     # =====================================================
 
     operative_repairs = {
-
-        r"\bse\s+aside\b":
-            "set aside",
-
-        r"\bresul\b":
-            "result",
-
-        r"\bpe\s+i\s+ions\b":
-            "petitions",
-
-        r"\bpe\s+i\s+ioners\b":
-            "petitioners",
-
-        r"\bliable\s+o\s+be\s+quashed\b":
-            "liable to be quashed",
-
-        r"\bhe\s+orders\b":
-            "the orders",
-
-        r"\bhe\s+judgment\b":
-            "the judgment",
-
-        r"\bse\s+aside\s+all\s+he\s+orders\b":
-            "set aside all the orders"
+        r"\bse\s+aside\b": "set aside",
+        r"\bresul\b": "result",
+        r"\bpe\s+i\s+ions\b": "petitions",
+        r"\bpe\s+i\s+ioners\b": "petitioners",
+        r"\bliable\s+o\s+be\s+quashed\b": "liable to be quashed",
+        r"\bhe\s+orders\b": "the orders",
+        r"\bhe\s+judgment\b": "the judgment",
+        r"\bse\s+aside\s+all\s+he\s+orders\b": "set aside all the orders",
     }
 
     for pattern, replacement in operative_repairs.items():
 
-        text = re.sub(
-            pattern,
-            replacement,
-            text,
-            flags=re.I
-        )
-
+        text = re.sub(pattern, replacement, text, flags=re.I)
 
     # =====================================================
     # 🔥 LEGAL SENTENCE RECONSTRUCTION ENGINE
     # =====================================================
 
+    text = re.sub(r"([a-z]{3,})([A-Z][a-z]{2,})", r"\1 \2", text)
 
-    text = re.sub(
-        r"([a-z]{3,})([A-Z][a-z]{2,})",
-        r"\1 \2",
-        text
-    )
+    text = re.sub(r"(appeal)(by)", r"\1 by", text, flags=re.I)
 
+    text = re.sub(r"(special)(leave)", r"\1 leave", text, flags=re.I)
 
-    text = re.sub(
-        r"(appeal)(by)",
-        r"\1 by",
-        text,
-        flags=re.I
-    )
+    text = re.sub(r"(leave)(isfiled)", r"\1 is filed", text, flags=re.I)
 
-    text = re.sub(
-        r"(special)(leave)",
-        r"\1 leave",
-        text,
-        flags=re.I
-    )
+    text = re.sub(r"(passed)(by)", r"\1 by", text, flags=re.I)
 
-    text = re.sub(
-        r"(leave)(isfiled)",
-        r"\1 is filed",
-        text,
-        flags=re.I
-    )
+    text = re.sub(r"(judgment)(dated)", r"\1 dated", text, flags=re.I)
 
-    text = re.sub(
-        r"(passed)(by)",
-        r"\1 by",
-        text,
-        flags=re.I
-    )
+    text = re.sub(r"(order)(dated)", r"\1 dated", text, flags=re.I)
 
-    text = re.sub(
-        r"(judgment)(dated)",
-        r"\1 dated",
-        text,
-        flags=re.I
-    )
+    text = re.sub(r"(section)([0-9])", r"\1 \2", text, flags=re.I)
 
-    text = re.sub(
-        r"(order)(dated)",
-        r"\1 dated",
-        text,
-        flags=re.I
-    )
+    text = re.sub(r"(article)([0-9])", r"\1 \2", text, flags=re.I)
 
-    text = re.sub(
-        r"(section)([0-9])",
-        r"\1 \2",
-        text,
-        flags=re.I
-    )
+    text = re.sub(r"(rule)([0-9])", r"\1 \2", text, flags=re.I)
 
-    text = re.sub(
-        r"(article)([0-9])",
-        r"\1 \2",
-        text,
-        flags=re.I
-    )
-
-    text = re.sub(
-        r"(rule)([0-9])",
-        r"\1 \2",
-        text,
-        flags=re.I
-    )
-
-    text = re.sub(
-        r"\s+",
-        " ",
-        text
-    ).strip()
-
+    text = re.sub(r"\s+", " ", text).strip()
 
     # ============================================================
     # 🔥 TRUE PARAGRAPH RECONSTRUCTION ENGINE
     # ============================================================
 
     # Normalize broken OCR paragraph spacing
-    text = re.sub(
-        r'(?<!\n)\n(?!\n)',
-        " ",
-        text
-    )
+    text = re.sub(r"(?<!\n)\n(?!\n)", " ", text)
 
     # Restore paragraph boundaries before numbered paragraphs
-    text = re.sub(
-        r'\s+(\d{1,3}\.)\s+',
-        r'\n\n\1 ',
-        text
-    )
+    text = re.sub(r"\s+(\d{1,3}\.)\s+", r"\n\n\1 ", text)
 
     # Restore paragraph boundaries before roman numeral paragraphs
-    text = re.sub(
-        r'\s+([IVXLC]+\.)\s+',
-        r'\n\n\1 ',
-        text
-    )
+    text = re.sub(r"\s+([IVXLC]+\.)\s+", r"\n\n\1 ", text)
 
     # Restore paragraph boundaries before legal headings
     text = re.sub(
-        r'\s+(ORDER|JUDGMENT|HELD|FACTS|ANALYSIS|CONCLUSION)\s+',
-        r'\n\n\1 ',
+        r"\s+(ORDER|JUDGMENT|HELD|FACTS|ANALYSIS|CONCLUSION)\s+",
+        r"\n\n\1 ",
         text,
-        flags=re.IGNORECASE
+        flags=re.IGNORECASE,
     )
 
     print("✅ TRUE PARAGRAPH RECONSTRUCTION COMPLETE")
 
     print("✅ LEGAL SENTENCE RECONSTRUCTION COMPLETE")
 
-
-
     # =====================================================
     # 🔥 ADVANCED LEGAL OCR RECOVERY ENGINE
     # =====================================================
 
     advanced_repairs = {
-
-        r"\bpena\s+l\s+code\b":
-            "penal code",
-
-        r"\bcrimi\s+nal\s+procedure\s+code\b":
-            "criminal procedure code",
-
-        r"\bcivi\s+l\s+procedure\s+code\b":
-            "civil procedure code",
-
-        r"\bindia\s+n\s+penal\s+code\b":
-            "indian penal code",
-
-        r"\bcons\s+titution\s+of\s+india\b":
-            "constitution of india",
-
-        r"\barti\s+cle\s+(\d+)\b":
-            r"article \1",
-
-        r"\bsec\s+tion\s+(\d+[A-Z\-]*)\b":
-            r"section \1",
-
-        r"\bunder\s+sec\s+tion\b":
-            "under section",
-
-        r"\bu\s*/?\s*s\.?\s*(\d+)\b":
-            r"under section \1",
-
-        r"\bipc\b":
-            "Indian Penal Code",
-
-        r"\bcrpc\b":
-            "Code of Criminal Procedure",
-
-        r"\bcpc\b":
-            "Code of Civil Procedure",
-
-        r"\bpocso\b":
-            "Protection of Children from Sexual Offences Act",
-
-        r"\bndps\b":
-            "Narcotic Drugs and Psychotropic Substances Act"
+        r"\bpena\s+l\s+code\b": "penal code",
+        r"\bcrimi\s+nal\s+procedure\s+code\b": "criminal procedure code",
+        r"\bcivi\s+l\s+procedure\s+code\b": "civil procedure code",
+        r"\bindia\s+n\s+penal\s+code\b": "indian penal code",
+        r"\bcons\s+titution\s+of\s+india\b": "constitution of india",
+        r"\barti\s+cle\s+(\d+)\b": r"article \1",
+        r"\bsec\s+tion\s+(\d+[A-Z\-]*)\b": r"section \1",
+        r"\bunder\s+sec\s+tion\b": "under section",
+        r"\bu\s*/?\s*s\.?\s*(\d+)\b": r"under section \1",
+        r"\bipc\b": "Indian Penal Code",
+        r"\bcrpc\b": "Code of Criminal Procedure",
+        r"\bcpc\b": "Code of Civil Procedure",
+        r"\bpocso\b": "Protection of Children from Sexual Offences Act",
+        r"\bndps\b": "Narcotic Drugs and Psychotropic Substances Act",
     }
 
     for pattern, replacement in advanced_repairs.items():
 
-        text = re.sub(
-            pattern,
-            replacement,
-            text,
-            flags=re.I
-        )
+        text = re.sub(pattern, replacement, text, flags=re.I)
 
     return text

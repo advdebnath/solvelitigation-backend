@@ -1,5 +1,6 @@
 import re
 
+
 # ============================================
 # 🔥 NORMALIZE TEXT
 # ============================================
@@ -15,13 +16,10 @@ STANDARD_ACTS = {
     "agreement": "Indian Contract Act, 1872",
     "breach": "Indian Contract Act, 1872",
     "damages": "Indian Contract Act, 1872",
-
     "ipc": "Indian Penal Code, 1860",
     "penal code": "Indian Penal Code, 1860",
-
     "crpc": "Code of Criminal Procedure, 1973",
     "criminal procedure": "Code of Criminal Procedure, 1973",
-
     "cpc": "Code of Civil Procedure, 1908",
     "civil procedure": "Code of Civil Procedure, 1908",
 }
@@ -30,9 +28,7 @@ STANDARD_ACTS = {
 # ============================================
 # 🔥 STRICT ACT REGEX (WITH YEAR ONLY)
 # ============================================
-ACT_REGEX = re.compile(
-    r"\b([A-Z][A-Za-z\s]{3,50}Act,\s?\d{4})\b"
-)
+ACT_REGEX = re.compile(r"\b([A-Z][A-Za-z\s]{3,50}Act,\s?\d{4})\b")
 
 
 # ============================================

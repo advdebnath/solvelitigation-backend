@@ -1,5 +1,6 @@
 import re
 
+
 def detect_court(text: str):
     text_upper = text.upper()
 

@@ -1,7 +1,6 @@
 import re
 from collections import Counter
 
-
 STOP_TERMS = {
     "court",
     "appeal",
@@ -14,29 +13,21 @@ STOP_TERMS = {
     "judgment",
     "paragraph",
     "therefore",
-    "however"
+    "however",
 }
 
 
-def discover_dynamic_points(
-    full_text="",
-    semantic_issues=None
-):
+def discover_dynamic_points(full_text="", semantic_issues=None):
 
     try:
 
         if not full_text:
 
-            return {
-                "dynamic_points": []
-            }
+            return {"dynamic_points": []}
 
         text = full_text.lower()
 
-        phrase_matches = re.findall(
-            r"\b[a-z]{4,}(?:\s+[a-z]{4,}){1,4}\b",
-            text
-        )
+        phrase_matches = re.findall(r"\b[a-z]{4,}(?:\s+[a-z]{4,}){1,4}\b", text)
 
         cleaned = []
 
@@ -46,10 +37,7 @@ def discover_dynamic_points(
 
             words = phrase.split()
 
-            if any(
-                word in STOP_TERMS
-                for word in words
-            ):
+            if any(word in STOP_TERMS for word in words):
                 continue
 
             if len(words) < 2:
@@ -66,24 +54,19 @@ def discover_dynamic_points(
             if count < 3:
                 continue
 
-            candidates.append({
-                "candidate_point": phrase.title(),
-                "frequency": count,
-                "confidence": min(
-                    95,
-                    40 + count * 5
-                )
-            })
+            candidates.append(
+                {
+                    "candidate_point": phrase.title(),
+                    "frequency": count,
+                    "confidence": min(95, 40 + count * 5),
+                }
+            )
 
-        return {
-            "dynamic_points": candidates
-        }
+        return {"dynamic_points": candidates}
 
     except Exception as e:
 
         print("❌ DYNAMIC POINT DISCOVERY ERROR:")
         print(str(e))
 
-        return {
-            "dynamic_points": []
-        }
+        return {"dynamic_points": []}

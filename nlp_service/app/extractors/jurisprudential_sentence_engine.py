@@ -1,13 +1,11 @@
 import re
-from typing import List, Dict
-
+from typing import Dict, List
 
 # =========================================================
 # 🔥 LEGAL SAFE ABBREVIATIONS
 # =========================================================
 
 PROTECTED_ABBREVIATIONS = [
-
     "Cr.P.C.",
     "I.P.C.",
     "C.P.C.",
@@ -29,8 +27,6 @@ PROTECTED_ABBREVIATIONS = [
     "M.P.",
     "A.P.",
     "UOI.",
-
-
     "v.",
     "vs.",
     "Mr.",
@@ -56,6 +52,7 @@ PROTECTED_ABBREVIATIONS = [
 # =========================================================
 # 🔥 NORMALIZE TEXT
 # =========================================================
+
 
 def normalize_text(text: str) -> str:
 
@@ -86,18 +83,10 @@ def normalize_text(text: str) -> str:
     # -------------------------------------------------
 
     text = re.sub(
-        r"\bHereinafter\s+referred\s+to\s+as\b[^\.;]{0,120}",
-        " ",
-        text,
-        flags=re.I
+        r"\bHereinafter\s+referred\s+to\s+as\b[^\.;]{0,120}", " ", text, flags=re.I
     )
 
-    text = re.sub(
-        r"\b\d+\s+Hereinafter\b",
-        " ",
-        text,
-        flags=re.I
-    )
+    text = re.sub(r"\b\d+\s+Hereinafter\b", " ", text, flags=re.I)
 
     # -------------------------------------------------
     # REMOVE SCANNING / DIGITAL EXPORT ARTIFACTS
@@ -106,7 +95,6 @@ def normalize_text(text: str) -> str:
     text = re.sub(r"\bSigned\s+by\b[^\n]*", " ", text, flags=re.I)
 
     text = re.sub(r"\bDigitally\s+signed\b[^\n]*", " ", text, flags=re.I)
-
 
     # -------------------------------------------------
     # REMOVE EXCESS DOTS / OCR GARBAGE
@@ -124,10 +112,10 @@ def normalize_text(text: str) -> str:
     return text.strip()
 
 
-
 # =========================================================
 # 🔥 PROTECT LEGAL ABBREVIATIONS
 # =========================================================
+
 
 def protect_abbreviations(text: str) -> str:
 
@@ -139,20 +127,15 @@ def protect_abbreviations(text: str) -> str:
 
         safe = abbr.replace(".", "__DOT__")
 
-        protected = re.sub(
-            escaped_abbr,
-            safe,
-            protected,
-            flags=re.I
-        )
+        protected = re.sub(escaped_abbr, safe, protected, flags=re.I)
 
     return protected
-
 
 
 # =========================================================
 # 🔥 RESTORE ABBREVIATIONS
 # =========================================================
+
 
 def restore_abbreviations(text: str) -> str:
 
@@ -162,10 +145,10 @@ def restore_abbreviations(text: str) -> str:
     return text.replace("__DOT__", ".")
 
 
-
 # =========================================================
 # 🔥 MASK LEGAL CITATIONS
 # =========================================================
+
 
 def mask_legal_citations(text: str) -> str:
 
@@ -173,7 +156,6 @@ def mask_legal_citations(text: str) -> str:
         return ""
 
     citation_patterns = [
-
         r"\(\d{4}\)\s*\d+\s*SCC\s*\d+",
         r"\(\d{4}\)\s*\d+\s*SCC\s*\(Cri\)\s*\d+",
         r"\(\d{4}\)\s*\d+\s*SCC\s*\(Civ\)\s*\d+",
@@ -201,25 +183,21 @@ def mask_legal_citations(text: str) -> str:
 
     for idx, pattern in enumerate(citation_patterns):
 
-        matches = re.findall(
-            pattern,
-            protected
-        )
+        matches = re.findall(pattern, protected)
 
         for m_idx, match in enumerate(matches):
 
             token = f"__CITATION_{idx}_{m_idx}__"
 
-            protected = protected.replace(
-                match,
-                token
-            )
+            protected = protected.replace(match, token)
 
     return protected
+
 
 # =========================================================
 # 🔥 RESTORE LEGAL CITATIONS
 # =========================================================
+
 
 def restore_legal_citations(original: str, masked: str) -> str:
 
@@ -229,9 +207,7 @@ def restore_legal_citations(original: str, masked: str) -> str:
     if not isinstance(masked, str):
         masked = ""
 
-
     citation_patterns = [
-
         r"\(\d{4}\)\s*\d+\s*SCC\s*\d+",
         r"AIR\s*\d{4}\s*SC\s*\d+",
         r"\d{4}\s*SCC\s*OnLine\s*SC\s*\d+",
@@ -261,13 +237,10 @@ def restore_legal_citations(original: str, masked: str) -> str:
 # 🔥 MASK NUMERIC DOT STRUCTURES
 # =========================================================
 
+
 def mask_numeric_dots(text: str) -> str:
 
-    protected = re.sub(
-        r"(\d)\.(\d)",
-        r"\1__NUMDOT__\2",
-        text
-    )
+    protected = re.sub(r"(\d)\.(\d)", r"\1__NUMDOT__\2", text)
 
     return protected
 
@@ -280,13 +253,10 @@ def restore_numeric_dots(text: str) -> str:
     return text.replace("__NUMDOT__", ".")
 
 
-
-
-
-
 # =========================================================
 # 🔥 SENTENCE SPLITTER
 # =========================================================
+
 
 def split_into_sentences(text: str) -> List[str]:
 
@@ -297,18 +267,11 @@ def split_into_sentences(text: str) -> List[str]:
 
     protected_text = protect_abbreviations(text)
 
-    protected_text = mask_legal_citations(
-        protected_text
-    )
+    protected_text = mask_legal_citations(protected_text)
 
-    protected_text = mask_numeric_dots(
-        protected_text
-    )
+    protected_text = mask_numeric_dots(protected_text)
 
-    paragraphs = re.split(
-        r'\n\s*\n+',
-        protected_text
-    )
+    paragraphs = re.split(r"\n\s*\n+", protected_text)
 
     raw_sentences = []
 
@@ -320,14 +283,10 @@ def split_into_sentences(text: str) -> List[str]:
             continue
 
         para_sentences = re.split(
-            r'(?<=[.!?])\s+(?=(?:[A-Z0-9]|\(?[ivxlcdm]+\)|\d+\.|[a-z]))',
-            para
+            r"(?<=[.!?])\s+(?=(?:[A-Z0-9]|\(?[ivxlcdm]+\)|\d+\.|[a-z]))", para
         )
 
-
-        raw_sentences.extend(
-            para_sentences
-        )
+        raw_sentences.extend(para_sentences)
 
     # =====================================================
     # 🔥 FALLBACK LEGAL SENTENCE RESCUE ENGINE
@@ -336,28 +295,22 @@ def split_into_sentences(text: str) -> List[str]:
     if len(raw_sentences) <= 1:
 
         fallback_sentences = re.split(
-            r'(?:(?<=\.)|(?<=;)|(?<=:))\s+|\n+|(?=\d+\.)',
-            protected_text
+            r"(?:(?<=\.)|(?<=;)|(?<=:))\s+|\n+|(?=\d+\.)", protected_text
         )
 
         fallback_sentences = [
             x.strip()
             for x in fallback_sentences
-            if isinstance(x, str)
-            and len(x.strip()) > 20
+            if isinstance(x, str) and len(x.strip()) > 20
         ]
 
         if len(fallback_sentences) > len(raw_sentences):
 
             raw_sentences = fallback_sentences
 
-            print(
-                "✅ FALLBACK SENTENCE RESCUE ACTIVATED"
-            )
+            print("✅ FALLBACK SENTENCE RESCUE ACTIVATED")
 
-            print(
-                f"✅ FALLBACK SENTENCE COUNT: {len(raw_sentences)}"
-            )
+            print(f"✅ FALLBACK SENTENCE COUNT: {len(raw_sentences)}")
 
     sentences = []
 
@@ -365,18 +318,9 @@ def split_into_sentences(text: str) -> List[str]:
 
         sent = restore_abbreviations(sent)
 
-        sent = restore_legal_citations(
-            text,
-            sent
-        )
+        sent = restore_legal_citations(text, sent)
 
-        sent = restore_numeric_dots(
-            sent
-        )
-
-
-
-
+        sent = restore_numeric_dots(sent)
 
         if not isinstance(sent, str):
             continue
@@ -385,10 +329,7 @@ def split_into_sentences(text: str) -> List[str]:
 
         word_count = len(sent.split())
 
-        if (
-            len(sent) < 15
-            and word_count < 4
-        ):
+        if len(sent) < 15 and word_count < 4:
             continue
 
         sentences.append(sent)
@@ -400,9 +341,8 @@ def split_into_sentences(text: str) -> List[str]:
 # 🔥 MAIN EXTRACTION ENGINE
 # =========================================================
 
-def extract_jurisprudential_sentences(
-    text: str
-) -> List[Dict]:
+
+def extract_jurisprudential_sentences(text: str) -> List[Dict]:
 
     if not text:
         return []
@@ -415,25 +355,16 @@ def extract_jurisprudential_sentences(
 
     for idx, sentence in enumerate(sentences):
 
-        results.append({
-
-            "sentence_id": f"S{idx+1}",
-
-            "text": sentence,
-
-            "normalized_text": sentence.lower(),
-
-            "sentence_index": idx,
-
-            "position": round(
-                idx / max(total, 1),
-                4
-            ),
-
-            "word_count": len(sentence.split()),
-
-            "char_count": len(sentence),
-        })
+        results.append(
+            {
+                "sentence_id": f"S{idx+1}",
+                "text": sentence,
+                "normalized_text": sentence.lower(),
+                "sentence_index": idx,
+                "position": round(idx / max(total, 1), 4),
+                "word_count": len(sentence.split()),
+                "char_count": len(sentence),
+            }
+        )
 
     return results
-

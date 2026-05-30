@@ -4,25 +4,20 @@ import re
 # 🔥 HYPHEN REPAIR
 # =========================================================
 
+
 def repair_hyphenation(text):
 
-    text = re.sub(
-        r'(\w+)-\n(\w+)',
-        r'\1\2',
-        text
-    )
+    text = re.sub(r"(\w+)-\n(\w+)", r"\1\2", text)
 
-    text = re.sub(
-        r'(\w+)-\s+(\w+)',
-        r'\1\2',
-        text
-    )
+    text = re.sub(r"(\w+)-\s+(\w+)", r"\1\2", text)
 
     return text
+
 
 # =========================================================
 # 🔥 MULTI-LINE JOIN
 # =========================================================
+
 
 def repair_line_breaks(text):
 
@@ -43,10 +38,7 @@ def repair_line_breaks(text):
         # CONTINUATION LINE
         # ---------------------------------------------
 
-        if (
-            buffer
-            and not re.match(r'^[A-Z0-9\(\[]', line)
-        ):
+        if buffer and not re.match(r"^[A-Z0-9\(\[]", line):
 
             buffer += " " + line
 
@@ -62,19 +54,15 @@ def repair_line_breaks(text):
 
     return "\n".join(repaired)
 
+
 # =========================================================
 # 🔥 OCR NOISE CLEANER
 # =========================================================
 
+
 def clean_ocr_noise(text):
 
-    replacements = {
-
-        '|': 'I',
-        '§': 'S',
-        'ﬁ': 'fi',
-        'ﬂ': 'fl'
-    }
+    replacements = {"|": "I", "§": "S", "ﬁ": "fi", "ﬂ": "fl"}
 
     for old, new in replacements.items():
 
@@ -82,67 +70,43 @@ def clean_ocr_noise(text):
 
     # repeated dots
 
-    text = re.sub(
-        r'\.{2,}',
-        '.',
-        text
-    )
+    text = re.sub(r"\.{2,}", ".", text)
 
     # repeated spaces
 
-    text = re.sub(
-        r'\s+',
-        ' ',
-        text
-    )
+    text = re.sub(r"\s+", " ", text)
 
     return text
+
 
 # =========================================================
 # 🔥 CITATION WINDOW REPAIR
 # =========================================================
 
+
 def reconstruct_citation_windows(text):
 
     # SCC OnLine split repair
 
-    text = re.sub(
-        r'SCC\s+On\s+Line',
-        'SCC OnLine',
-        text,
-        flags=re.IGNORECASE
-    )
+    text = re.sub(r"SCC\s+On\s+Line", "SCC OnLine", text, flags=re.IGNORECASE)
 
     # AIR split repair
 
-    text = re.sub(
-        r'A\s*I\s*R',
-        'AIR',
-        text,
-        flags=re.IGNORECASE
-    )
+    text = re.sub(r"A\s*I\s*R", "AIR", text, flags=re.IGNORECASE)
 
     # INSC split repair
 
-    text = re.sub(
-        r'I\s*N\s*S\s*C',
-        'INSC',
-        text,
-        flags=re.IGNORECASE
-    )
+    text = re.sub(r"I\s*N\s*S\s*C", "INSC", text, flags=re.IGNORECASE)
 
     return text
+
 
 # =========================================================
 # 🔥 MASTER ENGINE
 # =========================================================
 
-def reconstruct_legal_text(
-    full_text="",
-    pages=None,
-    semantic_paragraphs=None
-):
 
+def reconstruct_legal_text(full_text="", pages=None, semantic_paragraphs=None):
 
     try:
 
@@ -174,9 +138,7 @@ def reconstruct_legal_text(
 
                 if isinstance(page, dict):
 
-                    page_text = str(
-                        page.get("text", "")
-                    ).strip()
+                    page_text = str(page.get("text", "")).strip()
 
                 else:
 
@@ -185,18 +147,13 @@ def reconstruct_legal_text(
                 if page_text:
                     reconstructed_pages.append(page_text)
 
-            full_text = "\n\n".join(
-                reconstructed_pages
-            )
+            full_text = "\n\n".join(reconstructed_pages)
 
         # ---------------------------------------------
         # SEMANTIC PARAGRAPH FALLBACK
         # ---------------------------------------------
 
-        if (
-            not full_text
-            and semantic_paragraphs
-        ):
+        if not full_text and semantic_paragraphs:
 
             semantic_chunks = []
 
@@ -204,22 +161,16 @@ def reconstruct_legal_text(
 
                 if isinstance(para, dict):
 
-                    para_text = str(
-                        para.get("text", "")
-                    ).strip()
+                    para_text = str(para.get("text", "")).strip()
 
                 else:
 
                     para_text = str(para).strip()
 
                 if para_text:
-                    semantic_chunks.append(
-                        para_text
-                    )
+                    semantic_chunks.append(para_text)
 
-            full_text = "\n\n".join(
-                semantic_chunks
-            )
+            full_text = "\n\n".join(semantic_chunks)
 
         # ---------------------------------------------
         # PIPELINE
@@ -233,30 +184,15 @@ def reconstruct_legal_text(
 
         full_text = reconstruct_citation_windows(full_text)
 
-
-
-
         print("✅ Reconstruction Complete")
 
-        print({
+        print({"original_length": original_length, "final_length": len(full_text)})
 
-            "original_length": original_length,
-            "final_length": len(full_text)
-        })
-
-        return {
-
-            "text": full_text,
-            "confidence": 95
-        }
+        return {"text": full_text, "confidence": 95}
 
     except Exception as e:
 
         print("❌ Reconstruction Error:")
         print(str(e))
 
-        return {
-
-            "text": full_text,
-            "confidence": 0
-        }
+        return {"text": full_text, "confidence": 0}

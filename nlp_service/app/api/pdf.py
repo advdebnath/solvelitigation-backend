@@ -1,21 +1,21 @@
-from fastapi import APIRouter, HTTPException
-from fastapi.responses import StreamingResponse
-from pydantic import BaseModel
-import tempfile
 import os
+import tempfile
 import traceback
 
 # 🔥 EXISTING IMPORT
 from app.pdf.generate_pdf import generate_judgment_pdf
-
 # 🔥 NEW IMPORT
 from app.services.fact_extractor import extract_all
+from fastapi import APIRouter, HTTPException
+from fastapi.responses import StreamingResponse
+from pydantic import BaseModel
 
 router = APIRouter()
 
 # ============================================
 # 🔥 MODELS
 # ============================================
+
 
 class PDFRequest(BaseModel):
     judgment: dict
@@ -30,6 +30,7 @@ class TextRequest(BaseModel):
 # 🔥 SAFE FILE STREAM
 # ============================================
 
+
 def stream_file(path: str):
     try:
         with open(path, "rb") as f:
@@ -42,6 +43,7 @@ def stream_file(path: str):
 # ============================================
 # 🔥 PDF GENERATION (EXISTING - IMPROVED)
 # ============================================
+
 
 @router.post("/generate-pdf")
 def generate_pdf_endpoint(payload: PDFRequest):
@@ -59,9 +61,7 @@ def generate_pdf_endpoint(payload: PDFRequest):
         return StreamingResponse(
             stream_file(temp_path),
             media_type="application/pdf",
-            headers={
-                "Content-Disposition": "attachment; filename=judgment.pdf"
-            },
+            headers={"Content-Disposition": "attachment; filename=judgment.pdf"},
         )
 
     except Exception as e:
@@ -73,39 +73,29 @@ def generate_pdf_endpoint(payload: PDFRequest):
 # 🔥 FACT EXTRACTION API (NEW - CRITICAL)
 # ============================================
 
+
 @router.post("/extract-facts")
 def extract_facts_api(payload: TextRequest):
     try:
         text = payload.text
 
         if not text or len(text.strip()) < 10:
-            return {
-                "success": False,
-                "message": "Text too short"
-            }
+            return {"success": False, "message": "Text too short"}
 
         result = extract_all(text)
 
-        return {
-            "success": True,
-            "data": result
-        }
+        return {"success": True, "data": result}
 
     except Exception as e:
         print("❌ FACT EXTRACTION ERROR:", traceback.format_exc())
-        return {
-            "success": False,
-            "message": "Extraction failed"
-        }
+        return {"success": False, "message": "Extraction failed"}
 
 
 # ============================================
 # 🔥 HEALTH CHECK (OPTIONAL BUT USEFUL)
 # ============================================
 
+
 @router.get("/pdf-health")
 def pdf_health():
-    return {
-        "status": "ok",
-        "service": "pdf_and_fact_service"
-    }
+    return {"status": "ok", "service": "pdf_and_fact_service"}

@@ -5,206 +5,116 @@ import re
 # =====================================================
 
 CATEGORY_RULES = {
-
     "Criminal": [
-
         "ipc",
-
         "indian penal code",
-
         "crpc",
-
         "code of criminal procedure",
-
         "murder",
-
         "bail",
-
         "anticipatory bail",
-
         "acquittal",
-
         "conviction",
-
         "dowry death",
-
         "fir",
-
         "charge sheet",
-
         "criminal appeal",
-
         "ndps",
-
         "pocso",
-
         "prevention of corruption",
-
         "custody",
-
         "sentence",
-
         "prosecution",
-
-        "accused"
+        "accused",
     ],
-
     "Civil": [
-
         "specific performance",
-
         "breach of contract",
-
         "civil appeal",
-
         "injunction",
-
         "property dispute",
-
         "partition suit",
-
         "title suit",
-
         "agreement for sale",
-
         "civil procedure code",
-
         "cpc",
-
         "damages",
-
         "recovery suit",
-
         "arbitration",
-
         "contract act",
-
         "transfer of property",
-
-        "easement"
+        "easement",
     ],
-
     "Service Law": [
-
         "departmental proceeding",
-
         "termination",
-
         "reinstatement",
-
         "disciplinary authority",
-
         "suspension",
-
         "government servant",
-
         "promotion",
-
         "service matter",
-
         "compulsory retirement",
-
         "misconduct",
-
         "departmental enquiry",
-
-        "service tribunal"
+        "service tribunal",
     ],
-
     "Taxation & Corporate": [
-
         "income tax",
-
         "gst",
-
         "goods and services tax",
-
         "assessment order",
-
         "tax liability",
-
         "vat",
-
         "excise duty",
-
         "service tax",
-
         "customs duty",
-
         "input tax credit",
-
         "companies act",
-
         "shareholder",
-
         "company petition",
-
         "oppression and mismanagement",
-
         "nclt",
-
         "insolvency",
-
         "ibc",
-
         "corporate debtor",
-
         "liquidation",
-
-        "board resolution"
+        "board resolution",
     ],
-
     "Constitutional": [
-
         "article 14",
-
         "article 19",
-
         "article 21",
-
         "constitution of india",
-
         "fundamental rights",
-
         "constitutional validity",
-
         "writ petition",
-
         "habeas corpus",
-
         "mandamus",
-
-        "certiorari"
-    ]
+        "certiorari",
+    ],
 }
 
 # =====================================================
 # 🔥 NORMALIZE
 # =====================================================
 
+
 def normalize_text(text: str) -> str:
 
     text = text.lower()
 
-    text = re.sub(
-
-        r"\s+",
-
-        " ",
-
-        text
-    )
+    text = re.sub(r"\s+", " ", text)
 
     return text
+
 
 # =====================================================
 # 🔥 JURISDICTION ENGINE
 # =====================================================
 
-def detect_jurisdiction_category(
 
-    text: str
-):
+def detect_jurisdiction_category(text: str):
 
     upper_text = text.upper()
 
@@ -213,22 +123,9 @@ def detect_jurisdiction_category(
     # ==============================================
 
     if (
-
-        "CRIMINAL APPEAL"
-
-        in upper_text
-
-        or
-
-        "CRIMINAL ORIGINAL JURISDICTION"
-
-        in upper_text
-
-        or
-
-        "CRIMINAL REVISION"
-
-        in upper_text
+        "CRIMINAL APPEAL" in upper_text
+        or "CRIMINAL ORIGINAL JURISDICTION" in upper_text
+        or "CRIMINAL REVISION" in upper_text
     ):
 
         return "Criminal"
@@ -238,22 +135,9 @@ def detect_jurisdiction_category(
     # ==============================================
 
     if (
-
-        "CIVIL APPEAL"
-
-        in upper_text
-
-        or
-
-        "CIVIL ORIGINAL JURISDICTION"
-
-        in upper_text
-
-        or
-
-        "CIVIL REVISION"
-
-        in upper_text
+        "CIVIL APPEAL" in upper_text
+        or "CIVIL ORIGINAL JURISDICTION" in upper_text
+        or "CIVIL REVISION" in upper_text
     ):
 
         return "Civil"
@@ -263,22 +147,9 @@ def detect_jurisdiction_category(
     # ==============================================
 
     if (
-
-        "SERVICE MATTER"
-
-        in upper_text
-
-        or
-
-        "CENTRAL ADMINISTRATIVE TRIBUNAL"
-
-        in upper_text
-
-        or
-
-        "DISCIPLINARY AUTHORITY"
-
-        in upper_text
+        "SERVICE MATTER" in upper_text
+        or "CENTRAL ADMINISTRATIVE TRIBUNAL" in upper_text
+        or "DISCIPLINARY AUTHORITY" in upper_text
     ):
 
         return "Service Law"
@@ -288,37 +159,21 @@ def detect_jurisdiction_category(
     # ==============================================
 
     if (
-
-        "GST"
-
-        in upper_text
-
-        or
-
-        "INCOME TAX"
-
-        in upper_text
-
-        or
-
-        "COMPANIES ACT"
-
-        in upper_text
-
-        or
-
-        "NCLT"
-
-        in upper_text
+        "GST" in upper_text
+        or "INCOME TAX" in upper_text
+        or "COMPANIES ACT" in upper_text
+        or "NCLT" in upper_text
     ):
 
         return "Taxation & Corporate"
 
     return None
 
+
 # =====================================================
 # 🔥 CLASSIFY CATEGORY
 # =====================================================
+
 
 def classify_category(text: str):
 
@@ -332,21 +187,11 @@ def classify_category(text: str):
         # 🔥 JURISDICTION FIRST
         # ==========================================
 
-        jurisdiction_category = (
-
-            detect_jurisdiction_category(
-                text[:10000]
-            )
-        )
+        jurisdiction_category = detect_jurisdiction_category(text[:10000])
 
         if jurisdiction_category:
 
-            print(
-
-                "✅ Jurisdiction category:",
-
-                jurisdiction_category
-            )
+            print("✅ Jurisdiction category:", jurisdiction_category)
 
             return jurisdiction_category
 
@@ -354,10 +199,7 @@ def classify_category(text: str):
         # 🔥 NORMALIZE
         # ==========================================
 
-        text = normalize_text(
-
-            text[:50000]
-        )
+        text = normalize_text(text[:50000])
 
         scores = {}
 
@@ -381,16 +223,9 @@ def classify_category(text: str):
         # 🔥 BEST CATEGORY
         # ==========================================
 
-        best_category = max(
+        best_category = max(scores, key=scores.get)
 
-            scores,
-
-            key=scores.get
-        )
-
-        best_score = scores[
-            best_category
-        ]
+        best_score = scores[best_category]
 
         # ==========================================
         # 🔥 NO MATCH
@@ -400,24 +235,12 @@ def classify_category(text: str):
 
             return "Unknown"
 
-        print(
-
-            "✅ Keyword category:",
-
-            best_category,
-
-            scores
-        )
+        print("✅ Keyword category:", best_category, scores)
 
         return best_category
 
     except Exception as e:
 
-        print(
-
-            "❌ CATEGORY CLASSIFICATION ERROR:",
-
-            e
-        )
+        print("❌ CATEGORY CLASSIFICATION ERROR:", e)
 
         return "Unknown"

@@ -1,7 +1,9 @@
-import requests
 import logging
 
+import requests
+
 logger = logging.getLogger(__name__)
+
 
 def notify_backend(url: str, payload: dict):
     try:

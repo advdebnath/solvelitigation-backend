@@ -5,38 +5,12 @@ import re
 # =========================================================
 
 RELATIONSHIP_PATTERNS = {
-
-    "followed": [
-        "followed",
-        "relied upon",
-        "applied",
-        "approved"
-    ],
-
-    "distinguished": [
-        "distinguished",
-        "distinguishable"
-    ],
-
-    "overruled": [
-        "overruled"
-    ],
-
-    "reversed": [
-        "reversed",
-        "set aside"
-    ],
-
-    "affirmed": [
-        "affirmed",
-        "upheld"
-    ],
-
-    "referred": [
-        "referred to",
-        "cited",
-        "considered"
-    ]
+    "followed": ["followed", "relied upon", "applied", "approved"],
+    "distinguished": ["distinguished", "distinguishable"],
+    "overruled": ["overruled"],
+    "reversed": ["reversed", "set aside"],
+    "affirmed": ["affirmed", "upheld"],
+    "referred": ["referred to", "cited", "considered"],
 }
 
 # =========================================================
@@ -44,13 +18,11 @@ RELATIONSHIP_PATTERNS = {
 # =========================================================
 
 CITATION_PATTERN = re.compile(
-
-    r'(\(\d{4}\)\s*\d+\s*SCC\s*\d+|'
-    r'AIR\s*\d{4}\s*SC\s*\d+|'
-    r'\d{4}\s*SCC\s*OnLine\s*SC\s*\d+|'
-    r'\d{4}\s*INSC\s*\d+)',
-
-    flags=re.IGNORECASE
+    r"(\(\d{4}\)\s*\d+\s*SCC\s*\d+|"
+    r"AIR\s*\d{4}\s*SC\s*\d+|"
+    r"\d{4}\s*SCC\s*OnLine\s*SC\s*\d+|"
+    r"\d{4}\s*INSC\s*\d+)",
+    flags=re.IGNORECASE,
 )
 
 # =========================================================
@@ -58,15 +30,13 @@ CITATION_PATTERN = re.compile(
 # =========================================================
 
 CASE_PATTERN = re.compile(
-
-    r'([A-Z][A-Za-z\.\s&]+v(?:s\.?|ersus)\s*[A-Z][A-Za-z\.\s&]+)',
-
-    flags=re.IGNORECASE
+    r"([A-Z][A-Za-z\.\s&]+v(?:s\.?|ersus)\s*[A-Z][A-Za-z\.\s&]+)", flags=re.IGNORECASE
 )
 
 # =========================================================
 # 🔥 RELATIONSHIP DETECTOR
 # =========================================================
+
 
 def detect_relationship(text=""):
 
@@ -82,9 +52,11 @@ def detect_relationship(text=""):
 
     return "referred"
 
+
 # =========================================================
 # 🔥 MAIN ENGINE
 # =========================================================
+
 
 def build_citation_graph(full_text=""):
 
@@ -109,21 +81,13 @@ def build_citation_graph(full_text=""):
             if not case_match:
                 continue
 
-            case_name = re.sub(
-                r'\s+',
-                ' ',
-                case_match.group(1)
-            ).strip()
+            case_name = re.sub(r"\s+", " ", case_match.group(1)).strip()
 
             citation = None
 
             if citation_match:
 
-                citation = re.sub(
-                    r'\s+',
-                    ' ',
-                    citation_match.group(1)
-                ).strip()
+                citation = re.sub(r"\s+", " ", citation_match.group(1)).strip()
 
             relationship = detect_relationship(line)
 
@@ -134,48 +98,24 @@ def build_citation_graph(full_text=""):
 
             seen.add(key)
 
-            graph_edges.append({
-
-                "source":
-                    "current_case",
-
-                "target":
-                    case_name,
-
-                "citation":
-                    citation,
-
-                "relationship":
-                    relationship,
-
-                "weight":
-                    1
-            })
+            graph_edges.append(
+                {
+                    "source": "current_case",
+                    "target": case_name,
+                    "citation": citation,
+                    "relationship": relationship,
+                    "weight": 1,
+                }
+            )
 
         print("✅ Citation Graph Built:")
         print(graph_edges)
 
-        return {
-
-            "edges":
-                graph_edges,
-
-            "count":
-                len(graph_edges),
-
-            "confidence":
-                90
-        }
+        return {"edges": graph_edges, "count": len(graph_edges), "confidence": 90}
 
     except Exception as e:
 
         print("❌ Citation Graph Error:")
         print(str(e))
 
-        return {
-
-            "edges": [],
-            "count": 0,
-            "confidence": 0
-        }
-
+        return {"edges": [], "count": 0, "confidence": 0}

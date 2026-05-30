@@ -8,32 +8,21 @@ from collections import defaultdict
 # 🔥 BUILD SEMANTIC LINEAGE GRAPH
 # =========================================================
 
-def build_semantic_lineage_graph(
 
-    replay_data
-):
+def build_semantic_lineage_graph(replay_data):
 
     graph = {
-
         "nodes": [],
-
         "edges": [],
-
         "agent_relationships": defaultdict(list),
-
         "event_dependencies": defaultdict(list),
-
         "constitutional_paths": [],
-
-        "semantic_clusters": defaultdict(list)
+        "semantic_clusters": defaultdict(list),
     }
 
     try:
 
-        timeline = replay_data.get(
-            "timeline",
-            []
-        )
+        timeline = replay_data.get("timeline", [])
 
         previous_node = None
 
@@ -41,32 +30,17 @@ def build_semantic_lineage_graph(
 
             node_id = f"node_{idx}"
 
-            agent = event.get(
-                "agent"
-            )
+            agent = event.get("agent")
 
-            event_type = event.get(
-                "event"
-            )
+            event_type = event.get("event")
 
-            payload = event.get(
-                "payload",
-                {}
-            )
+            payload = event.get("payload", {})
 
             node = {
-
-                "id":
-                    node_id,
-
-                "agent":
-                    agent,
-
-                "event":
-                    event_type,
-
-                "payload":
-                    payload
+                "id": node_id,
+                "agent": agent,
+                "event": event_type,
+                "payload": payload,
             }
 
             graph["nodes"].append(node)
@@ -78,15 +52,9 @@ def build_semantic_lineage_graph(
             if previous_node:
 
                 edge = {
-
-                    "source":
-                        previous_node,
-
-                    "target":
-                        node_id,
-
-                    "relationship":
-                        "semantic_flow"
+                    "source": previous_node,
+                    "target": node_id,
+                    "relationship": "semantic_flow",
                 }
 
                 graph["edges"].append(edge)
@@ -97,17 +65,13 @@ def build_semantic_lineage_graph(
             # 🔥 AGENT RELATIONSHIPS
             # =================================================
 
-            graph[
-                "agent_relationships"
-            ][agent].append(node_id)
+            graph["agent_relationships"][agent].append(node_id)
 
             # =================================================
             # 🔥 EVENT DEPENDENCIES
             # =================================================
 
-            graph[
-                "event_dependencies"
-            ][event_type].append(node_id)
+            graph["event_dependencies"][event_type].append(node_id)
 
             # =================================================
             # 🔥 CONSTITUTIONAL PATHS
@@ -115,9 +79,7 @@ def build_semantic_lineage_graph(
 
             if "constitutional" in event_type.lower():
 
-                graph[
-                    "constitutional_paths"
-                ].append(node_id)
+                graph["constitutional_paths"].append(node_id)
 
             # =================================================
             # 🔥 SEMANTIC CLUSTERS
@@ -141,33 +103,17 @@ def build_semantic_lineage_graph(
 
                 cluster = "semantic"
 
-            graph[
-                "semantic_clusters"
-            ][cluster].append(node_id)
+            graph["semantic_clusters"][cluster].append(node_id)
 
-        graph[
-            "agent_relationships"
-        ] = dict(
-            graph["agent_relationships"]
-        )
+        graph["agent_relationships"] = dict(graph["agent_relationships"])
 
-        graph[
-            "event_dependencies"
-        ] = dict(
-            graph["event_dependencies"]
-        )
+        graph["event_dependencies"] = dict(graph["event_dependencies"])
 
-        graph[
-            "semantic_clusters"
-        ] = dict(
-            graph["semantic_clusters"]
-        )
+        graph["semantic_clusters"] = dict(graph["semantic_clusters"])
 
     except Exception as e:
 
-        print(
-            "❌ SEMANTIC LINEAGE GRAPH ERROR:"
-        )
+        print("❌ SEMANTIC LINEAGE GRAPH ERROR:")
 
         print(str(e))
 

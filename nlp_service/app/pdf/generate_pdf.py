@@ -1,15 +1,13 @@
-from weasyprint import HTML
-from jinja2 import Template
-from datetime import datetime
 import os
+from datetime import datetime
+
+from jinja2 import Template
+from weasyprint import HTML
 
 
 def generate_judgment_pdf(judgment, user, output_path):
 
-    template_path = os.path.join(
-        os.path.dirname(__file__),
-        "judgment_template.html"
-    )
+    template_path = os.path.join(os.path.dirname(__file__), "judgment_template.html")
 
     with open(template_path, "r", encoding="utf-8") as f:
         template_html = f.read()

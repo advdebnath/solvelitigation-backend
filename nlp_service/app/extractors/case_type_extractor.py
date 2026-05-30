@@ -1,16 +1,12 @@
-from app.legal_ontology.supreme_court_case_types import (
+from app.legal_ontology.supreme_court_case_types import \
     detect_supreme_court_case_type
-)
 
 # =========================================================
 # 🔥 GENERIC CASE TYPE EXTRACTOR
 # =========================================================
 
-def extract_case_type(
-    text,
-    court=None,
-    jurisdiction=None
-):
+
+def extract_case_type(text, court=None, jurisdiction=None):
 
     try:
 
@@ -21,9 +17,7 @@ def extract_case_type(
 
         if court and "SUPREME COURT" in court.upper():
 
-            result = detect_supreme_court_case_type(
-                text
-            )
+            result = detect_supreme_court_case_type(text)
 
             return result or {}
 
@@ -31,9 +25,6 @@ def extract_case_type(
 
     except Exception as e:
 
-        print(
-            "❌ CASE TYPE EXTRACTION ERROR:",
-            e
-        )
+        print("❌ CASE TYPE EXTRACTION ERROR:", e)
 
         return {}

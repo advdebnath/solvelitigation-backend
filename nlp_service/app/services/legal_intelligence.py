@@ -5,12 +5,7 @@ import re
 # 🔥 CLEAN TEXT (GLOBAL FIX)
 # =========================================
 def clean_text(text: str):
-    return (
-        text.replace("\xa0", " ")
-        .replace("\n", " ")
-        .replace("\t", " ")
-        .strip()
-    )
+    return text.replace("\xa0", " ").replace("\n", " ").replace("\t", " ").strip()
 
 
 # =========================================
@@ -19,14 +14,10 @@ def clean_text(text: str):
 def extract_sentences(text: str):
     text = clean_text(text)
 
-    sentences = re.split(r'(?<=[.!?])\s+', text)
+    sentences = re.split(r"(?<=[.!?])\s+", text)
 
     # filter meaningful sentences
-    return [
-        s.strip()
-        for s in sentences
-        if len(s.strip()) > 40
-    ]
+    return [s.strip() for s in sentences if len(s.strip()) > 40]
 
 
 # =========================================
@@ -41,18 +32,24 @@ def extract_arguments(text: str):
     for s in sentences:
         s_lower = s.lower()
 
-        if any(k in s_lower for k in [
-            "counsel for the appellant",
-            "appellant submitted",
-            "it is contended",
-        ]):
+        if any(
+            k in s_lower
+            for k in [
+                "counsel for the appellant",
+                "appellant submitted",
+                "it is contended",
+            ]
+        ):
             appellant.append(s)
 
-        if any(k in s_lower for k in [
-            "counsel for the respondent",
-            "respondent submitted",
-            "on the other hand",
-        ]):
+        if any(
+            k in s_lower
+            for k in [
+                "counsel for the respondent",
+                "respondent submitted",
+                "on the other hand",
+            ]
+        ):
             respondent.append(s)
 
     return {
@@ -70,11 +67,14 @@ def extract_issue(text: str):
     for s in sentences:
         s_lower = s.lower()
 
-        if any(k in s_lower for k in [
-            "whether",
-            "the question is",
-            "issue is",
-        ]):
+        if any(
+            k in s_lower
+            for k in [
+                "whether",
+                "the question is",
+                "issue is",
+            ]
+        ):
             return s.strip()
 
     return "Legal issue inferred from context"
@@ -91,14 +91,17 @@ def extract_ratio(text: str):
     for s in sentences:
         s_lower = s.lower()
 
-        if any(k in s_lower for k in [
-            "held that",
-            "it is settled",
-            "it is clear that",
-            "we hold",
-            "therefore",
-            "thus",
-        ]):
+        if any(
+            k in s_lower
+            for k in [
+                "held that",
+                "it is settled",
+                "it is clear that",
+                "we hold",
+                "therefore",
+                "thus",
+            ]
+        ):
             ratio.append(s)
 
     # remove duplicates
@@ -118,14 +121,17 @@ def extract_reasoning(text: str):
     for s in sentences:
         s_lower = s.lower()
 
-        if any(k in s_lower for k in [
-            "because",
-            "in view of",
-            "it is evident",
-            "we find",
-            "thus",
-            "therefore",
-        ]):
+        if any(
+            k in s_lower
+            for k in [
+                "because",
+                "in view of",
+                "it is evident",
+                "we find",
+                "thus",
+                "therefore",
+            ]
+        ):
             # ❌ avoid statute-only lines
             if any(x in s_lower for x in ["section", "article", "rule"]):
                 continue

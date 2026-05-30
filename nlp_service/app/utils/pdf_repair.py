@@ -1,6 +1,7 @@
-import subprocess
 import os
+import subprocess
 import tempfile
+
 
 def repair_pdf(input_path: str) -> str:
     """

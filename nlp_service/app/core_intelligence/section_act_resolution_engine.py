@@ -20,7 +20,6 @@ import re
 # =========================================================
 
 SECTION_ACT_ONTOLOGY = {
-
     "Indian Penal Code, 1860": {
         "302",
         "304B",
@@ -31,9 +30,8 @@ SECTION_ACT_ONTOLOGY = {
         "34",
         "120B",
         "161",
-        "21"
+        "21",
     },
-
     "Code Of Criminal Procedure, 1973": {
         "154",
         "156",
@@ -43,17 +41,9 @@ SECTION_ACT_ONTOLOGY = {
         "190",
         "438",
         "439",
-        "482"
+        "482",
     },
-
-    "Constitution Of India": {
-        "14",
-        "19",
-        "21",
-        "32",
-        "136",
-        "226"
-    }
+    "Constitution Of India": {"14", "19", "21", "32", "136", "226"},
 }
 
 # =========================================================
@@ -61,7 +51,6 @@ SECTION_ACT_ONTOLOGY = {
 # =========================================================
 
 SECTION_INFERENCE_MAP = {
-
     "302": "Indian Penal Code, 1860",
     "304B": "Indian Penal Code, 1860",
     "307": "Indian Penal Code, 1860",
@@ -69,7 +58,6 @@ SECTION_INFERENCE_MAP = {
     "420": "Indian Penal Code, 1860",
     "34": "Indian Penal Code, 1860",
     "120B": "Indian Penal Code, 1860",
-
     "154": "Code Of Criminal Procedure, 1973",
     "161": "Code Of Criminal Procedure, 1973",
     "164": "Code Of Criminal Procedure, 1973",
@@ -77,42 +65,34 @@ SECTION_INFERENCE_MAP = {
     "438": "Code Of Criminal Procedure, 1973",
     "439": "Code Of Criminal Procedure, 1973",
     "482": "Code Of Criminal Procedure, 1973",
-
     "14": "Constitution Of India",
     "19": "Constitution Of India",
     "21": "Constitution Of India",
     "32": "Constitution Of India",
     "136": "Constitution Of India",
-    "226": "Constitution Of India"
+    "226": "Constitution Of India",
 }
-
 
 
 # =========================================================
 # 🔥 NORMALIZE ACT NAME
 # =========================================================
 
+
 def normalize_act_name(act_name=""):
 
     if not act_name:
         return ""
 
-
-    return re.sub(
-        r"\\s+",
-        " ",
-        str(act_name)
-    ).strip()
-
+    return re.sub(r"\\s+", " ", str(act_name)).strip()
 
 
 # =========================================================
 # 🔥 RESOLVE SECTION ACT
 # =========================================================
 
-def resolve_section_act_relationship(
-    sections=None
-):
+
+def resolve_section_act_relationship(sections=None):
 
     if sections is None:
         sections = []
@@ -125,13 +105,9 @@ def resolve_section_act_relationship(
         if not isinstance(item, dict):
             continue
 
-        section = str(
-            item.get("section", "")
-        ).strip()
+        section = str(item.get("section", "")).strip()
 
-        act = normalize_act_name(
-            item.get("act", "")
-        )
+        act = normalize_act_name(item.get("act", ""))
 
         # -------------------------------------------------
         # 🔥 ACT CO-REFERENCE INFERENCE ENGINE
@@ -139,27 +115,19 @@ def resolve_section_act_relationship(
 
         if section and not act:
 
-            inferred_act = SECTION_INFERENCE_MAP.get(
-                section
-            )
+            inferred_act = SECTION_INFERENCE_MAP.get(section)
 
             if inferred_act:
 
                 act = inferred_act
 
                 print("✅ INFERRED ACT FROM SECTION:")
-                print({
-                    "section": section,
-                    "act": act
-                })
+                print({"section": section, "act": act})
 
         if not section or not act:
             continue
 
-        valid_sections = SECTION_ACT_ONTOLOGY.get(
-            act,
-            set()
-        )
+        valid_sections = SECTION_ACT_ONTOLOGY.get(act, set())
 
         # -------------------------------------------------
         # 🔥 VALIDATE SECTION BELONGS TO ACT
@@ -168,21 +136,11 @@ def resolve_section_act_relationship(
         if section not in valid_sections:
 
             print("❌ INVALID SECTION-ACT MAPPING:")
-            print({
-                "section": section,
-                "act": act
-            })
+            print({"section": section, "act": act})
 
             continue
 
-
-
-
-        key = (
-            section,
-            act
-        )
-
+        key = (section, act)
 
         # -------------------------------------------------
         # 🔥 DEDUPLICATION
@@ -193,15 +151,16 @@ def resolve_section_act_relationship(
 
         seen.add(key)
 
-        resolved.append({
-            "section": section,
-            "act": act,
-            "confidence": 95,
-            "source": "section_act_resolution_engine"
-        })
+        resolved.append(
+            {
+                "section": section,
+                "act": act,
+                "confidence": 95,
+                "source": "section_act_resolution_engine",
+            }
+        )
 
     print("✅ RESOLVED SECTION-ACT RELATIONSHIPS:")
     print(resolved)
 
     return resolved
-

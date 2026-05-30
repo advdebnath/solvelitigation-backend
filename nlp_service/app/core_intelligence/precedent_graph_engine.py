@@ -1,9 +1,9 @@
 from difflib import SequenceMatcher
 
-
 # =========================================================
 # 🔥 SAFE NORMALIZER
 # =========================================================
+
 
 def normalize_text(value):
 
@@ -16,6 +16,7 @@ def normalize_text(value):
 # =========================================================
 # 🔥 SAFE LIST NORMALIZER
 # =========================================================
+
 
 def normalize_list(values):
 
@@ -39,6 +40,7 @@ def normalize_list(values):
 # 🔥 TEXT SIMILARITY
 # =========================================================
 
+
 def similarity(a, b):
 
     a = normalize_text(a)
@@ -47,28 +49,19 @@ def similarity(a, b):
     if not a or not b:
         return 0
 
-    return int(
-        SequenceMatcher(
-            None,
-            a,
-            b
-        ).ratio() * 100
-    )
+    return int(SequenceMatcher(None, a, b).ratio() * 100)
 
 
 # =========================================================
 # 🔥 OVERLAP SCORE
 # =========================================================
 
+
 def overlap_score(list_a, list_b):
 
-    a = set(
-        normalize_list(list_a)
-    )
+    a = set(normalize_list(list_a))
 
-    b = set(
-        normalize_list(list_b)
-    )
+    b = set(normalize_list(list_b))
 
     if not a or not b:
         return 0
@@ -77,47 +70,26 @@ def overlap_score(list_a, list_b):
 
     union = len(a.union(b))
 
-    return int(
-        (intersection / union) * 100
-    )
+    return int((intersection / union) * 100)
 
 
 # =========================================================
 # 🔥 PRECEDENT RELATIONSHIP ENGINE
 # =========================================================
 
-def build_precedent_relationship(
 
-    source_case,
+def build_precedent_relationship(source_case, candidate_case):
 
-    candidate_case
-):
+    source_case_number = source_case.get("caseNumber", "UNKNOWN")
 
-    source_case_number = source_case.get(
-        "caseNumber",
-        "UNKNOWN"
-    )
-
-    candidate_case_number = candidate_case.get(
-        "caseNumber",
-        "UNKNOWN"
-    )
+    candidate_case_number = candidate_case.get("caseNumber", "UNKNOWN")
 
     # -----------------------------------------------------
     # 🔥 CATEGORY SCORE
     # -----------------------------------------------------
 
     category_score = similarity(
-
-        source_case.get(
-            "category",
-            ""
-        ),
-
-        candidate_case.get(
-            "category",
-            ""
-        )
+        source_case.get("category", ""), candidate_case.get("category", "")
     )
 
     # -----------------------------------------------------
@@ -125,16 +97,7 @@ def build_precedent_relationship(
     # -----------------------------------------------------
 
     act_score = overlap_score(
-
-        source_case.get(
-            "actNames",
-            []
-        ),
-
-        candidate_case.get(
-            "actNames",
-            []
-        )
+        source_case.get("actNames", []), candidate_case.get("actNames", [])
     )
 
     # -----------------------------------------------------
@@ -142,16 +105,7 @@ def build_precedent_relationship(
     # -----------------------------------------------------
 
     point_score = overlap_score(
-
-        source_case.get(
-            "pointsOfLaw",
-            []
-        ),
-
-        candidate_case.get(
-            "pointsOfLaw",
-            []
-        )
+        source_case.get("pointsOfLaw", []), candidate_case.get("pointsOfLaw", [])
     )
 
     # -----------------------------------------------------
@@ -159,16 +113,7 @@ def build_precedent_relationship(
     # -----------------------------------------------------
 
     judge_score = overlap_score(
-
-        source_case.get(
-            "judges",
-            []
-        ),
-
-        candidate_case.get(
-            "judges",
-            []
-        )
+        source_case.get("judges", []), candidate_case.get("judges", [])
     )
 
     # -----------------------------------------------------
@@ -176,15 +121,11 @@ def build_precedent_relationship(
     # -----------------------------------------------------
 
     final_score = int(
-
         (
             category_score * 0.20
-            +
-            act_score * 0.30
-            +
-            point_score * 0.35
-            +
-            judge_score * 0.15
+            + act_score * 0.30
+            + point_score * 0.35
+            + judge_score * 0.15
         )
     )
 
@@ -192,42 +133,27 @@ def build_precedent_relationship(
 
     if final_score >= 85:
 
-        relationship = (
-            "STRONG_PRECEDENT_CONNECTION"
-        )
+        relationship = "STRONG_PRECEDENT_CONNECTION"
 
     elif final_score >= 65:
 
-        relationship = (
-            "MODERATE_PRECEDENT_CONNECTION"
-        )
+        relationship = "MODERATE_PRECEDENT_CONNECTION"
 
     elif final_score >= 45:
 
-        relationship = (
-            "SEMANTICALLY_RELATED"
-        )
+        relationship = "SEMANTICALLY_RELATED"
 
     return {
-
         "source_case": source_case_number,
-
         "target_case": candidate_case_number,
-
         "relationship": relationship,
-
         "confidence": final_score,
-
         "score_breakdown": {
-
             "category_score": category_score,
-
             "act_score": act_score,
-
             "point_score": point_score,
-
-            "judge_score": judge_score
-        }
+            "judge_score": judge_score,
+        },
     }
 
 
@@ -235,21 +161,12 @@ def build_precedent_relationship(
 # 🔥 GRAPH BUILDER
 # =========================================================
 
-def build_precedent_graph(
 
-    source_case,
-
-    candidate_cases
-):
+def build_precedent_graph(source_case, candidate_cases):
 
     graph = {
-
-        "source_case": source_case.get(
-            "caseNumber",
-            "UNKNOWN"
-        ),
-
-        "connected_cases": []
+        "source_case": source_case.get("caseNumber", "UNKNOWN"),
+        "connected_cases": [],
     }
 
     if not candidate_cases:
@@ -257,24 +174,12 @@ def build_precedent_graph(
 
     for candidate in candidate_cases:
 
-        relation = build_precedent_relationship(
+        relation = build_precedent_relationship(source_case, candidate)
 
-            source_case,
-
-            candidate
-        )
-
-        graph["connected_cases"].append(
-            relation
-        )
+        graph["connected_cases"].append(relation)
 
     graph["connected_cases"] = sorted(
-
-        graph["connected_cases"],
-
-        key=lambda x: x["confidence"],
-
-        reverse=True
+        graph["connected_cases"], key=lambda x: x["confidence"], reverse=True
     )
 
     return graph
@@ -287,71 +192,30 @@ def build_precedent_graph(
 if __name__ == "__main__":
 
     source_case = {
-
         "caseNumber": "2024 SLSC 101",
-
         "category": "SERVICE LAW",
-
-        "actNames": [
-            "CONSTITUTION OF INDIA"
-        ],
-
-        "pointsOfLaw": [
-            "REINSTATEMENT",
-            "DEPARTMENTAL ENQUIRY"
-        ],
-
-        "judges": [
-            "Justice Chandrachud"
-        ]
+        "actNames": ["CONSTITUTION OF INDIA"],
+        "pointsOfLaw": ["REINSTATEMENT", "DEPARTMENTAL ENQUIRY"],
+        "judges": ["Justice Chandrachud"],
     }
 
     candidate_cases = [
-
         {
-
             "caseNumber": "2021 SLSC 55",
-
             "category": "SERVICE LAW",
-
-            "actNames": [
-                "CONSTITUTION OF INDIA"
-            ],
-
-            "pointsOfLaw": [
-                "REINSTATEMENT"
-            ],
-
-            "judges": [
-                "Justice Chandrachud"
-            ]
+            "actNames": ["CONSTITUTION OF INDIA"],
+            "pointsOfLaw": ["REINSTATEMENT"],
+            "judges": ["Justice Chandrachud"],
         },
-
         {
-
             "caseNumber": "2020 SLHC_DEL 44",
-
             "category": "TAXATION",
-
-            "actNames": [
-                "GST ACT"
-            ],
-
-            "pointsOfLaw": [
-                "INPUT TAX CREDIT"
-            ],
-
-            "judges": [
-                "Justice Rao"
-            ]
-        }
+            "actNames": ["GST ACT"],
+            "pointsOfLaw": ["INPUT TAX CREDIT"],
+            "judges": ["Justice Rao"],
+        },
     ]
 
-    result = build_precedent_graph(
-
-        source_case,
-
-        candidate_cases
-    )
+    result = build_precedent_graph(source_case, candidate_cases)
 
     print(result)

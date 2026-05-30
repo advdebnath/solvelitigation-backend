@@ -106,7 +106,7 @@ def predict_outcome(cases, query):
             "probability": 50,
             "decision": "Uncertain",
             "confidence": "Low",
-            "analysis": "No data available"
+            "analysis": "No data available",
         }
 
     score = calculate_strength(cases)
@@ -147,5 +147,5 @@ def predict_outcome(cases, query):
         "decision": decision,
         "confidence": confidence,
         "reasons": reasons,
-        "text": text
+        "text": text,
     }

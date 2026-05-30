@@ -1,7 +1,7 @@
 import faiss
 import numpy as np
-from pymongo import MongoClient
 from bson import ObjectId
+from pymongo import MongoClient
 
 # ============================================
 # 🔥 GLOBAL INDEX
@@ -14,13 +14,14 @@ id_map = []
 # 🔥 DB CONNECTION
 # ============================================
 
-db = MongoClient(
-    "mongodb://sl_app:Debnath%401966@127.0.0.1:27017/solvelitigation"
-)["solvelitigation"]
+db = MongoClient("mongodb://sl_app:Debnath%401966@127.0.0.1:27017/solvelitigation")[
+    "solvelitigation"
+]
 
 # ============================================
 # 🔥 LOAD INDEX
 # ============================================
+
 
 def load_index():
     global index, id_map
@@ -30,6 +31,7 @@ def load_index():
 
         with open("faiss_ids.pkl", "rb") as f:
             import pickle
+
             id_map = pickle.load(f)
 
         print(f"✅ FAISS loaded ({len(id_map)} vectors)")
@@ -38,9 +40,11 @@ def load_index():
         print("⚠️ No FAISS index found, building new...")
         build_index()
 
+
 # ============================================
 # 🔥 BUILD INDEX (CRITICAL FUNCTION)
 # ============================================
+
 
 def build_index():
     global index, id_map
@@ -71,8 +75,8 @@ def build_index():
 
     # ✅ Normalize vectors before indexing
     import faiss
-    faiss.normalize_L2(vectors)
 
+    faiss.normalize_L2(vectors)
 
     dim = vectors.shape[1]
 
@@ -83,14 +87,17 @@ def build_index():
     faiss.write_index(index, "faiss.index")
 
     import pickle
+
     with open("faiss_ids.pkl", "wb") as f:
         pickle.dump(id_map, f)
 
     print(f"✅ Indexed {len(id_map)} documents")
 
+
 # ============================================
 # 🔍 SEARCH
 # ============================================
+
 
 def search_by_embedding(embedding, top_k=5):
     global index, id_map
@@ -98,8 +105,8 @@ def search_by_embedding(embedding, top_k=5):
     if index is None:
         return []
 
-    import numpy as np
     import faiss
+    import numpy as np
 
     vector = np.array([embedding]).astype("float32")
 
@@ -123,16 +130,15 @@ def search_by_embedding(embedding, top_k=5):
             continue
 
         if idx < len(id_map):
-            results.append({
-                "id": id_map[idx],
-                "score": score
-            })
+            results.append({"id": id_map[idx], "score": score})
 
     return results
+
 
 # ============================================
 # 🔍 FETCH DOCS
 # ============================================
+
 
 def fetch_documents(results):
     docs = []
@@ -141,10 +147,12 @@ def fetch_documents(results):
         doc = db.judgments.find_one({"_id": ObjectId(r["id"])})
 
         if doc:
-            docs.append({
-                "caseNumber": doc.get("caseNumber"),
-                "headnote": doc.get("headnote") or doc.get("fullText", "")[:300],
-                "score": r["score"]
-            })
+            docs.append(
+                {
+                    "caseNumber": doc.get("caseNumber"),
+                    "headnote": doc.get("headnote") or doc.get("fullText", "")[:300],
+                    "score": r["score"],
+                }
+            )
 
     return docs

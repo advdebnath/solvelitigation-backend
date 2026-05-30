@@ -9,10 +9,8 @@ SECTION_MEANING = {
     "304": "Culpable homicide not amounting to murder",
     "420": "Cheating and dishonestly inducing delivery of property",
     "34": "Acts done by several persons in furtherance of common intention",
-
     # NI Act
     "138": "Dishonour of cheque for insufficiency of funds",
-
     # Contract Act
     "73": "Compensation for loss or damage caused by breach of contract",
     "74": "Compensation for breach of contract where penalty stipulated",
@@ -32,6 +30,7 @@ LEGAL_KEYWORDS = {
     "damages": "Claim for Damages",
     "liability": "Legal Liability",
 }
+
 
 # ============================================
 # 🔥 MAIN FUNCTION (FINAL)

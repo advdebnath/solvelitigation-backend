@@ -8,63 +8,32 @@ import asyncio
 # 🔥 ASYNC WRAPPER
 # =========================================================
 
-async def execute_agent(
 
-    agent_name,
-    agent_callable,
-    kwargs
-):
+async def execute_agent(agent_name, agent_callable, kwargs):
 
     try:
 
         result = agent_callable(**kwargs)
 
-        return {
-
-            "agent":
-                agent_name,
-
-            "success":
-                True,
-
-            "result":
-                result
-        }
+        return {"agent": agent_name, "success": True, "result": result}
 
     except Exception as e:
 
-        return {
+        return {"agent": agent_name, "success": False, "error": str(e)}
 
-            "agent":
-                agent_name,
-
-            "success":
-                False,
-
-            "error":
-                str(e)
-        }
 
 # =========================================================
 # 🔥 PARALLEL COGNITION EXECUTION
 # =========================================================
 
-async def execute_parallel_cognition(
 
-    resolved_agents,
-    shared_context
-):
+async def execute_parallel_cognition(resolved_agents, shared_context):
 
     tasks = []
 
     for agent_name, agent_callable in resolved_agents.items():
 
-        task = execute_agent(
-
-            agent_name,
-            agent_callable,
-            shared_context
-        )
+        task = execute_agent(agent_name, agent_callable, shared_context)
 
         tasks.append(task)
 
@@ -74,8 +43,6 @@ async def execute_parallel_cognition(
 
     for item in results:
 
-        cognition_results[
-            item["agent"]
-        ] = item
+        cognition_results[item["agent"]] = item
 
     return cognition_results

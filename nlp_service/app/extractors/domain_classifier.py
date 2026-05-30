@@ -1,8 +1,6 @@
 import re
 
-
 DOMAIN_PATTERNS = {
-
     "Service Law": [
         r"\bequal\\s+pay\\s+for\\s+equal\\s+work\\b",
         r"\bpay\\s+parity\\b",
@@ -24,7 +22,6 @@ DOMAIN_PATTERNS = {
         r"\bretiral\\s+benefits\\b",
         r"\bgovernment\\s+servant\\b",
     ],
-
     "Taxation Law": [
         r"\bincome\\s+tax\\b",
         r"\bgst\\b",
@@ -34,7 +31,6 @@ DOMAIN_PATTERNS = {
         r"\bexcise\\b",
         r"\bcustoms\\b",
     ],
-
     "Corporate Law": [
         r"\bcompanies\\s+act\\b",
         r"\bshareholder\\b",
@@ -43,7 +39,6 @@ DOMAIN_PATTERNS = {
         r"\bnclt\\b",
         r"\bsebi\\b",
     ],
-
     "Constitutional Law": [
         r"\barticle\\s+14\\b",
         r"\barticle\\s+21\\b",
@@ -51,29 +46,21 @@ DOMAIN_PATTERNS = {
         r"\bconstitutional\\b",
         r"\bjudicial\\s+review\\b",
     ],
-
     "Property Law": [
         r"\bproperty\\b",
         r"\btitle\\b",
         r"\bownership\\b",
         r"\bpossession\\b",
         r"\bpartition\\b",
-    ]
+    ],
 }
 
 
-def classify_domain(
-    full_text="",
-    points_of_law=None
-):
+def classify_domain(full_text="", points_of_law=None):
 
     if not full_text:
 
-        return {
-            "domain": "Unknown",
-            "confidence": 0
-        }
-
+        return {"domain": "Unknown", "confidence": 0}
 
     print("🔥 RAW POINTS INPUT TYPE:")
     print(type(points_of_law))
@@ -92,11 +79,7 @@ def classify_domain(
 
         for pattern in patterns:
 
-            matches = re.findall(
-                pattern,
-                text,
-                flags=re.I
-            )
+            matches = re.findall(pattern, text, flags=re.I)
 
             score += len(matches)
 
@@ -106,7 +89,6 @@ def classify_domain(
     # 🔥 POINT-OF-LAW DOMAIN BOOST
     # =====================================================
 
-
     print("✅ DOMAIN BOOST INPUT:")
     print(points_of_law)
 
@@ -115,10 +97,7 @@ def classify_domain(
         if not isinstance(point, dict):
             continue
 
-        point_category = point.get(
-            "category",
-            ""
-        )
+        point_category = point.get("category", "")
 
         if point_category == "Service":
             scores["Service Law"] += 50
@@ -132,24 +111,14 @@ def classify_domain(
         elif point_category == "Constitutional":
             scores["Constitutional Law"] += 30
 
-    best_domain = max(
-        scores,
-        key=scores.get
-    )
+    best_domain = max(scores, key=scores.get)
 
     if scores[best_domain] <= 0:
 
-        return {
-            "domain": "General Civil",
-            "confidence": 10,
-            "scores": scores
-        }
+        return {"domain": "General Civil", "confidence": 10, "scores": scores}
 
     return {
         "domain": best_domain,
-        "confidence": min(
-            95,
-            50 + scores[best_domain] * 5
-        ),
-        "scores": scores
+        "confidence": min(95, 50 + scores[best_domain] * 5),
+        "scores": scores,
     }

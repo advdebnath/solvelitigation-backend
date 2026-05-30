@@ -9,43 +9,31 @@ from collections import defaultdict
 # =========================================================
 
 DOCTRINAL_BALANCE = {
-
     "federation_doctrines": defaultdict(dict),
-
     "conflict_matrix": [],
-
     "equilibrium_state": "STABLE",
-
     "balancing_events": [],
-
-    "constitutional_priority_index": 1.0
+    "constitutional_priority_index": 1.0,
 }
 
 # =========================================================
 # 🔥 REGISTER DOCTRINE
 # =========================================================
 
-def register_doctrine(
 
-    federation_name,
-    doctrine_name,
-    doctrine_weight
-):
+def register_doctrine(federation_name, doctrine_name, doctrine_weight):
 
-    DOCTRINAL_BALANCE[
-        "federation_doctrines"
-    ][federation_name][
-        doctrine_name
-    ] = round(
-        doctrine_weight,
-        2
+    DOCTRINAL_BALANCE["federation_doctrines"][federation_name][doctrine_name] = round(
+        doctrine_weight, 2
     )
 
     return True
 
+
 # =========================================================
 # 🔥 DETECT DOCTRINAL CONFLICTS
 # =========================================================
+
 
 def detect_doctrinal_conflicts():
 
@@ -53,13 +41,9 @@ def detect_doctrinal_conflicts():
 
     try:
 
-        federations = DOCTRINAL_BALANCE[
-            "federation_doctrines"
-        ]
+        federations = DOCTRINAL_BALANCE["federation_doctrines"]
 
-        federation_names = list(
-            federations.keys()
-        )
+        federation_names = list(federations.keys())
 
         for i in range(len(federation_names)):
 
@@ -75,53 +59,38 @@ def detect_doctrinal_conflicts():
 
                     if doctrine in doctrines_b:
 
-                        weight_diff = abs(
-
-                            doctrines_a[doctrine]
-                            -
-                            doctrines_b[doctrine]
-                        )
+                        weight_diff = abs(doctrines_a[doctrine] - doctrines_b[doctrine])
 
                         if weight_diff >= 0.40:
 
-                            conflicts.append({
+                            conflicts.append(
+                                {
+                                    "doctrine": doctrine,
+                                    "federation_a": fed_a,
+                                    "federation_b": fed_b,
+                                    "weight_difference": round(weight_diff, 2),
+                                }
+                            )
 
-                                "doctrine":
-                                    doctrine,
-
-                                "federation_a":
-                                    fed_a,
-
-                                "federation_b":
-                                    fed_b,
-
-                                "weight_difference":
-                                    round(weight_diff, 2)
-                            })
-
-        DOCTRINAL_BALANCE[
-            "conflict_matrix"
-        ] = conflicts
+        DOCTRINAL_BALANCE["conflict_matrix"] = conflicts
 
         if conflicts:
 
-            DOCTRINAL_BALANCE[
-                "equilibrium_state"
-            ] = "UNSTABLE"
+            DOCTRINAL_BALANCE["equilibrium_state"] = "UNSTABLE"
 
     except Exception as e:
 
-        print(
-            "❌ DOCTRINAL CONFLICT ERROR:"
-        )
+        print("❌ DOCTRINAL CONFLICT ERROR:")
 
         print(str(e))
 
     return conflicts
 
+
 # =========================================================
 # 🔥 BALANCE DOCTRINES
 # =========================================================
+
 
 def balance_doctrines():
 
@@ -129,9 +98,7 @@ def balance_doctrines():
 
     try:
 
-        conflicts = DOCTRINAL_BALANCE[
-            "conflict_matrix"
-        ]
+        conflicts = DOCTRINAL_BALANCE["conflict_matrix"]
 
         for conflict in conflicts:
 
@@ -140,61 +107,42 @@ def balance_doctrines():
             fed_a = conflict["federation_a"]
             fed_b = conflict["federation_b"]
 
-            doctrines = DOCTRINAL_BALANCE[
-                "federation_doctrines"
-            ]
+            doctrines = DOCTRINAL_BALANCE["federation_doctrines"]
 
             avg_weight = round(
-
-                (
-                    doctrines[fed_a][doctrine]
-                    +
-                    doctrines[fed_b][doctrine]
-                ) / 2,
-
-                2
+                (doctrines[fed_a][doctrine] + doctrines[fed_b][doctrine]) / 2, 2
             )
 
             doctrines[fed_a][doctrine] = avg_weight
             doctrines[fed_b][doctrine] = avg_weight
 
-            balancing_actions.append({
-
-                "doctrine":
-                    doctrine,
-
-                "balanced_weight":
-                    avg_weight,
-
-                "federations":
-                    [fed_a, fed_b]
-            })
+            balancing_actions.append(
+                {
+                    "doctrine": doctrine,
+                    "balanced_weight": avg_weight,
+                    "federations": [fed_a, fed_b],
+                }
+            )
 
         if balancing_actions:
 
-            DOCTRINAL_BALANCE[
-                "equilibrium_state"
-            ] = "REBALANCED"
+            DOCTRINAL_BALANCE["equilibrium_state"] = "REBALANCED"
 
-        DOCTRINAL_BALANCE[
-            "balancing_events"
-        ].extend(
-            balancing_actions
-        )
+        DOCTRINAL_BALANCE["balancing_events"].extend(balancing_actions)
 
     except Exception as e:
 
-        print(
-            "❌ DOCTRINE BALANCING ERROR:"
-        )
+        print("❌ DOCTRINE BALANCING ERROR:")
 
         print(str(e))
 
     return balancing_actions
 
+
 # =========================================================
 # 🔥 FETCH BALANCE STATE
 # =========================================================
+
 
 def get_doctrinal_balance_state():
 

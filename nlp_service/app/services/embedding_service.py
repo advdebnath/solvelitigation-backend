@@ -1,5 +1,6 @@
-from sentence_transformers import SentenceTransformer
 import re
+
+from sentence_transformers import SentenceTransformer
 
 # =========================================
 # 🔥 GLOBAL MODEL (LOAD ON IMPORT)
@@ -45,10 +46,7 @@ def generate_embedding(text: str):
         # 🔥 HARD LIMIT (IMPORTANT)
         text = text[:2000]
 
-        embedding = model.encode(
-            text,
-            normalize_embeddings=True
-        )
+        embedding = model.encode(text, normalize_embeddings=True)
 
         return embedding.tolist()
 
@@ -67,10 +65,7 @@ def generate_embeddings_batch(texts):
 
         cleaned = [clean_text(t)[:2000] for t in texts]
 
-        embeddings = model.encode(
-            cleaned,
-            normalize_embeddings=True
-        )
+        embeddings = model.encode(cleaned, normalize_embeddings=True)
 
         return embeddings.tolist()
 

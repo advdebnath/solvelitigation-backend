@@ -2,22 +2,20 @@
 # 🔥 SEMANTIC DISPATCH ENGINE
 # =========================================================
 
-from app.core_intelligence.agent_registry import (
-    get_agent
-)
+from app.core_intelligence.agent_registry import get_agent
 
 # =========================================================
 # 🔥 SEMANTIC DISPATCH ENGINE
 # =========================================================
 
-def semantic_dispatch(
 
+def semantic_dispatch(
     semantic_confidence=0.5,
     contradiction_risk_score=0.5,
     constitutional_weight=0.5,
     precedent_density=0.5,
     procedural_complexity=0.5,
-    doctrinal_density=0.5
+    doctrinal_density=0.5,
 ):
 
     dispatch_plan = []
@@ -28,9 +26,7 @@ def semantic_dispatch(
 
     if semantic_confidence < 0.70:
 
-        dispatch_plan.append(
-            "validation"
-        )
+        dispatch_plan.append("validation")
 
     # =====================================================
     # 🔥 EVIDENTIARY DISPATCH
@@ -38,9 +34,7 @@ def semantic_dispatch(
 
     if contradiction_risk_score > 0.40:
 
-        dispatch_plan.append(
-            "evidentiary"
-        )
+        dispatch_plan.append("evidentiary")
 
     # =====================================================
     # 🔥 STRATEGIC DISPATCH
@@ -48,9 +42,7 @@ def semantic_dispatch(
 
     if constitutional_weight > 0.60:
 
-        dispatch_plan.append(
-            "strategy"
-        )
+        dispatch_plan.append("strategy")
 
     # =====================================================
     # 🔥 PROCEDURAL DISPATCH
@@ -58,9 +50,7 @@ def semantic_dispatch(
 
     if procedural_complexity > 0.50:
 
-        dispatch_plan.append(
-            "procedural"
-        )
+        dispatch_plan.append("procedural")
 
     # =====================================================
     # 🔥 GRAPH DISPATCH
@@ -68,9 +58,7 @@ def semantic_dispatch(
 
     if doctrinal_density > 0.50:
 
-        dispatch_plan.append(
-            "semantic_graph"
-        )
+        dispatch_plan.append("semantic_graph")
 
     # =====================================================
     # 🔥 RAG DISPATCH
@@ -78,36 +66,29 @@ def semantic_dispatch(
 
     if precedent_density > 0.50:
 
-        dispatch_plan.append(
-            "rag"
-        )
+        dispatch_plan.append("rag")
 
     # =====================================================
     # 🔥 AGENTIC DISPATCH
     # =====================================================
 
-    if (
-        constitutional_weight > 0.75
-        or precedent_density > 0.75
-    ):
+    if constitutional_weight > 0.75 or precedent_density > 0.75:
 
-        dispatch_plan.append(
-            "agentic"
-        )
+        dispatch_plan.append("agentic")
 
     # =====================================================
     # 🔥 REMOVE DUPLICATES
     # =====================================================
 
-    dispatch_plan = list(
-        dict.fromkeys(dispatch_plan)
-    )
+    dispatch_plan = list(dict.fromkeys(dispatch_plan))
 
     return dispatch_plan
+
 
 # =========================================================
 # 🔥 DYNAMIC AGENT FETCHER
 # =========================================================
+
 
 def resolve_agents(dispatch_plan):
 
@@ -119,8 +100,6 @@ def resolve_agents(dispatch_plan):
 
         if agent:
 
-            resolved_agents[
-                agent_name
-            ] = agent
+            resolved_agents[agent_name] = agent
 
     return resolved_agents

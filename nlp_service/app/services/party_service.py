@@ -1,10 +1,17 @@
 import re
 
+
 def clean_name(name):
-    name = re.sub(r"\b(Appellant|Petitioner|Respondent|Versus|Vs\.?)\b", "", name, flags=re.IGNORECASE)
+    name = re.sub(
+        r"\b(Appellant|Petitioner|Respondent|Versus|Vs\.?)\b",
+        "",
+        name,
+        flags=re.IGNORECASE,
+    )
     name = re.sub(r"[^A-Za-z0-9\s\.\&]", "", name)
     name = re.sub(r"\s+", " ", name)
     return name.strip()
+
 
 def extract_parties(text):
     clean = re.sub(r"\s+", " ", text)

@@ -4,98 +4,51 @@
 
 
 STRATEGY_MAP = {
-
     "FIR Quashing": {
-
-        "strategy":
-            "Emphasize settlement, abuse of process, and continuation of criminal proceedings being futile.",
-
+        "strategy": "Emphasize settlement, abuse of process, and continuation of criminal proceedings being futile.",
         "arguments": [
-
             "Abuse of process",
-
             "Settlement between parties",
-
-            "Ends of justice"
-        ]
+            "Ends of justice",
+        ],
     },
-
     "Liberty Oriented Bail Jurisprudence": {
-
-        "strategy":
-            "Stress personal liberty, absence of custodial interrogation, and constitutional protections.",
-
-        "arguments": [
-
-            "Article 21",
-
-            "Bail is the rule",
-
-            "No custodial interrogation"
-        ]
+        "strategy": "Stress personal liberty, absence of custodial interrogation, and constitutional protections.",
+        "arguments": ["Article 21", "Bail is the rule", "No custodial interrogation"],
     },
-
     "Premature Release Of Life Convicts": {
-
-        "strategy":
-            "Stress remission jurisprudence, reformative justice, prison conduct, and constitutional clemency powers.",
-
+        "strategy": "Stress remission jurisprudence, reformative justice, prison conduct, and constitutional clemency powers.",
         "arguments": [
-
             "Article 161 constitutional powers",
-
             "Reformative justice principles",
-
             "Good prison conduct",
-
-            "Remission jurisprudence precedents"
-        ]
+            "Remission jurisprudence precedents",
+        ],
     },
-
     "Minimal Arbitration Interference": {
-
-        "strategy":
-            "Highlight limited scope of judicial interference under Section 34.",
-
+        "strategy": "Highlight limited scope of judicial interference under Section 34.",
         "arguments": [
-
             "Judicial restraint",
-
             "Patent illegality threshold",
-
-            "Minimal interference"
-        ]
+            "Minimal interference",
+        ],
     },
-
     "Natural Justice Expansion": {
-
-        "strategy":
-            "Focus on procedural fairness and denial of fair hearing.",
-
+        "strategy": "Focus on procedural fairness and denial of fair hearing.",
         "arguments": [
-
             "Audi alteram partem",
-
             "Procedural fairness",
-
-            "Reasoned order requirement"
-        ]
+            "Reasoned order requirement",
+        ],
     },
-
     "Cheque Dishonour": {
-
-        "strategy":
-            "Stress statutory presumptions and legally enforceable debt.",
-
+        "strategy": "Stress statutory presumptions and legally enforceable debt.",
         "arguments": [
-
             "Section 139 presumption",
-
             "Legally enforceable debt",
-
-            "Burden shifts to accused"
-        ]
-    }
+            "Burden shifts to accused",
+        ],
+    },
 }
 
 
@@ -103,35 +56,23 @@ STRATEGY_MAP = {
 # 🔥 MAIN ENGINE
 # =========================================================
 
-def generate_litigation_strategy(
 
+def generate_litigation_strategy(
     dominant_issue=None,
     semantic_precedent_data=None,
     judge_behaviour_data=None,
-    temporal_jurisprudence_data=None
+    temporal_jurisprudence_data=None,
 ):
 
     try:
 
         result = {
-
-            "dominant_issue":
-                "General",
-
-            "recommended_strategy":
-                "",
-
-            "arguments":
-                [],
-
-            "recommended_precedents":
-                [],
-
-            "judge_behaviour":
-                "Neutral",
-
-            "confidence":
-                0
+            "dominant_issue": "General",
+            "recommended_strategy": "",
+            "arguments": [],
+            "recommended_precedents": [],
+            "judge_behaviour": "Neutral",
+            "confidence": 0,
         }
 
         issue = None
@@ -142,116 +83,60 @@ def generate_litigation_strategy(
 
         if isinstance(dominant_issue, dict):
 
-            issue = dominant_issue.get(
-                "dominant_issue"
-            )
+            issue = dominant_issue.get("dominant_issue")
         elif isinstance(dominant_issue, str):
 
             issue = dominant_issue.strip()
-
 
         if not issue:
 
             return result
 
-        result[
-            "dominant_issue"
-        ] = issue
+        result["dominant_issue"] = issue
 
         # -------------------------------------------------
         # STRATEGY LOOKUP
         # -------------------------------------------------
 
-        strategy_data = STRATEGY_MAP.get(
-            issue,
-            {}
-        )
+        strategy_data = STRATEGY_MAP.get(issue, {})
 
-        result[
-            "recommended_strategy"
-        ] = strategy_data.get(
-            "strategy",
-            ""
-        )
+        result["recommended_strategy"] = strategy_data.get("strategy", "")
 
-        result[
-            "arguments"
-        ] = strategy_data.get(
-            "arguments",
-            []
-        )
+        result["arguments"] = strategy_data.get("arguments", [])
 
         # -------------------------------------------------
         # PRECEDENTS
         # -------------------------------------------------
 
-        if isinstance(
-            semantic_precedent_data,
-            dict
-        ):
+        if isinstance(semantic_precedent_data, dict):
 
-            result[
-                "recommended_precedents"
-            ] = (
-
-                semantic_precedent_data.get(
-                    "recommended_precedents",
-                    []
-                )
+            result["recommended_precedents"] = semantic_precedent_data.get(
+                "recommended_precedents", []
             )
 
         # -------------------------------------------------
         # JUDGE BEHAVIOUR
         # -------------------------------------------------
 
-        if isinstance(
-            judge_behaviour_data,
-            dict
-        ):
+        if isinstance(judge_behaviour_data, dict):
 
-            result[
-                "judge_behaviour"
-            ] = (
-
-                judge_behaviour_data.get(
-                    "dominant_behaviour",
-                    "Neutral"
-                )
+            result["judge_behaviour"] = judge_behaviour_data.get(
+                "dominant_behaviour", "Neutral"
             )
 
         # -------------------------------------------------
         # TEMPORAL DOCTRINE
         # -------------------------------------------------
 
-        if isinstance(
-            temporal_jurisprudence_data,
-            dict
-        ):
+        if isinstance(temporal_jurisprudence_data, dict):
 
-            result[
-                "dominant_doctrine"
-            ] = (
-
-                temporal_jurisprudence_data.get(
-                    "dominant_doctrine",
-                    "General"
-                )
+            result["dominant_doctrine"] = temporal_jurisprudence_data.get(
+                "dominant_doctrine", "General"
             )
 
-        result[
-            "confidence"
-        ] = min(
+        result["confidence"] = min(95, 60 + len(result["arguments"]) * 5)
 
-            95,
-
-            60 + len(
-                result["arguments"]
-            ) * 5
-        )
-
-        print(
-            "✅ Litigation Strategy:"
-        )
+        print("✅ Litigation Strategy:")
 
         print(result)
 
@@ -259,28 +144,13 @@ def generate_litigation_strategy(
 
     except Exception as e:
 
-        print(
-            "❌ Litigation Strategy Error:",
-            str(e)
-        )
+        print("❌ Litigation Strategy Error:", str(e))
 
         return {
-
-            "dominant_issue":
-                "General",
-
-            "recommended_strategy":
-                "",
-
-            "arguments":
-                [],
-
-            "recommended_precedents":
-                [],
-
-            "judge_behaviour":
-                "Neutral",
-
-            "confidence":
-                0
+            "dominant_issue": "General",
+            "recommended_strategy": "",
+            "arguments": [],
+            "recommended_precedents": [],
+            "judge_behaviour": "Neutral",
+            "confidence": 0,
         }

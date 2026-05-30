@@ -44,7 +44,7 @@ def extract_core(cases, query=None):
         "facts": facts[:3],
         "issues": list(set(issues))[:5],
         "reasoning": reasoning[:5],
-        "ratio": list(set(ratio))[:5]
+        "ratio": list(set(ratio))[:5],
     }
 
 
@@ -73,7 +73,7 @@ def decide_case(cases, ratios):
             score += weight
 
         if c.get("reasoning"):
-            score += (weight * 0.5)
+            score += weight * 0.5
 
     if score >= len(cases) * 2:
         return "Petition Allowed"

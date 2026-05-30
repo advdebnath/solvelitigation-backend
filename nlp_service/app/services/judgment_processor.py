@@ -1,23 +1,31 @@
-from pymongo import MongoClient
-from bson import ObjectId
+import os
+import re
+import shutil
+import subprocess
 from datetime import datetime
-import os, re, subprocess, shutil
+
 from bs4 import BeautifulSoup
+from bson import ObjectId
+from pymongo import MongoClient
 from sentence_transformers import SentenceTransformer
 
 MONGO_URI = "mongodb://sl_app:Debnath%401966@127.0.0.1:27017/solvelitigation"
 BASE_PATH = "/var/www/solvelitigation/backend"
 
+
 def get_db():
     return MongoClient(MONGO_URI)["solvelitigation"]
 
+
 _embedding_model = None
+
 
 def get_embedding_model():
     global _embedding_model
     if _embedding_model is None:
         _embedding_model = SentenceTransformer("all-MiniLM-L6-v2")
     return _embedding_model
+
 
 def generate_embedding(text):
     try:
@@ -27,9 +35,11 @@ def generate_embedding(text):
     except:
         return []
 
+
 def extract_number(f):
     match = re.search(r"-(\d+)\.html$", f)
     return int(match.group(1)) if match else 0
+
 
 def find_all_html_files(base):
     files = []
@@ -44,6 +54,7 @@ def find_all_html_files(base):
             files.append(os.path.join(directory, f))
 
     return sorted(files, key=extract_number)
+
 
 def extract_from_html(base):
     html_files = find_all_html_files(base)
@@ -68,6 +79,7 @@ def extract_from_html(base):
     text = " ".join(full_text)
     return re.sub(r"\s+", " ", text).strip()
 
+
 def extract_with_ocr(pdf_path):
     try:
         tmp_dir = pdf_path + "_ocr_tmp"
@@ -77,7 +89,7 @@ def extract_with_ocr(pdf_path):
             ["pdftoppm", "-png", pdf_path, os.path.join(tmp_dir, "page")],
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
-            text=True
+            text=True,
         )
 
         if result.returncode != 0:
@@ -90,7 +102,9 @@ def extract_with_ocr(pdf_path):
 
         for img in os.listdir(tmp_dir):
             if img.endswith(".png"):
-                txt = pytesseract.image_to_string(Image.open(os.path.join(tmp_dir, img)))
+                txt = pytesseract.image_to_string(
+                    Image.open(os.path.join(tmp_dir, img))
+                )
                 if txt:
                     text_parts.append(txt)
 
@@ -100,6 +114,7 @@ def extract_with_ocr(pdf_path):
 
     except:
         return ""
+
 
 def extract_text(pdf_path):
     base = pdf_path.replace(".pdf", "")
@@ -118,6 +133,7 @@ def extract_text(pdf_path):
         text = html_text
 
     return re.sub(r"\s+", " ", text).strip()
+
 
 def process_judgment_core(ingestion_id):
     db = get_db()
@@ -144,10 +160,10 @@ def process_judgment_core(ingestion_id):
                 "$set": {
                     "fullText": text[:100000],
                     "embedding": embedding,
-                    "createdAt": datetime.utcnow()
+                    "createdAt": datetime.utcnow(),
                 }
             },
-            upsert=True
+            upsert=True,
         )
 
         return True
@@ -155,6 +171,6 @@ def process_judgment_core(ingestion_id):
     except Exception as e:
         db.judgmentingestions.update_one(
             {"_id": ObjectId(ingestion_id)},
-            {"$set": {"status": "FAILED", "error": str(e)}}
+            {"$set": {"status": "FAILED", "error": str(e)}},
         )
         return False

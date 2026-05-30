@@ -1,5 +1,6 @@
 import re
 
+
 def extract_court(text: str) -> str:
     text = (text or "").upper()
 

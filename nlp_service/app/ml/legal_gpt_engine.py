@@ -1,8 +1,8 @@
-from app.ml.similarity_engine import model
-from sentence_transformers import SentenceTransformer
 import faiss
 import numpy as np
+from app.ml.similarity_engine import model
 from pymongo import MongoClient
+from sentence_transformers import SentenceTransformer
 
 MONGO_URI = "mongodb://sl_app:Debnath%401966@127.0.0.1:27017/solvelitigation"
 
@@ -13,9 +13,7 @@ db = client["solvelitigation"]
 def search_similar_cases(query):
     query_vec = model.encode([query])[0]
 
-    judgments = list(db.judgments.find({
-        "embedding": {"$exists": True}
-    }))
+    judgments = list(db.judgments.find({"embedding": {"$exists": True}}))
 
     if not judgments:
         return []
@@ -28,6 +26,7 @@ def search_similar_cases(query):
     D, I = index.search(np.array([query_vec]).astype("float32"), k=3)
 
     return [judgments[i] for i in I[0]]
+
 
 def generate_legal_response(query):
     similar_cases = search_similar_cases(query)
@@ -62,5 +61,5 @@ The strongest argument is derived from the cited cases where courts have interpr
     return {
         "query": query,
         "answer": answer,
-        "cases_used": [c.get("caseNumber") for c in similar_cases]
+        "cases_used": [c.get("caseNumber") for c in similar_cases],
     }

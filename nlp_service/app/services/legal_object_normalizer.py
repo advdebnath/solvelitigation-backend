@@ -8,6 +8,7 @@ from copy import deepcopy
 # 🔥 SAFE HELPERS
 # =========================================================
 
+
 def ensure_list(value):
 
     if value is None:
@@ -39,6 +40,7 @@ def clean_string(value):
 # 🔥 DEDUPLICATION
 # =========================================================
 
+
 def unique_list(items):
 
     seen = set()
@@ -62,6 +64,7 @@ def unique_list(items):
 # =========================================================
 # 🔥 ACT NORMALIZATION
 # =========================================================
+
 
 def normalize_acts(acts):
 
@@ -87,13 +90,9 @@ def normalize_acts(acts):
         elif isinstance(act, dict):
 
             value = (
-
                 act.get("act_name")
-
                 or act.get("act")
-
                 or act.get("name")
-
                 or act.get("title")
             )
 
@@ -109,6 +108,7 @@ def normalize_acts(acts):
 # 🔥 SECTION NORMALIZATION
 # =========================================================
 
+
 def normalize_sections(sections):
 
     normalized = []
@@ -119,28 +119,12 @@ def normalize_sections(sections):
             continue
 
         section_obj = {
-
-            "type":
-                clean_string(
-                    s.get("type")
-                ),
-
-            "section":
-                clean_string(
-                    s.get("section")
-                ),
-
-            "act":
-                clean_string(
-                    s.get("act")
-                )
+            "type": clean_string(s.get("type")),
+            "section": clean_string(s.get("section")),
+            "act": clean_string(s.get("act")),
         }
 
-        if (
-            section_obj["section"]
-            or
-            section_obj["act"]
-        ):
+        if section_obj["section"] or section_obj["act"]:
             normalized.append(section_obj)
 
     return unique_list(normalized)
@@ -149,6 +133,7 @@ def normalize_sections(sections):
 # =========================================================
 # 🔥 POINTS OF LAW NORMALIZATION
 # =========================================================
+
 
 def normalize_points(points):
 
@@ -166,12 +151,7 @@ def normalize_points(points):
 
             if value:
 
-                normalized.append({
-
-                    "point": value,
-
-                    "category": "Unknown"
-                })
+                normalized.append({"point": value, "category": "Unknown"})
 
         # =================================================
         # 🔥 DICT
@@ -180,54 +160,13 @@ def normalize_points(points):
         elif isinstance(p, dict):
 
             point_obj = {
-
-                "point":
-                    clean_string(
-                        p.get("point")
-                    ),
-
-                "category":
-                    clean_string(
-                        p.get(
-                            "category",
-                            "Unknown"
-                        )
-                    ),
-
-                "confidence":
-                    p.get(
-                        "confidence",
-                        60
-                    ),
-
-                "sources":
-                    ensure_list(
-                        p.get(
-                            "sources",
-                            []
-                        )
-                    ),
-
-                "supporting_section":
-                    clean_string(
-                        p.get(
-                            "supporting_section"
-                        )
-                    ),
-
-                "supporting_act":
-                    clean_string(
-                        p.get(
-                            "supporting_act"
-                        )
-                    ),
-
-                "lineage":
-                    clean_string(
-                        p.get(
-                            "lineage"
-                        )
-                    )
+                "point": clean_string(p.get("point")),
+                "category": clean_string(p.get("category", "Unknown")),
+                "confidence": p.get("confidence", 60),
+                "sources": ensure_list(p.get("sources", [])),
+                "supporting_section": clean_string(p.get("supporting_section")),
+                "supporting_act": clean_string(p.get("supporting_act")),
+                "lineage": clean_string(p.get("lineage")),
             }
 
             if point_obj["point"]:
@@ -240,6 +179,7 @@ def normalize_points(points):
 # =========================================================
 # 🔥 CITATION NORMALIZATION
 # =========================================================
+
 
 def normalize_citations(citations):
 
@@ -257,10 +197,7 @@ def normalize_citations(citations):
 
             if value:
 
-                normalized.append({
-
-                    "citation": value
-                })
+                normalized.append({"citation": value})
 
         # =================================================
         # 🔥 DICT
@@ -269,21 +206,9 @@ def normalize_citations(citations):
         elif isinstance(c, dict):
 
             citation_obj = {
-
-                "citation":
-                    clean_string(
-                        c.get("citation")
-                    ),
-
-                "case":
-                    clean_string(
-                        c.get("case")
-                    ),
-
-                "court":
-                    clean_string(
-                        c.get("court")
-                    )
+                "citation": clean_string(c.get("citation")),
+                "case": clean_string(c.get("case")),
+                "court": clean_string(c.get("court")),
             }
 
             if citation_obj["citation"]:
@@ -296,6 +221,7 @@ def normalize_citations(citations):
 # =========================================================
 # 🔥 JUDGE NORMALIZATION
 # =========================================================
+
 
 def normalize_judges(judges):
 
@@ -313,10 +239,7 @@ def normalize_judges(judges):
 
             if value:
 
-                normalized.append({
-
-                    "name": value
-                })
+                normalized.append({"name": value})
 
         # =================================================
         # 🔥 DICT
@@ -324,13 +247,7 @@ def normalize_judges(judges):
 
         elif isinstance(j, dict):
 
-            judge_obj = {
-
-                "name":
-                    clean_string(
-                        j.get("name")
-                    )
-            }
+            judge_obj = {"name": clean_string(j.get("name"))}
 
             if judge_obj["name"]:
 
@@ -343,6 +260,7 @@ def normalize_judges(judges):
 # 🔥 SIMILAR CASES NORMALIZATION
 # =========================================================
 
+
 def normalize_similar_cases(similar_cases):
 
     normalized = []
@@ -353,19 +271,9 @@ def normalize_similar_cases(similar_cases):
             continue
 
         case_obj = {
-
-            "caseNumber":
-                clean_string(
-                    s.get("caseNumber")
-                ),
-
-            "score":
-                s.get("score", 0),
-
-            "category":
-                clean_string(
-                    s.get("category")
-                )
+            "caseNumber": clean_string(s.get("caseNumber")),
+            "score": s.get("score", 0),
+            "category": clean_string(s.get("category")),
         }
 
         if case_obj["caseNumber"]:
@@ -379,6 +287,7 @@ def normalize_similar_cases(similar_cases):
 # 🔥 MAIN NORMALIZER
 # =========================================================
 
+
 def normalize_legal_objects(judgment_doc):
 
     doc = deepcopy(judgment_doc)
@@ -387,33 +296,25 @@ def normalize_legal_objects(judgment_doc):
     # 🔥 ACTS
     # =====================================================
 
-    doc["actNames"] = normalize_acts(
-        doc.get("actNames", [])
-    )
+    doc["actNames"] = normalize_acts(doc.get("actNames", []))
 
     # =====================================================
     # 🔥 SECTIONS
     # =====================================================
 
-    doc["sections"] = normalize_sections(
-        doc.get("sections", [])
-    )
+    doc["sections"] = normalize_sections(doc.get("sections", []))
 
     # =====================================================
     # 🔥 POINTS OF LAW
     # =====================================================
 
-    doc["pointsOfLaw"] = normalize_points(
-        doc.get("pointsOfLaw", [])
-    )
+    doc["pointsOfLaw"] = normalize_points(doc.get("pointsOfLaw", []))
 
     # =====================================================
     # 🔥 CITATIONS
     # =====================================================
 
-    doc["citations"] = normalize_citations(
-        doc.get("citations", [])
-    )
+    doc["citations"] = normalize_citations(doc.get("citations", []))
 
     # =====================================================
     # 🔥 JUDGES
@@ -421,31 +322,17 @@ def normalize_legal_objects(judgment_doc):
 
     if isinstance(doc.get("judges"), dict):
 
-        doc["judges"]["judges"] = normalize_judges(
-
-            doc["judges"].get(
-                "judges",
-                []
-            )
-        )
+        doc["judges"]["judges"] = normalize_judges(doc["judges"].get("judges", []))
 
     else:
 
-        doc["judges"] = {
-
-            "judges":
-                normalize_judges(
-                    doc.get("judges", [])
-                )
-        }
+        doc["judges"] = {"judges": normalize_judges(doc.get("judges", []))}
 
     # =====================================================
     # 🔥 SIMILAR CASES
     # =====================================================
 
-    doc["similarCases"] = normalize_similar_cases(
-        doc.get("similarCases", [])
-    )
+    doc["similarCases"] = normalize_similar_cases(doc.get("similarCases", []))
 
     # =====================================================
     # 🔥 DEBUG
@@ -453,25 +340,13 @@ def normalize_legal_objects(judgment_doc):
 
     print("✅ Legal objects normalized")
 
-    print({
-
-        "actNames":
-            doc.get("actNames"),
-
-        "sections":
-            len(
-                doc.get("sections", [])
-            ),
-
-        "pointsOfLaw":
-            len(
-                doc.get("pointsOfLaw", [])
-            ),
-
-        "citations":
-            len(
-                doc.get("citations", [])
-            )
-    })
+    print(
+        {
+            "actNames": doc.get("actNames"),
+            "sections": len(doc.get("sections", [])),
+            "pointsOfLaw": len(doc.get("pointsOfLaw", [])),
+            "citations": len(doc.get("citations", [])),
+        }
+    )
 
     return doc

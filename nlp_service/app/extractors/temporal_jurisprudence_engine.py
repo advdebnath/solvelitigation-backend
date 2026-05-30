@@ -4,67 +4,41 @@
 
 import re
 
-
 # =========================================================
 # 🔥 TEMPORAL DOCTRINE SIGNALS
 # =========================================================
 
 TEMPORAL_PATTERNS = {
-
     "Article 21 Expansion": [
-
         r"right\s+to\s+privacy",
-
         r"dignity",
-
         r"personal\s+liberty",
-
-        r"constitutional\s+morality"
+        r"constitutional\s+morality",
     ],
-
     "Minimal Arbitration Interference": [
-
         r"limited\s+scope\s+of\s+interference",
-
         r"arbitral\s+award",
-
         r"judicial\s+restraint",
-
-        r"section\s+34"
+        r"section\s+34",
     ],
-
     "Liberty Oriented Bail Jurisprudence": [
-
         r"bail\s+is\s+the\s+rule",
-
         r"personal\s+liberty",
-
         r"article\s+21",
-
-        r"custodial\s+interrogation"
+        r"custodial\s+interrogation",
     ],
-
     "Natural Justice Expansion": [
-
         r"natural\s+justice",
-
         r"audi\s+alteram\s+partem",
-
         r"fair\s+hearing",
-
-        r"procedural\s+fairness"
+        r"procedural\s+fairness",
     ],
-
     "Strict NI Act Enforcement": [
-
         r"legally\s+enforceable\s+debt",
-
         r"presumption\s+under\s+section\s+139",
-
         r"cheque\s+dishonour",
-
-        r"burden\s+of\s+proof"
-    ]
+        r"burden\s+of\s+proof",
+    ],
 }
 
 
@@ -72,13 +46,10 @@ TEMPORAL_PATTERNS = {
 # 🔥 CLEAN TEXT
 # =========================================================
 
+
 def normalize_text(text):
 
-    text = re.sub(
-        r"\s+",
-        " ",
-        str(text)
-    )
+    text = re.sub(r"\s+", " ", str(text))
 
     return text.strip().lower()
 
@@ -86,6 +57,7 @@ def normalize_text(text):
 # =========================================================
 # 🔥 DETECT TEMPORAL DOCTRINES
 # =========================================================
+
 
 def detect_temporal_doctrines(text):
 
@@ -101,11 +73,7 @@ def detect_temporal_doctrines(text):
 
         for pattern in patterns:
 
-            results = re.findall(
-                pattern,
-                text,
-                re.I
-            )
+            results = re.findall(pattern, text, re.I)
 
             if results:
 
@@ -115,17 +83,13 @@ def detect_temporal_doctrines(text):
 
         if score > 0:
 
-            findings.append({
-
-                "doctrine":
-                    doctrine,
-
-                "score":
-                    min(score, 100),
-
-                "signals":
-                    list(set(matched))
-            })
+            findings.append(
+                {
+                    "doctrine": doctrine,
+                    "score": min(score, 100),
+                    "signals": list(set(matched)),
+                }
+            )
 
     return findings
 
@@ -134,39 +98,22 @@ def detect_temporal_doctrines(text):
 # 🔥 BUILD TEMPORAL EVOLUTION
 # =========================================================
 
-def build_temporal_jurisprudence(
 
-    full_text="",
-    judgment_date=None,
-    dominant_issue=None,
-    judges=None
+def build_temporal_jurisprudence(
+    full_text="", judgment_date=None, dominant_issue=None, judges=None
 ):
 
     try:
 
-        dominant_issue = str(
-            dominant_issue
-        ).strip() or "General"
+        dominant_issue = str(dominant_issue).strip() or "General"
 
         temporal_data = {
-
-            "judgment_year":
-                None,
-
-            "dominant_issue":
-                dominant_issue,
-
-            "doctrinal_movements":
-                [],
-
-            "dominant_doctrine":
-                "General",
-
-            "judges":
-                judges or [],
-
-            "confidence":
-                0
+            "judgment_year": None,
+            "dominant_issue": dominant_issue,
+            "doctrinal_movements": [],
+            "dominant_doctrine": "General",
+            "judges": judges or [],
+            "confidence": 0,
         }
 
         # -------------------------------------------------
@@ -175,23 +122,13 @@ def build_temporal_jurisprudence(
 
         if isinstance(judgment_date, dict):
 
-            raw_date = str(
-                judgment_date.get(
-                    "date",
-                    ""
-                )
-            )
+            raw_date = str(judgment_date.get("date", ""))
 
-            year_match = re.search(
-                r"(19|20)\d{2}",
-                raw_date
-            )
+            year_match = re.search(r"(19|20)\d{2}", raw_date)
 
             if year_match:
 
-                temporal_data[
-                    "judgment_year"
-                ] = year_match.group(0)
+                temporal_data["judgment_year"] = year_match.group(0)
 
         # -------------------------------------------------
         # DOMINANT ISSUE
@@ -199,24 +136,17 @@ def build_temporal_jurisprudence(
 
         if isinstance(dominant_issue, dict):
 
-            temporal_data[
-                "dominant_issue"
-            ] = dominant_issue.get(
-                "dominant_issue",
-                "General"
+            temporal_data["dominant_issue"] = dominant_issue.get(
+                "dominant_issue", "General"
             )
 
         # -------------------------------------------------
         # DOCTRINE DETECTION
         # -------------------------------------------------
 
-        doctrines = detect_temporal_doctrines(
-            full_text
-        )
+        doctrines = detect_temporal_doctrines(full_text)
 
-        temporal_data[
-            "doctrinal_movements"
-        ] = doctrines
+        temporal_data["doctrinal_movements"] = doctrines
 
         # -------------------------------------------------
         # DOMINANT DOCTRINE
@@ -228,36 +158,19 @@ def build_temporal_jurisprudence(
 
         for item in doctrines:
 
-            score = item.get(
-                "score",
-                0
-            )
+            score = item.get("score", 0)
 
             if score > top_score:
 
                 top_score = score
 
-                dominant_doctrine = item.get(
-                    "doctrine",
-                    "General"
-                )
+                dominant_doctrine = item.get("doctrine", "General")
 
-        temporal_data[
-            "dominant_doctrine"
-        ] = dominant_doctrine
+        temporal_data["dominant_doctrine"] = dominant_doctrine
 
-        temporal_data[
-            "confidence"
-        ] = min(
+        temporal_data["confidence"] = min(95, 50 + top_score)
 
-            95,
-
-            50 + top_score
-        )
-
-        print(
-            "✅ Temporal Jurisprudence:"
-        )
+        print("✅ Temporal Jurisprudence:")
 
         print(temporal_data)
 
@@ -265,28 +178,13 @@ def build_temporal_jurisprudence(
 
     except Exception as e:
 
-        print(
-            "❌ Temporal Jurisprudence Error:",
-            str(e)
-        )
+        print("❌ Temporal Jurisprudence Error:", str(e))
 
         return {
-
-            "judgment_year":
-                None,
-
-            "dominant_issue":
-                "General",
-
-            "doctrinal_movements":
-                [],
-
-            "dominant_doctrine":
-                "General",
-
-            "judges":
-                judges or [],
-
-            "confidence":
-                0
+            "judgment_year": None,
+            "dominant_issue": "General",
+            "doctrinal_movements": [],
+            "dominant_doctrine": "General",
+            "judges": judges or [],
+            "confidence": 0,
         }

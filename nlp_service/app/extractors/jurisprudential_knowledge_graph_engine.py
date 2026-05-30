@@ -1,10 +1,6 @@
-
 from app.legal_ontology.canonical_legal_object_engine import (
-
-    canonicalize_act_name,
-    canonicalize_point_of_law,
-    build_canonical_legal_object
-)
+    build_canonical_legal_object, canonicalize_act_name,
+    canonicalize_point_of_law)
 
 # =========================================================
 # 🔥 JURISPRUDENTIAL KNOWLEDGE GRAPH ENGINE
@@ -12,7 +8,6 @@ from app.legal_ontology.canonical_legal_object_engine import (
 
 
 def build_jurisprudential_knowledge_graph(
-
     case_number=None,
     judges=None,
     acts=None,
@@ -20,21 +15,12 @@ def build_jurisprudential_knowledge_graph(
     dominant_issue=None,
     ratio_data=None,
     operative_data=None,
-    temporal_data=None
+    temporal_data=None,
 ):
 
     try:
 
-        graph = {
-
-            "nodes": [],
-
-            "edges": [],
-
-            "summary": {},
-
-            "confidence": 0
-        }
+        graph = {"nodes": [], "edges": [], "summary": {}, "confidence": 0}
 
         # -------------------------------------------------
         # CASE NODE
@@ -48,16 +34,11 @@ def build_jurisprudential_knowledge_graph(
             # 🔒 IMMUTABLE GRAPH CASE IDENTITY
             # ---------------------------------------------
 
-            case_id = case_number.get(
-                "canonical_id"
-            )
+            case_id = case_number.get("canonical_id")
 
             if not case_id:
 
-                case_id = case_number.get(
-                    "case_number",
-                    "Unknown Case"
-                )
+                case_id = case_number.get("case_number", "Unknown Case")
 
         assert case_id is not None
 
@@ -71,14 +52,7 @@ def build_jurisprudential_knowledge_graph(
 
         assert str(case_id).strip() != ""
 
-        graph["nodes"].append({
-
-            "id":
-                case_id,
-
-            "type":
-                "CASE"
-        })
+        graph["nodes"].append({"id": case_id, "type": "CASE"})
 
         # -------------------------------------------------
         # JUDGE NODES
@@ -90,26 +64,11 @@ def build_jurisprudential_knowledge_graph(
 
         for judge in judges:
 
-            graph["nodes"].append({
+            graph["nodes"].append({"id": judge, "type": "JUDGE"})
 
-                "id":
-                    judge,
-
-                "type":
-                    "JUDGE"
-            })
-
-            graph["edges"].append({
-
-                "source":
-                    case_id,
-
-                "target":
-                    judge,
-
-                "relation":
-                    "DECIDED_BY"
-            })
+            graph["edges"].append(
+                {"source": case_id, "target": judge, "relation": "DECIDED_BY"}
+            )
 
         # -------------------------------------------------
         # ACT NODES
@@ -119,44 +78,23 @@ def build_jurisprudential_knowledge_graph(
 
             for act in acts:
 
-                canonical_act = (
-                    canonicalize_act_name(
-                        act
-                    )
+                canonical_act = canonicalize_act_name(act)
+
+                canonical_act_object = build_canonical_legal_object(
+                    canonical_act, "ACT"
                 )
 
-                canonical_act_object = (
-                    build_canonical_legal_object(
-                        canonical_act,
-                        "ACT"
-                    )
+                graph["nodes"].append(
+                    {
+                        "id": canonical_act_object.get("id"),
+                        "label": canonical_act,
+                        "type": "ACT",
+                    }
                 )
 
-                graph["nodes"].append({
-
-                    "id":
-                        canonical_act_object.get(
-                            "id"
-                        ),
-
-                    "label":
-                        canonical_act,
-
-                    "type":
-                        "ACT"
-                })
-
-                graph["edges"].append({
-
-                    "source":
-                        case_id,
-
-                    "target":
-                        act,
-
-                    "relation":
-                        "INVOLVES_ACT"
-                })
+                graph["edges"].append(
+                    {"source": case_id, "target": act, "relation": "INVOLVES_ACT"}
+                )
 
         # -------------------------------------------------
         # SECTION NODES
@@ -164,41 +102,25 @@ def build_jurisprudential_knowledge_graph(
 
         if isinstance(sections, dict):
 
-            section_items = sections.get(
-                "sections",
-                []
-            )
+            section_items = sections.get("sections", [])
 
             for item in section_items:
 
-                section_name = item.get(
-                    "section"
-                )
+                section_name = item.get("section")
 
                 if not section_name:
 
                     continue
 
-                graph["nodes"].append({
+                graph["nodes"].append({"id": section_name, "type": "SECTION"})
 
-                    "id":
-                        section_name,
-
-                    "type":
-                        "SECTION"
-                })
-
-                graph["edges"].append({
-
-                    "source":
-                        case_id,
-
-                    "target":
-                        section_name,
-
-                    "relation":
-                        "INVOLVES_SECTION"
-                })
+                graph["edges"].append(
+                    {
+                        "source": case_id,
+                        "target": section_name,
+                        "relation": "INVOLVES_SECTION",
+                    }
+                )
 
         # -------------------------------------------------
         # DOMINANT ISSUE
@@ -206,50 +128,31 @@ def build_jurisprudential_knowledge_graph(
 
         if isinstance(dominant_issue, dict):
 
-            issue = dominant_issue.get(
-                "dominant_issue"
-            )
+            issue = dominant_issue.get("dominant_issue")
 
             if issue:
 
-                canonical_issue = (
-                    canonicalize_point_of_law(
-                        issue
-                    )
+                canonical_issue = canonicalize_point_of_law(issue)
+
+                canonical_issue_object = build_canonical_legal_object(
+                    canonical_issue, "POINT_OF_LAW"
                 )
 
-                canonical_issue_object = (
-                    build_canonical_legal_object(
-                        canonical_issue,
-                        "POINT_OF_LAW"
-                    )
+                graph["nodes"].append(
+                    {
+                        "id": canonical_issue_object.get("id"),
+                        "label": canonical_issue,
+                        "type": "DOCTRINE",
+                    }
                 )
 
-                graph["nodes"].append({
-
-                    "id":
-                        canonical_issue_object.get(
-                            "id"
-                        ),
-
-                    "label":
-                        canonical_issue,
-
-                    "type":
-                        "DOCTRINE"
-                })
-
-                graph["edges"].append({
-
-                    "source":
-                        case_id,
-
-                    "target":
-                        issue,
-
-                    "relation":
-                        "INVOLVES_DOCTRINE"
-                })
+                graph["edges"].append(
+                    {
+                        "source": case_id,
+                        "target": issue,
+                        "relation": "INVOLVES_DOCTRINE",
+                    }
+                )
 
         # -------------------------------------------------
         # OPERATIVE HOLDING
@@ -257,32 +160,15 @@ def build_jurisprudential_knowledge_graph(
 
         if isinstance(operative_data, dict):
 
-            holding = operative_data.get(
-                "final_holding"
-            )
+            holding = operative_data.get("final_holding")
 
             if holding:
 
-                graph["nodes"].append({
+                graph["nodes"].append({"id": holding, "type": "OUTCOME"})
 
-                    "id":
-                        holding,
-
-                    "type":
-                        "OUTCOME"
-                })
-
-                graph["edges"].append({
-
-                    "source":
-                        case_id,
-
-                    "target":
-                        holding,
-
-                    "relation":
-                        "RESULTED_IN"
-                })
+                graph["edges"].append(
+                    {"source": case_id, "target": holding, "relation": "RESULTED_IN"}
+                )
 
         # -------------------------------------------------
         # TEMPORAL DOCTRINES
@@ -290,39 +176,23 @@ def build_jurisprudential_knowledge_graph(
 
         if isinstance(temporal_data, dict):
 
-            doctrines = temporal_data.get(
-                "doctrinal_movements",
-                []
-            )
+            doctrines = temporal_data.get("doctrinal_movements", [])
 
             for item in doctrines:
 
-                doctrine = item.get(
-                    "doctrine"
-                )
+                doctrine = item.get("doctrine")
 
                 if doctrine:
 
-                    graph["nodes"].append({
+                    graph["nodes"].append({"id": doctrine, "type": "TEMPORAL_DOCTRINE"})
 
-                        "id":
-                            doctrine,
-
-                        "type":
-                            "TEMPORAL_DOCTRINE"
-                    })
-
-                    graph["edges"].append({
-
-                        "source":
-                            case_id,
-
-                        "target":
-                            doctrine,
-
-                        "relation":
-                            "EVOLVES_DOCTRINE"
-                    })
+                    graph["edges"].append(
+                        {
+                            "source": case_id,
+                            "target": doctrine,
+                            "relation": "EVOLVES_DOCTRINE",
+                        }
+                    )
 
         # -------------------------------------------------
         # REMOVE DUPLICATES
@@ -334,12 +204,7 @@ def build_jurisprudential_knowledge_graph(
 
         for node in graph["nodes"]:
 
-            key = (
-
-                node.get("id"),
-
-                node.get("type")
-            )
+            key = (node.get("id"), node.get("type"))
 
             if key not in seen_nodes:
 
@@ -354,24 +219,13 @@ def build_jurisprudential_knowledge_graph(
         # -------------------------------------------------
 
         graph["summary"] = {
-
-            "total_nodes":
-                len(graph["nodes"]),
-
-            "total_edges":
-                len(graph["edges"])
+            "total_nodes": len(graph["nodes"]),
+            "total_edges": len(graph["edges"]),
         }
 
-        graph["confidence"] = min(
+        graph["confidence"] = min(95, 50 + len(graph["edges"]))
 
-            95,
-
-            50 + len(graph["edges"])
-        )
-
-        print(
-            "✅ Jurisprudential Knowledge Graph:"
-        )
+        print("✅ Jurisprudential Knowledge Graph:")
 
         print(graph)
 
@@ -379,18 +233,6 @@ def build_jurisprudential_knowledge_graph(
 
     except Exception as e:
 
-        print(
-            "❌ Knowledge Graph Error:",
-            str(e)
-        )
+        print("❌ Knowledge Graph Error:", str(e))
 
-        return {
-
-            "nodes": [],
-
-            "edges": [],
-
-            "summary": {},
-
-            "confidence": 0
-        }
+        return {"nodes": [], "edges": [], "summary": {}, "confidence": 0}

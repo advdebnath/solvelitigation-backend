@@ -1,5 +1,6 @@
-from pymongo import MongoClient
 from typing import Optional
+
+from pymongo import MongoClient
 
 MONGO_URI = "mongodb://sl_app:Debnath%401966@127.0.0.1:27017/solvelitigation"
 

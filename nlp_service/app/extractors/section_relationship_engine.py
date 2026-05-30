@@ -4,51 +4,31 @@
 
 
 SECTION_RELATIONSHIPS = {
-
     # -----------------------------------------------------
     # IPC RELATIONSHIPS
     # -----------------------------------------------------
-
-    frozenset(["302", "34"]):
-        "Murder with Common Intention",
-
-    frozenset(["302", "120B"]):
-        "Murder Conspiracy",
-
-    frozenset(["420", "120B"]):
-        "Fraud Conspiracy",
-
-    frozenset(["406", "420"]):
-        "Fraud and Criminal Breach of Trust",
-
-    frozenset(["498A", "304B"]):
-        "Cruelty and Dowry Death",
-
-    frozenset(["376", "506"]):
-        "Sexual Offence with Criminal Intimidation",
-
-    frozenset(["307", "34"]):
-        "Attempt to Murder with Common Intention",
-
+    frozenset(["302", "34"]): "Murder with Common Intention",
+    frozenset(["302", "120B"]): "Murder Conspiracy",
+    frozenset(["420", "120B"]): "Fraud Conspiracy",
+    frozenset(["406", "420"]): "Fraud and Criminal Breach of Trust",
+    frozenset(["498A", "304B"]): "Cruelty and Dowry Death",
+    frozenset(["376", "506"]): "Sexual Offence with Criminal Intimidation",
+    frozenset(["307", "34"]): "Attempt to Murder with Common Intention",
     # -----------------------------------------------------
     # CrPC
     # -----------------------------------------------------
-
-    frozenset(["438", "482"]):
-        "Anticipatory Bail with Inherent Powers",
-
+    frozenset(["438", "482"]): "Anticipatory Bail with Inherent Powers",
     # -----------------------------------------------------
     # NI ACT
     # -----------------------------------------------------
-
-    frozenset(["138", "141"]):
-        "Corporate Cheque Dishonour Liability",
+    frozenset(["138", "141"]): "Corporate Cheque Dishonour Liability",
 }
 
 
 # =========================================================
 # 🔥 NORMALIZER
 # =========================================================
+
 
 def normalize_section(value):
 
@@ -67,6 +47,7 @@ def normalize_section(value):
 # 🔥 RELATIONSHIP BUILDER
 # =========================================================
 
+
 def build_section_relationships(section_hierarchy):
 
     if not isinstance(section_hierarchy, list):
@@ -81,9 +62,7 @@ def build_section_relationships(section_hierarchy):
 
             continue
 
-        section = normalize_section(
-            item.get("section")
-        )
+        section = normalize_section(item.get("section"))
 
         if section:
 
@@ -105,16 +84,12 @@ def build_section_relationships(section_hierarchy):
 
             seen.add(key_tuple)
 
-            relationships.append({
-
-                "sections":
-                    list(sorted(relation_key)),
-
-                "relationship":
-                    meaning,
-
-                "confidence":
-                    90
-            })
+            relationships.append(
+                {
+                    "sections": list(sorted(relation_key)),
+                    "relationship": meaning,
+                    "confidence": 90,
+                }
+            )
 
     return relationships

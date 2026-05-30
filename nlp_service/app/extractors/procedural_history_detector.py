@@ -1,22 +1,17 @@
 import re
-from typing import List, Dict
-
+from typing import Dict, List
 
 # =========================================================
 # 🔥 PROCEDURAL HISTORY DETECTOR
 # =========================================================
 
-def detect_procedural_history(
-    text: str
-) -> List[Dict]:
+
+def detect_procedural_history(text: str) -> List[Dict]:
 
     if not text:
         return []
 
-    paragraphs = re.split(
-        r'\n{2,}',
-        text
-    )
+    paragraphs = re.split(r"\n{2,}", text)
 
     results = []
 
@@ -42,7 +37,7 @@ def detect_procedural_history(
                 "learned trial court",
                 "sessions court",
                 "convicted by",
-                "acquitted by"
+                "acquitted by",
             ]
         ):
 
@@ -60,13 +55,11 @@ def detect_procedural_history(
                 "the appeals are allowed",
                 "appeal stands allowed",
                 "we accordingly allow",
-                "appeal deserves to be allowed"
+                "appeal deserves to be allowed",
             ]
         ):
 
             stage = "SUPREME_COURT_FINAL"
-
-
 
         # =====================================================
         # 🔥 HIGH COURT
@@ -79,12 +72,11 @@ def detect_procedural_history(
                 "division bench",
                 "single judge",
                 "dismissed by the high court",
-                "allowed by the high court"
+                "allowed by the high court",
             ]
         ):
 
             stage = "HIGH_COURT"
-
 
         # =====================================================
         # 🔥 STORE
@@ -92,11 +84,6 @@ def detect_procedural_history(
 
         if stage:
 
-            results.append({
-
-                "stage": stage,
-
-                "text": clean_para[:2000]
-            })
+            results.append({"stage": stage, "text": clean_para[:2000]})
 
     return results

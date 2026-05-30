@@ -5,23 +5,22 @@ from collections import Counter
 # 🔥 CLEAN TEXT
 # =========================================================
 
+
 def clean_text(text):
 
     if not text:
 
         return ""
 
-    text = re.sub(
-        r"\s+",
-        " ",
-        text
-    )
+    text = re.sub(r"\s+", " ", text)
 
     return text.strip()
+
 
 # =========================================================
 # 🔥 SPLIT PARAGRAPHS
 # =========================================================
+
 
 def split_paragraphs(text):
 
@@ -29,46 +28,27 @@ def split_paragraphs(text):
     # 🔥 NORMALIZE OCR / PDF STRUCTURE
     # =====================================================
 
-    text = re.sub(
-        r"\\r",
-        "\\n",
-        text
-    )
+    text = re.sub(r"\\r", "\\n", text)
 
     # -----------------------------------------------------
     # 🔥 FORCE SPLIT BEFORE NUMBERED PARAS
     # -----------------------------------------------------
 
-    text = re.sub(
-        r"(?<!\\n)(\\b\\d{1,3}\\.\\s+)",
-        r"\\n\\n\\1",
-        text
-    )
+    text = re.sub(r"(?<!\\n)(\\b\\d{1,3}\\.\\s+)", r"\\n\\n\\1", text)
 
     # -----------------------------------------------------
     # 🔥 FORCE SPLIT BEFORE ROMAN SUBPARTS
     # -----------------------------------------------------
 
-    text = re.sub(
-        r"(?<!\\n)(\\([ivxIVX]+\\))",
-        r"\\n\\n\\1",
-        text
-    )
+    text = re.sub(r"(?<!\\n)(\\([ivxIVX]+\\))", r"\\n\\n\\1", text)
 
     # -----------------------------------------------------
     # 🔥 CLEAN MULTIPLE NEWLINES
     # -----------------------------------------------------
 
-    text = re.sub(
-        r"\\n{2,}",
-        "\\n\\n",
-        text
-    )
+    text = re.sub(r"\\n{2,}", "\\n\\n", text)
 
-    paragraphs = re.split(
-        r"\\n\\s*\\n",
-        text
-    )
+    paragraphs = re.split(r"\\n\\s*\\n", text)
 
     cleaned = []
 
@@ -95,32 +75,19 @@ def split_paragraphs(text):
         lower = p.lower()
 
         rejection_terms = [
-
             "reportable",
-
             "in the supreme court",
-
             "high court of",
-
             "petitioner",
-
             "respondent",
-
             "versus",
-
             "appearance",
-
             "coram",
-
             "advocate",
-
-            "diary no"
+            "diary no",
         ]
 
-        rejection_hits = sum(
-            1 for term in rejection_terms
-            if term in lower
-        )
+        rejection_hits = sum(1 for term in rejection_terms if term in lower)
 
         if rejection_hits >= 4:
 
@@ -130,26 +97,19 @@ def split_paragraphs(text):
 
     return cleaned
 
+
 # =========================================================
 # 🔥 EXTRACT PARA NUMBER
 # =========================================================
 
+
 def extract_para_number(para):
 
-    patterns = [
-
-        r"\b(\d{1,3})\.\s",
-        r"\((\d{1,3})\)",
-        r"paragraph\s+(\d{1,3})"
-    ]
+    patterns = [r"\b(\d{1,3})\.\s", r"\((\d{1,3})\)", r"paragraph\s+(\d{1,3})"]
 
     for pattern in patterns:
 
-        match = re.search(
-            pattern,
-            para,
-            re.I
-        )
+        match = re.search(pattern, para, re.I)
 
         if match:
 
@@ -157,12 +117,12 @@ def extract_para_number(para):
 
     return "para-unknown"
 
+
 # =========================================================
 # 🔥 RATIO INDICATORS
 # =========================================================
 
 RATIO_PATTERNS = [
-
     r"\bheld that\b",
     r"\bit is settled law\b",
     r"\bthe court held\b",
@@ -178,7 +138,6 @@ RATIO_PATTERNS = [
     r"\blegal position\b",
     r"\bbarred by\b",
     r"\bvalidly exercised\b",
-
     r"\bwe direct\b",
     r"\bwe therefore direct\b",
     r"\bit is necessary\b",
@@ -194,7 +153,7 @@ RATIO_PATTERNS = [
     r"\bcriminal antecedents\b",
     r"\bmust disclose\b",
     r"\bshall disclose\b",
-    r"\bthe directions issued\b"
+    r"\bthe directions issued\b",
 ]
 
 # =========================================================
@@ -202,63 +161,50 @@ RATIO_PATTERNS = [
 # =========================================================
 
 CATEGORY_PROPOSITIONS = {
-
     "Criminal": [
-
         "conviction",
         "sentence",
         "acquittal",
         "bail",
         "prosecution",
-        "evidence"
+        "evidence",
     ],
-
     "Civil": [
-
         "title",
         "ownership",
         "lease",
         "agreement",
         "tenancy",
-        "specific performance"
+        "specific performance",
     ],
-
     "Taxation": [
-
         "assessment",
         "reassessment",
         "deduction",
         "assessee",
         "tax liability",
-        "exemption"
+        "exemption",
     ],
-
     "Service": [
-
         "termination",
         "departmental proceeding",
         "reinstatement",
-        "disciplinary authority"
+        "disciplinary authority",
     ],
-
     "Constitutional": [
-
         "article 14",
         "article 21",
         "writ jurisdiction",
-        "fundamental rights"
-    ]
+        "fundamental rights",
+    ],
 }
 
 # =========================================================
 # 🔥 RATIO SCORING
 # =========================================================
 
-def score_ratio_paragraph(
 
-    para,
-    category=None
-):
+def score_ratio_paragraph(para, category=None):
 
     lower = para.lower()
 
@@ -270,11 +216,7 @@ def score_ratio_paragraph(
 
     for pattern in RATIO_PATTERNS:
 
-        if re.search(
-            pattern,
-            lower,
-            re.I
-        ):
+        if re.search(pattern, lower, re.I):
 
             score += 60
 
@@ -284,10 +226,7 @@ def score_ratio_paragraph(
 
     if category:
 
-        words = CATEGORY_PROPOSITIONS.get(
-            category,
-            []
-        )
+        words = CATEGORY_PROPOSITIONS.get(category, [])
 
         for word in words:
 
@@ -308,110 +247,53 @@ def score_ratio_paragraph(
     # =====================================================
 
     declaratory_terms = [
-
         "we hold",
-
         "it is held",
-
         "we direct",
-
         "we therefore direct",
-
         "constitutional mandate",
-
         "constitutional obligation",
-
         "right to know",
-
         "free and fair elections",
-
         "purity of elections",
-
         "criminal antecedents",
-
         "must disclose",
-
         "shall disclose",
-
         "candidate shall",
-
         "political parties shall",
-
         "voter awareness",
-
         "rule of law",
-
         "democracy",
-
         "constitutional courts",
-
-        "election commission"
+        "election commission",
     ]
 
-    declaratory_hits = sum(
-
-        1 for term in declaratory_terms
-
-        if term in lower
-    )
+    declaratory_hits = sum(1 for term in declaratory_terms if term in lower)
 
     score += declaratory_hits * 180
 
     return score
 
+
 # =========================================================
 # 🔥 EXTRACT RATIO
 # =========================================================
 
-def extract_ratio(
 
-    text,
-    category=None
-):
+def extract_ratio(text, category=None):
 
     # =====================================================
     # 🔥 STRUCTURAL NORMALIZATION
     # =====================================================
 
-    text = re.sub(
+    text = re.sub(r"\n\s*(\d{1,3})\.\s+", r"\n\nPARA_SPLIT_\\1. ", text)
 
-        r"\n\s*(\d{1,3})\.\s+",
+    text = re.sub(r"\n\s*(\([ivxIVX]+\))", r"\n\n\\1", text)
 
-        r"\n\nPARA_SPLIT_\\1. ",
-
-        text
-    )
-
-    text = re.sub(
-
-        r"\n\s*(\([ivxIVX]+\))",
-
-        r"\n\n\\1",
-
-        text
-    )
-
-    text = re.sub(
-
-        r"\n{3,}",
-
-        "\n\n",
-
-        text
-    )
+    text = re.sub(r"\n{3,}", "\n\n", text)
 
     paragraphs = [
-
-        p.strip()
-
-        for p in re.split(
-
-            r"\n\n+|PARA_SPLIT_\d+\.",
-
-            text
-        )
-
-        if p.strip()
+        p.strip() for p in re.split(r"\n\n+|PARA_SPLIT_\d+\.", text) if p.strip()
     ]
 
     if not paragraphs:
@@ -439,7 +321,6 @@ def extract_ratio(
         # =============================================
 
         structural_rejections = [
-
             "reportable",
             "in the supreme court of india",
             "high court of",
@@ -459,72 +340,43 @@ def extract_ratio(
             "j u d g m e n t",
             "per court",
             "advocate",
-            "diary no"
+            "diary no",
         ]
 
-        rejection_hits = sum(
-            1 for term in structural_rejections
-            if term in para_lower
-        )
+        rejection_hits = sum(1 for term in structural_rejections if term in para_lower)
 
         if rejection_hits >= 3:
 
             continue
-
 
         # =============================================
         # 🔥 HEADER / TITLE REJECTION
         # =============================================
 
         rejection_patterns = [
-
             "reportable",
-
             "in the supreme court",
-
             "high court of",
-
             "civil appeal no",
-
             "criminal appeal no",
-
             "writ petition",
-
             "versus",
-
             "petitioner",
-
             "respondent",
-
             "appellant",
-
             "appearance",
-
             "for petitioner",
-
             "for respondent",
-
             "present:",
-
             "coram",
-
             "j u d g m e n t",
-
             "per court",
-
             "advocate",
-
             "diary no",
-
-            "contempt petition"
+            "contempt petition",
         ]
 
-        if any(
-
-            pattern in para_lower
-
-            for pattern in rejection_patterns
-        ):
+        if any(pattern in para_lower for pattern in rejection_patterns):
 
             continue
 
@@ -533,32 +385,18 @@ def extract_ratio(
         # =============================================
 
         factual_patterns = [
-
             "facts of the case",
-
             "brief facts",
-
             "the petitioner herein",
-
             "the respondent herein",
-
             "has filed the present",
-
             "the present petition",
-
             "the case of the petitioner",
-
             "the facts leading",
-
-            "in the instant case"
+            "in the instant case",
         ]
 
-        factual_hits = sum(
-
-            1 for pattern in factual_patterns
-
-            if pattern in para_lower
-        )
+        factual_hits = sum(1 for pattern in factual_patterns if pattern in para_lower)
 
         if factual_hits >= 2:
 
@@ -580,49 +418,28 @@ def extract_ratio(
         # 🔥 SCORE
         # =============================================
 
-        score = score_ratio_paragraph(
-
-            para_clean,
-            category
-        )
+        score = score_ratio_paragraph(para_clean, category)
 
         # =============================================
         # 🔥 PROCEDURAL PENALTY
         # =============================================
 
         procedural_terms = [
-
             "petition has been filed",
-
             "petitioner herein",
-
             "the present petition",
-
             "brief facts",
-
             "facts of the case",
-
             "the petitioner submits",
-
             "learned counsel",
-
             "notice was issued",
-
             "the instant petition",
-
             "the present appeal",
-
             "the appellant contends",
-
-            "the respondent submits"
+            "the respondent submits",
         ]
 
-        procedural_hits = sum(
-
-            1 for term in procedural_terms
-
-            if term in para_lower
-        )
+        procedural_hits = sum(1 for term in procedural_terms if term in para_lower)
 
         score -= procedural_hits * 40
 
@@ -631,34 +448,19 @@ def extract_ratio(
         # =============================================
 
         analytical_terms = [
-
             "we hold",
-
             "it is settled",
-
             "therefore",
-
             "thus",
-
             "in our opinion",
-
             "we are of the view",
-
             "held that",
-
             "we find",
-
             "it is clear",
-
-            "the law is well settled"
+            "the law is well settled",
         ]
 
-        analytical_hits = sum(
-
-            1 for term in analytical_terms
-
-            if term in para_lower
-        )
+        analytical_hits = sum(1 for term in analytical_terms if term in para_lower)
 
         score += analytical_hits * 80
 
@@ -667,46 +469,25 @@ def extract_ratio(
         # =============================================
 
         doctrinal_terms = [
-
             "constitutional mandate",
-
             "rule of law",
-
             "free and fair elections",
-
             "democracy",
-
             "fundamental rights",
-
             "constitutional obligation",
-
             "constitutional courts",
-
             "judicial review",
-
             "interpretation of",
-
             "constitutional scheme",
-
             "public interest",
-
             "electoral reforms",
-
             "criminal antecedents",
-
             "voter awareness",
-
             "purity of elections",
-
-            "constitutional morality"
+            "constitutional morality",
         ]
 
-        doctrinal_hits = sum(
-
-            1 for term in doctrinal_terms
-
-            if term in para_lower
-        )
+        doctrinal_hits = sum(1 for term in doctrinal_terms if term in para_lower)
 
         score += doctrinal_hits * 120
 
@@ -725,46 +506,25 @@ def extract_ratio(
         # =============================================
 
         admission_terms = [
-
             "we hold",
-
             "held that",
-
             "it is clear",
-
             "therefore",
-
             "thus",
-
             "we are of the view",
-
             "constitutional",
-
             "fundamental rights",
-
             "rule of law",
-
             "judicial review",
-
             "free and fair elections",
-
             "criminal antecedents",
-
             "electoral reforms",
-
             "voter awareness",
-
             "purity of elections",
-
-            "democracy"
+            "democracy",
         ]
 
-        admission_hits = sum(
-
-            1 for term in admission_terms
-
-            if term in para_lower
-        )
+        admission_hits = sum(1 for term in admission_terms if term in para_lower)
 
         # =============================================
         # 🔥 REJECT LOW ANALYTICAL PARAGRAPHS
@@ -784,34 +544,27 @@ def extract_ratio(
 
         return None, None
 
-    cleaned = clean_text(
-        best_para
-    )
+    cleaned = clean_text(best_para)
 
     cleaned = cleaned[:900]
 
-    para_number = extract_para_number(
-        best_para
-    )
+    para_number = extract_para_number(best_para)
 
     return cleaned, para_number
+
 
 # =========================================================
 # 🔥 OPERATIVE SYNTHESIS
 # =========================================================
 
-def synthesize_operative(
 
-    operative_data
-):
+def synthesize_operative(operative_data):
 
     if not operative_data:
 
         return None
 
-    holding = operative_data.get(
-        "final_holding"
-    )
+    holding = operative_data.get("final_holding")
 
     if not holding:
 
@@ -819,14 +572,13 @@ def synthesize_operative(
 
     return clean_text(holding)
 
+
 # =========================================================
 # 🔥 POINT SYNTHESIS
 # =========================================================
 
-def synthesize_points(
 
-    points_data
-):
+def synthesize_points(points_data):
 
     if not points_data:
 
@@ -834,10 +586,7 @@ def synthesize_points(
 
     points = []
 
-    raw = points_data.get(
-        "points_of_law",
-        []
-    )
+    raw = points_data.get("points_of_law", [])
 
     for item in raw[:4]:
 
@@ -857,21 +606,18 @@ def synthesize_points(
 
     return list(dict.fromkeys(points))
 
+
 # =========================================================
 # 🔥 MAIN ENGINE
 # =========================================================
 
+
 def generate_jurisprudential_headnote(
-
     full_text,
-
     issue_data=None,
-
     points_data=None,
-
     sections_data=None,
-
-    operative_data=None
+    operative_data=None,
 ):
 
     try:
@@ -879,19 +625,13 @@ def generate_jurisprudential_headnote(
         if not full_text:
 
             return {
-
                 "headnote": "",
-
                 "ratio": None,
-
                 "structured_headnotes": [],
-
-                "confidence": 0
+                "confidence": 0,
             }
 
-        full_text = clean_text(
-            full_text
-        )
+        full_text = clean_text(full_text)
 
         # =================================================
         # 🔥 CATEGORY
@@ -901,9 +641,7 @@ def generate_jurisprudential_headnote(
 
         if issue_data:
 
-            category = issue_data.get(
-                "dominant_category"
-            )
+            category = issue_data.get("dominant_category")
 
         # =================================================
         # 🔥 DOMINANT ISSUE
@@ -913,35 +651,25 @@ def generate_jurisprudential_headnote(
 
         if issue_data:
 
-            dominant_issue = issue_data.get(
-                "dominant_issue"
-            )
+            dominant_issue = issue_data.get("dominant_issue")
 
         # =================================================
         # 🔥 POINTS
         # =================================================
 
-        points = synthesize_points(
-            points_data
-        )
+        points = synthesize_points(points_data)
 
         # =================================================
         # 🔥 RATIO
         # =================================================
 
-        ratio, ratio_para = extract_ratio(
-
-            full_text,
-            category
-        )
+        ratio, ratio_para = extract_ratio(full_text, category)
 
         # =================================================
         # 🔥 OPERATIVE
         # =================================================
 
-        operative = synthesize_operative(
-            operative_data
-        )
+        operative = synthesize_operative(operative_data)
 
         # =================================================
         # 🔥 BUILD
@@ -951,228 +679,51 @@ def generate_jurisprudential_headnote(
 
         structured_headnotes = []
 
-
         if dominant_issue:
 
-            parts.append(
-
-
-                dominant_issue
-
-
-            )
-
-
-
-
+            parts.append(dominant_issue)
 
         if points:
 
-
-
-
-
-            parts.append(
-
-
-                " — ".join(points[:3])
-
-
-            )
-
-
-
-
+            parts.append(" — ".join(points[:3]))
 
         if ratio:
 
-
-
-
-
             # =============================================
-
 
             # 🔥 DOCTRINAL CLEANUP
 
-
             # =============================================
-
-
-
-
 
             cleaned_ratio = ratio
 
-
-
-
-
             cleanup_patterns = [
-
-
-
-
-
                 r"REPORTABLE",
-
-
-
-
-
                 r"IN THE SUPREME COURT OF INDIA",
-
-
-
-
-
                 r"J U D G M E N T",
-
-
-
-
-
                 r"Signature Not Verified",
-
-
-
-
-
                 r"Digitally signed by.*",
-
-
-
-
-
                 r"Date:\s*\d{4}.*",
-
-
-
-
-
-                r"\b\d+\s*$"
-
-
+                r"\b\d+\s*$",
             ]
-
-
-
-
 
             for pattern in cleanup_patterns:
 
+                cleaned_ratio = re.sub(pattern, "", cleaned_ratio, flags=re.I)
 
-
-
-
-                cleaned_ratio = re.sub(
-
-
-
-
-
-                    pattern,
-
-
-
-
-
-                    "",
-
-
-
-
-
-                    cleaned_ratio,
-
-
-
-
-
-                    flags=re.I
-
-
-                )
-
-
-
-
-
-            cleaned_ratio = re.sub(
-
-
-
-
-
-                r"\s+",
-
-
-
-
-
-                " ",
-
-
-
-
-
-                cleaned_ratio
-
-
-            ).strip()
-
-
-
-
+            cleaned_ratio = re.sub(r"\s+", " ", cleaned_ratio).strip()
 
             # =============================================
-
 
             # 🔥 TRUNCATE SMARTLY
 
-
             # =============================================
 
+            sentences = re.split(r"(?<=[.!?])\s+", cleaned_ratio)
 
+            doctrinal_summary = " ".join(sentences[:3])
 
-
-
-            sentences = re.split(
-
-
-
-
-
-                r"(?<=[.!?])\s+",
-
-
-
-
-
-                cleaned_ratio
-
-
-            )
-
-
-
-
-
-            doctrinal_summary = " ".join(
-
-
-                sentences[:3]
-
-
-            )
-
-
-
-
-
-            parts.append(
-                f"Held: {doctrinal_summary}"
-            )
+            parts.append(f"Held: {doctrinal_summary}")
 
             if points:
 
@@ -1181,346 +732,115 @@ def generate_jurisprudential_headnote(
                     if not point:
                         continue
 
-                    structured_headnotes.append({
-                        "point_of_law": point,
-                        "holding": doctrinal_summary,
-                        "paragraphs": ratio_para if ratio_para else "para-unknown"
-                    })
+                    structured_headnotes.append(
+                        {
+                            "point_of_law": point,
+                            "holding": doctrinal_summary,
+                            "paragraphs": ratio_para if ratio_para else "para-unknown",
+                        }
+                    )
 
             elif dominant_issue:
 
-                structured_headnotes.append({
-                    "point_of_law": dominant_issue,
-                    "holding": doctrinal_summary,
-                    "paragraphs": ratio_para if ratio_para else "para-unknown"
-                })
-
-
-
-
+                structured_headnotes.append(
+                    {
+                        "point_of_law": dominant_issue,
+                        "holding": doctrinal_summary,
+                        "paragraphs": ratio_para if ratio_para else "para-unknown",
+                    }
+                )
 
         if operative:
 
-            parts.append(
-
-
-                operative
-
-
-            )
-
-
-
-
+            parts.append(operative)
 
         # =================================================
-
 
         # 🔥 DEDUP
 
-
         # =================================================
-
-
-
-
 
         final = []
 
-
-
-
-
         seen = set()
-
-
-
-
 
         for part in parts:
 
-
-
-
-
             part = clean_text(part)
-
-
-
-
 
             if not part:
 
-
-
-
-
                 continue
-
-
-
-
 
             lower = part.lower()
 
-
-
-
-
             if lower in seen:
-
-
-
-
 
                 continue
 
-
-
-
-
             seen.add(lower)
-
-
-
-
 
             final.append(part)
 
-
-
-
-
         # =================================================
-
 
         # 🔥 FINAL HEADNOTE
 
-
         # =================================================
-
-
-
-
 
         headnote = " — ".join(final)
 
-
-
-
-
         if ratio_para:
-
-
-
-
 
             headnote += f". ({ratio_para})"
 
-
-
-
-
         # =================================================
-
 
         # 🔥 CONFIDENCE
 
-
         # =================================================
-
-
-
-
 
         confidence = 75
 
-
-
-
-
         if dominant_issue:
 
-
-
-
-
             confidence += 5
-
-
-
-
 
         if ratio:
 
-
-
-
-
             confidence += 10
-
-
-
-
 
         if operative:
 
-
-
-
-
             confidence += 5
 
-
-
-
-
-        confidence = min(
-
-
-            confidence,
-
-
-            98
-
-
-        )
-
-
-
-
+        confidence = min(confidence, 98)
 
         result = {
-
-
-
-
-
-            "headnote":
-
-
-                headnote,
-
-
-
-
-
-            "ratio":
-
-
-                ratio,
-
-
-
-
-
-            "ratio_para":
-
-
-                ratio_para,
-
-
-
-
-
-
-            "structured_headnotes":
-
-                structured_headnotes,
-
-            "confidence":
-
-
-                confidence
-
-
+            "headnote": headnote,
+            "ratio": ratio,
+            "ratio_para": ratio_para,
+            "structured_headnotes": structured_headnotes,
+            "confidence": confidence,
         }
 
-
-
-
-
-        print(
-
-
-            "✅ Jurisprudential Headnote Generated:"
-
-
-        )
-
-
-
-
+        print("✅ Jurisprudential Headnote Generated:")
 
         print(result)
 
-
-
-
-
         return result
-
-
-
-
 
     except Exception as e:
 
-
-
-
-
-        print(
-
-
-            "❌ JURISPRUDENTIAL HEADNOTE ERROR:",
-
-
-            e
-
-
-        )
-
-
-
-
+        print("❌ JURISPRUDENTIAL HEADNOTE ERROR:", e)
 
         return {
-
-
-
-
-
             "headnote": "",
-
-
-
-
-
             "ratio": None,
-
-
-
-
-
             "ratio_para": None,
-
-
-
-
-
-
-            "structured_headnotes":
-
-                structured_headnotes,
-
-            "confidence": 0
-
-
+            "structured_headnotes": structured_headnotes,
+            "confidence": 0,
         }
-
-
-
 
 
 # =========================================================
@@ -1532,73 +852,17 @@ def generate_jurisprudential_headnote(
 # =========================================================
 
 
-
-
-
 def generate_headnote(
-
-
-
-
-
     full_text,
-
-
-
-
-
     issue_data=None,
-
-
-
-
-
     points_data=None,
-
-
-
-
-
     sections_data=None,
-
-
-
-
-
-    operative_data=None
-
-
+    operative_data=None,
 ):
 
-
-
-
-
     return generate_jurisprudential_headnote(
-
-
-
-
-
-        full_text,
-
-
-        issue_data,
-
-
-        points_data,
-
-
-        sections_data,
-
-
-        operative_data
-
-
+        full_text, issue_data, points_data, sections_data, operative_data
     )
-
-
-
 
 
 # =========================================================
@@ -1610,14 +874,7 @@ def generate_headnote(
 # =========================================================
 
 
-
-
-
 if __name__ == "__main__":
-
-
-
-
 
     sample = """
 
@@ -1648,67 +905,13 @@ if __name__ == "__main__":
 
     """
 
-
-
-
-
     print(
-
-
-
-
-
         generate_jurisprudential_headnote(
-
-
-
-
-
             sample,
-
-
-
-
-
             issue_data={
-
-
-                "dominant_issue":
-
-
-                "Income Tax Assessment",
-
-
-
-
-
-                "dominant_category":
-
-
-                "Taxation"
-
-
+                "dominant_issue": "Income Tax Assessment",
+                "dominant_category": "Taxation",
             },
-
-
-
-
-
-            operative_data={
-
-
-                "final_holding":
-
-
-                "Appeal Allowed"
-
-
-            }
-
-
+            operative_data={"final_holding": "Appeal Allowed"},
         )
-
-
     )
-
-

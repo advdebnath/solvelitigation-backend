@@ -1,10 +1,10 @@
 import re
 from difflib import SequenceMatcher
 
-
 # =========================================================
 # 🔥 NORMALIZATION
 # =========================================================
+
 
 def normalize_entity(text):
 
@@ -13,17 +13,9 @@ def normalize_entity(text):
 
     text = str(text).upper()
 
-    text = re.sub(
-        r"[^A-Z0-9\s]",
-        " ",
-        text
-    )
+    text = re.sub(r"[^A-Z0-9\s]", " ", text)
 
-    text = re.sub(
-        r"\s+",
-        " ",
-        text
-    ).strip()
+    text = re.sub(r"\s+", " ", text).strip()
 
     return text
 
@@ -31,6 +23,7 @@ def normalize_entity(text):
 # =========================================================
 # 🔥 FUZZY SCORE
 # =========================================================
+
 
 def similarity_score(a, b):
 
@@ -40,18 +33,13 @@ def similarity_score(a, b):
     if not a or not b:
         return 0
 
-    return int(
-        SequenceMatcher(
-            None,
-            a,
-            b
-        ).ratio() * 100
-    )
+    return int(SequenceMatcher(None, a, b).ratio() * 100)
 
 
 # =========================================================
 # 🔥 ENTITY RESOLUTION
 # =========================================================
+
 
 def resolve_entities(entity_a, entity_b):
 
@@ -76,16 +64,11 @@ def resolve_entities(entity_a, entity_b):
             match_type = "FUZZY_CANONICAL_MATCH"
 
     return {
-
         "entity_a": a,
-
         "entity_b": b,
-
         "same_entity": same_entity,
-
         "confidence": score,
-
-        "match_type": match_type
+        "match_type": match_type,
     }
 
 
@@ -95,11 +78,6 @@ def resolve_entities(entity_a, entity_b):
 
 if __name__ == "__main__":
 
-    result = resolve_entities(
-
-        "BHAGWAN DASS RAMA SHANKER",
-
-        "BHAGWAN DASS RAMASHANKER"
-    )
+    result = resolve_entities("BHAGWAN DASS RAMA SHANKER", "BHAGWAN DASS RAMASHANKER")
 
     print(result)

@@ -4,6 +4,7 @@ import re
 # 🔥 TEXT NORMALIZATION
 # =========================================================
 
+
 def normalize(text):
 
     if not text:
@@ -15,9 +16,11 @@ def normalize(text):
 
     return text.strip()
 
+
 # =========================================================
 # 🔥 LOCAL EVIDENTIARY CHECK
 # =========================================================
+
 
 def locally_supported(term, full_text):
 
@@ -48,9 +51,11 @@ def locally_supported(term, full_text):
 
     return False
 
+
 # =========================================================
 # 🔥 ACT VALIDATION
 # =========================================================
+
 
 def validate_acts(acts, full_text):
 
@@ -60,7 +65,7 @@ def validate_acts(acts, full_text):
         "Indian Penal Code, 1860",
         "Code Of Criminal Procedure, 1973",
         "Narcotic Drugs And Psychotropic Substances Act, 1985",
-        "Indian Evidence Act, 1872"
+        "Indian Evidence Act, 1872",
     }
 
     for act in acts:
@@ -85,16 +90,15 @@ def validate_acts(acts, full_text):
 
         else:
 
-            print(
-                "❌ REJECTED ACT:",
-                act
-            )
+            print("❌ REJECTED ACT:", act)
 
     return validated
+
 
 # =========================================================
 # 🔥 POINT OF LAW VALIDATION
 # =========================================================
+
 
 def validate_points(points, full_text):
 
@@ -106,10 +110,7 @@ def validate_points(points, full_text):
 
         if isinstance(item, dict):
 
-            point = item.get(
-                "point",
-                ""
-            )
+            point = item.get("point", "")
 
         else:
 
@@ -121,36 +122,26 @@ def validate_points(points, full_text):
 
         else:
 
-            print(
-                "❌ REJECTED POINT:",
-                point
-            )
+            print("❌ REJECTED POINT:", point)
 
     return validated
+
 
 # =========================================================
 # 🔥 ISSUE VALIDATION
 # =========================================================
+
 
 def validate_issue(issue_data, full_text):
 
     if not isinstance(issue_data, dict):
         return issue_data
 
-    dominant_issue = issue_data.get(
-        "dominant_issue",
-        ""
-    )
+    dominant_issue = issue_data.get("dominant_issue", "")
 
-    if not locally_supported(
-        dominant_issue,
-        full_text
-    ):
+    if not locally_supported(dominant_issue, full_text):
 
-        print(
-            "❌ REJECTED ISSUE:",
-            dominant_issue
-        )
+        print("❌ REJECTED ISSUE:", dominant_issue)
 
         issue_data["dominant_issue"] = "General"
 

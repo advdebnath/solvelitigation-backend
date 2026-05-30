@@ -1,29 +1,24 @@
 import re
 
-
 # =========================================================
 # 🔥 ARGUMENT PATTERNS
 # =========================================================
 
 ARGUMENT_PATTERNS = {
-
     "Petitioner": [
-
         r"learned counsel for the petitioner submitted",
         r"petitioner contended",
         r"petitioner argued",
         r"it was submitted on behalf of the petitioner",
-        r"counsel appearing for the petitioner"
+        r"counsel appearing for the petitioner",
     ],
-
     "Respondent": [
-
         r"learned counsel for the respondent submitted",
         r"respondent contended",
         r"respondent argued",
         r"it was submitted on behalf of the respondent",
-        r"counsel appearing for the respondent"
-    ]
+        r"counsel appearing for the respondent",
+    ],
 }
 
 
@@ -32,13 +27,12 @@ ARGUMENT_PATTERNS = {
 # =========================================================
 
 ACCEPT_PATTERNS = [
-
     r"we agree",
     r"submission deserves acceptance",
     r"contention is accepted",
     r"argument is accepted",
     r"correctly submitted",
-    r"has merit"
+    r"has merit",
 ]
 
 
@@ -47,13 +41,12 @@ ACCEPT_PATTERNS = [
 # =========================================================
 
 REJECT_PATTERNS = [
-
     r"cannot be accepted",
     r"submission is rejected",
     r"without merit",
     r"contention fails",
     r"argument fails",
-    r"we do not agree"
+    r"we do not agree",
 ]
 
 
@@ -61,13 +54,10 @@ REJECT_PATTERNS = [
 # 🔥 CLEAN
 # =========================================================
 
+
 def clean_text(text):
 
-    text = re.sub(
-        r"\s+",
-        " ",
-        text
-    )
+    text = re.sub(r"\s+", " ", text)
 
     return text.strip()
 
@@ -76,25 +66,18 @@ def clean_text(text):
 # 🔥 DETECT STATUS
 # =========================================================
 
+
 def detect_argument_status(context):
 
     for pattern in ACCEPT_PATTERNS:
 
-        if re.search(
-            pattern,
-            context,
-            re.I
-        ):
+        if re.search(pattern, context, re.I):
 
             return "Accepted"
 
     for pattern in REJECT_PATTERNS:
 
-        if re.search(
-            pattern,
-            context,
-            re.I
-        ):
+        if re.search(pattern, context, re.I):
 
             return "Rejected"
 
@@ -105,19 +88,16 @@ def detect_argument_status(context):
 # 🔥 SPLIT SENTENCES
 # =========================================================
 
+
 def split_sentences(text):
 
-    return re.split(
-
-        r'(?<=[.!?])\s+',
-
-        text
-    )
+    return re.split(r"(?<=[.!?])\s+", text)
 
 
 # =========================================================
 # 🔥 EXTRACT ARGUMENTS
 # =========================================================
+
 
 def extract_arguments(text):
 
@@ -149,11 +129,7 @@ def extract_arguments(text):
 
                 for pattern in patterns:
 
-                    if re.search(
-                        pattern,
-                        lower,
-                        re.I
-                    ):
+                    if re.search(pattern, lower, re.I):
 
                         role = label
                         matched = True
@@ -169,40 +145,24 @@ def extract_arguments(text):
             # 🔥 LOCAL CONTEXT ONLY
             # =============================================
 
-            local_context = " ".join(
+            local_context = " ".join(sentences[idx : min(len(sentences), idx + 2)])
 
-                sentences[
-                    idx:
-                    min(len(sentences), idx + 2)
-                ]
-            )
-
-            local_context = clean_text(
-                local_context
-            )
+            local_context = clean_text(local_context)
 
             # =============================================
             # 🔥 STATUS
             # =============================================
 
-            status = detect_argument_status(
-                local_context
+            status = detect_argument_status(local_context)
+
+            arguments.append(
+                {
+                    "party": role,
+                    "argument": clean_text(sentence),
+                    "status": status,
+                    "context": local_context[:1000],
+                }
             )
-
-            arguments.append({
-
-                "party":
-                    role,
-
-                "argument":
-                    clean_text(sentence),
-
-                "status":
-                    status,
-
-                "context":
-                    local_context[:1000]
-            })
 
         # =================================================
         # 🔥 REMOVE DUPLICATES
@@ -214,12 +174,7 @@ def extract_arguments(text):
 
         for item in arguments:
 
-            key = (
-
-                item["party"].lower(),
-
-                item["argument"].lower()
-            )
+            key = (item["party"].lower(), item["argument"].lower())
 
             if key in seen:
                 continue
@@ -232,18 +187,9 @@ def extract_arguments(text):
         # 🔥 RESULT
         # =================================================
 
-        result = {
+        result = {"arguments": unique, "confidence": 95}
 
-            "arguments":
-                unique,
-
-            "confidence":
-                95
-        }
-
-        print(
-            "✅ Argument Mining Extracted:"
-        )
+        print("✅ Argument Mining Extracted:")
 
         print(result)
 
@@ -251,16 +197,9 @@ def extract_arguments(text):
 
     except Exception as e:
 
-        print(
-            "❌ Argument Mining Error:",
-            str(e)
-        )
+        print("❌ Argument Mining Error:", str(e))
 
-        return {
-
-            "arguments": [],
-            "confidence": 0
-        }
+        return {"arguments": [], "confidence": 0}
 
 
 # =========================================================
@@ -282,6 +221,4 @@ if __name__ == "__main__":
     The contention cannot be accepted.
     """
 
-    print(
-        extract_arguments(sample)
-    )
+    print(extract_arguments(sample))

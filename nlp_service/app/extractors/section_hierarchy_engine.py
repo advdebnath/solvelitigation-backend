@@ -1,16 +1,13 @@
 import re
 
-
 # =========================================================
 # 🔥 SECTION ROLE MAP
 # =========================================================
 
 SECTION_ROLE_MAP = {
-
     # -----------------------------------------------------
     # IPC
     # -----------------------------------------------------
-
     "302": "Murder",
     "304B": "Dowry Death",
     "307": "Attempt to Murder",
@@ -21,27 +18,21 @@ SECTION_ROLE_MAP = {
     "120B": "Criminal Conspiracy",
     "34": "Common Intention",
     "149": "Unlawful Assembly Liability",
-
     # -----------------------------------------------------
     # CrPC
     # -----------------------------------------------------
-
     "438": "Anticipatory Bail",
     "439": "Regular Bail",
     "482": "Inherent Powers",
     "125": "Maintenance",
-
     # -----------------------------------------------------
     # Constitution
     # -----------------------------------------------------
-
     "226": "Writ Jurisdiction",
     "32": "Constitutional Remedies",
-
     # -----------------------------------------------------
     # NI Act
     # -----------------------------------------------------
-
     "138": "Cheque Dishonour",
 }
 
@@ -49,6 +40,7 @@ SECTION_ROLE_MAP = {
 # =========================================================
 # 🔥 ROLE CLASSIFIER
 # =========================================================
+
 
 def classify_section_role(section):
 
@@ -58,21 +50,15 @@ def classify_section_role(section):
 
     cleaned = str(section).strip().upper()
 
-    cleaned = re.sub(
-        r"[^0-9A-Z]",
-        "",
-        cleaned
-    )
+    cleaned = re.sub(r"[^0-9A-Z]", "", cleaned)
 
-    return SECTION_ROLE_MAP.get(
-        cleaned,
-        "General"
-    )
+    return SECTION_ROLE_MAP.get(cleaned, "General")
 
 
 # =========================================================
 # 🔥 HIERARCHY BUILDER
 # =========================================================
+
 
 def build_section_hierarchy(sections):
 
@@ -104,38 +90,17 @@ def build_section_hierarchy(sections):
 
         seen.add(normalized)
 
-        role = classify_section_role(
-            normalized
+        role = classify_section_role(normalized)
+
+        hierarchy.append(
+            {
+                "section": normalized,
+                "act": item.get("act"),
+                "role": role,
+                "context_score": item.get("context_score", 0),
+            }
         )
 
-        hierarchy.append({
-
-            "section":
-                normalized,
-
-            "act":
-                item.get("act"),
-
-            "role":
-                role,
-
-            "context_score":
-                item.get(
-                    "context_score",
-                    0
-                )
-        })
-
-    hierarchy = sorted(
-
-        hierarchy,
-
-        key=lambda x: x.get(
-            "context_score",
-            0
-        ),
-
-        reverse=True
-    )
+    hierarchy = sorted(hierarchy, key=lambda x: x.get("context_score", 0), reverse=True)
 
     return hierarchy

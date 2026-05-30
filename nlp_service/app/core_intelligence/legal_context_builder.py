@@ -6,7 +6,7 @@ def build_validated_legal_context(
     resolved_sections: List[dict],
     canonical_issue_data: dict,
     court_type: str = "",
-    case_type: str = ""
+    case_type: str = "",
 ) -> Dict:
 
     domain = "UNKNOWN"
@@ -68,5 +68,5 @@ def build_validated_legal_context(
         "rejected_acts": rejected_acts,
         "resolved_sections": resolved_sections,
         "issues": canonical_issue_data,
-        "validated": True
+        "validated": True,
     }

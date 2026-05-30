@@ -10,43 +10,18 @@ from collections import defaultdict
 # =========================================================
 
 DOCTRINAL_SUPPRESSION = {
-
-    "Joint Hindu Family": [
-
-        "wakf",
-        "wakf board",
-        "wakf tribunal",
-        "mutawalli"
-    ],
-
-    "Tenancy Surrender": [
-
-        "wakf",
-        "section 83",
-        "section 85",
-        "tribunal"
-    ],
-
-    "Murder Conviction": [
-
-        "civil appeal",
-        "wakf",
-        "property dispute"
-    ]
+    "Joint Hindu Family": ["wakf", "wakf board", "wakf tribunal", "mutawalli"],
+    "Tenancy Surrender": ["wakf", "section 83", "section 85", "tribunal"],
+    "Murder Conviction": ["civil appeal", "wakf", "property dispute"],
 }
 
 
 SUPPRESSED_ISSUES = [
-
     "Joint Hindu Family",
-
     "Tenancy Surrender",
-
     "Coparcenary",
-
     "Karta",
-
-    "Partition"
+    "Partition",
 ]
 
 # =========================================================
@@ -54,167 +29,111 @@ SUPPRESSED_ISSUES = [
 # =========================================================
 
 LEGAL_ISSUE_ONTOLOGY = {
-
     "Wakf Tribunal Jurisdiction": [
-
         "wakf tribunal",
         "tribunal constituted under section 83",
         "exclusive jurisdiction",
         "wakf dispute",
-        "tribunal jurisdiction"
+        "tribunal jurisdiction",
     ],
-
     "Bar Of Civil Court Jurisdiction": [
-
         "civil court shall have no jurisdiction",
         "bar of jurisdiction",
         "section 85",
         "jurisdiction barred",
-        "civil court barred"
+        "civil court barred",
     ],
-
     "Maintainability Of Writ Petition": [
-
         "maintainability",
         "writ petition",
         "article 226",
-        "article 227"
+        "article 227",
     ],
-
     "Jurisdictional Error": [
-
         "without jurisdiction",
         "lack of jurisdiction",
-        "jurisdictional issue"
+        "jurisdictional issue",
     ],
-
     "Natural Justice": [
-
         "principles of natural justice",
         "audi alteram partem",
-        "opportunity of hearing"
+        "opportunity of hearing",
     ],
-
     "Fraud And Misrepresentation": [
-
         "fraud",
         "misrepresentation",
-        "suppression of facts"
+        "suppression of facts",
     ],
-
     "Electoral Transparency": [
-
         "criminal antecedents",
         "electoral transparency",
         "right to vote",
         "informed choice of voters",
-        "candidate disclosure"
+        "candidate disclosure",
     ],
-
     "Criminal Antecedent Disclosure": [
-
         "criminal antecedents",
         "candidate is convicted",
         "candidate is acquitted",
         "disclosure of criminal cases",
-        "pending criminal cases"
+        "pending criminal cases",
     ],
-
     "Election Commission Compliance": [
-
         "election commission of india",
         "eci",
         "compliance with directions",
         "election commission",
-        "directions issued"
+        "directions issued",
     ],
-
     "Free And Fair Election": [
-
         "free and fair election",
         "constitutional democracy",
         "purity of elections",
-        "electoral process"
+        "electoral process",
     ],
-
     "Contempt Jurisdiction": [
-
         "contempt petition",
         "wilful disobedience",
         "contempt jurisdiction",
-        "flouting of directions"
-    ]
-
-        ,
-
+        "flouting of directions",
+    ],
     "Benefit Of Doubt": [
-
         "benefit of doubt",
-
         "prosecution failed",
-
         "evidence insufficient",
-
         "failed to prove",
-
         "reasonable doubt",
-
-        "suspicion cannot take the place of proof"
+        "suspicion cannot take the place of proof",
     ],
-
     "Conviction Set Aside": [
-
         "set aside the conviction",
-
         "orders of conviction set aside",
-
         "conviction and sentence set aside",
-
         "acquitted",
-
         "appeal allowed",
-
-        "set at liberty"
+        "set at liberty",
     ],
-
     "Criminal Appeal Allowed": [
-
         "criminal appeal allowed",
-
         "appeals are allowed",
-
         "allow these appeals",
-
         "appellants acquitted",
-
-        "released forthwith"
+        "released forthwith",
     ],
-
     "Evidentiary Insufficiency": [
-
         "lack of evidence",
-
         "evidence insufficient",
-
         "material contradiction",
-
         "improvements in testimony",
-
-        "prosecution failed to establish"
+        "prosecution failed to establish",
     ],
-
     "Appellate Interference": [
-
         "high court erred",
-
         "trial court erred",
-
         "judgment cannot be sustained",
-
         "conviction unsustainable",
-
-        "findings are perverse"
-    ]
+        "findings are perverse",
+    ],
 }
 
 
@@ -223,183 +142,98 @@ LEGAL_ISSUE_ONTOLOGY = {
 # =========================================================
 
 SEMANTIC_ISSUE_PATTERNS = {
-
     "Wakf Tribunal Jurisdiction": [
-
         "wakf tribunal",
         "section 83",
         "section 85",
         "tribunal had jurisdiction",
-        "exclusive jurisdiction"
+        "exclusive jurisdiction",
     ],
-
     "Bar Of Civil Court Jurisdiction": [
-
         "civil court shall have no jurisdiction",
         "barred by section 85",
         "jurisdiction barred",
-        "civil court jurisdiction"
+        "civil court jurisdiction",
     ],
-
     "Maintainability Of Writ Petition": [
-
         "article 226",
         "article 227",
         "writ petition",
-        "maintainability"
+        "maintainability",
     ],
-
     "Jurisdictional Error": [
-
         "without jurisdiction",
         "exceeded jurisdiction",
-        "jurisdictional issue"
+        "jurisdictional issue",
     ],
-
-    "Tribunal Adjudication": [
-
-        "tribunal",
-        "adjudication",
-        "wakf board"
-    ],
-
+    "Tribunal Adjudication": ["tribunal", "adjudication", "wakf board"],
     "Jurisdiction Of Tribunal": [
-
         "jurisdiction of tribunal",
         "tribunal jurisdiction",
-        "competent tribunal"
+        "competent tribunal",
     ],
-
-    "Bail Jurisprudence": [
-
-        "grant of bail",
-        "anticipatory bail",
-        "regular bail"
-    ],
-
-    "Murder Conviction": [
-
-        "section 302",
-        "homicidal death",
-        "murder conviction"
-    ],
-
+    "Bail Jurisprudence": ["grant of bail", "anticipatory bail", "regular bail"],
+    "Murder Conviction": ["section 302", "homicidal death", "murder conviction"],
     "Departmental Proceeding": [
-
         "departmental proceeding",
         "disciplinary authority",
-        "dismissal from service"
+        "dismissal from service",
     ],
-
-    "Contractual Breach": [
-
-        "breach of contract",
-        "specific performance"
-    ],
-
+    "Contractual Breach": ["breach of contract", "specific performance"],
     "Electoral Transparency": [
-
         "electoral transparency",
         "right to vote",
-        "informed choice"
+        "informed choice",
     ],
-
     "Criminal Antecedent Disclosure": [
-
         "criminal antecedents",
         "candidate disclosure",
-        "pending criminal cases"
+        "pending criminal cases",
     ],
-
     "Election Commission Compliance": [
-
         "election commission",
         "eci",
-        "compliance report"
+        "compliance report",
     ],
-
-    "Free And Fair Election": [
-
-        "free and fair election",
-        "purity of elections"
-    ],
-
-    "Contempt Jurisdiction": [
-
-        "contempt petition",
-        "wilful disobedience"
-    ]
-        ,
-
+    "Free And Fair Election": ["free and fair election", "purity of elections"],
+    "Contempt Jurisdiction": ["contempt petition", "wilful disobedience"],
     "Benefit Of Doubt": [
-
         "benefit of doubt",
-
         "prosecution failed",
-
         "evidence insufficient",
-
         "failed to prove",
-
         "reasonable doubt",
-
-        "suspicion cannot take the place of proof"
+        "suspicion cannot take the place of proof",
     ],
-
     "Conviction Set Aside": [
-
         "set aside the conviction",
-
         "orders of conviction set aside",
-
         "conviction and sentence set aside",
-
         "acquitted",
-
         "appeal allowed",
-
-        "set at liberty"
+        "set at liberty",
     ],
-
     "Criminal Appeal Allowed": [
-
         "criminal appeal allowed",
-
         "appeals are allowed",
-
         "allow these appeals",
-
         "appellants acquitted",
-
-        "released forthwith"
+        "released forthwith",
     ],
-
     "Evidentiary Insufficiency": [
-
         "lack of evidence",
-
         "evidence insufficient",
-
         "material contradiction",
-
         "improvements in testimony",
-
-        "prosecution failed to establish"
+        "prosecution failed to establish",
     ],
-
     "Appellate Interference": [
-
         "high court erred",
-
         "trial court erred",
-
         "judgment cannot be sustained",
-
         "conviction unsustainable",
-
-        "findings are perverse"
-    ]
-
+        "findings are perverse",
+    ],
 }
 
 # =========================================================
@@ -407,88 +241,40 @@ SEMANTIC_ISSUE_PATTERNS = {
 # =========================================================
 
 ISSUE_CATEGORY_MAP = {
-
-    "Wakf Tribunal Jurisdiction":
-        "Civil",
-
-    "Bar Of Civil Court Jurisdiction":
-        "Civil",
-
-    "Maintainability Of Writ Petition":
-        "Constitutional",
-
-    "Jurisdictional Error":
-        "Constitutional",
-
-    "Natural Justice":
-        "Civil",
-
-    "Fraud And Misrepresentation":
-        "Civil",
-
-    "Jurisdiction Of Tribunal":
-        "Civil",
-
-    "Bail Jurisprudence":
-        "Criminal",
-
-    "Murder Conviction":
-        "Criminal",
-
-    "Departmental Proceeding":
-        "Service Law",
-
-    "Contractual Breach":
-        "Civil",
-
-    "Electoral Transparency":
-        "Constitutional",
-
-    "Criminal Antecedent Disclosure":
-        "Constitutional",
-
-    "Election Commission Compliance":
-        "Constitutional",
-
-    "Free And Fair Election":
-        "Constitutional",
-
-    "Contempt Jurisdiction":
-        "Constitutional"
-
-        ,
-
-    "Benefit Of Doubt":
-        "Criminal",
-
-    "Conviction Set Aside":
-        "Criminal",
-
-    "Criminal Appeal Allowed":
-        "Criminal",
-
-    "Evidentiary Insufficiency":
-        "Criminal",
-
-    "Appellate Interference":
-        "Criminal"
+    "Wakf Tribunal Jurisdiction": "Civil",
+    "Bar Of Civil Court Jurisdiction": "Civil",
+    "Maintainability Of Writ Petition": "Constitutional",
+    "Jurisdictional Error": "Constitutional",
+    "Natural Justice": "Civil",
+    "Fraud And Misrepresentation": "Civil",
+    "Jurisdiction Of Tribunal": "Civil",
+    "Bail Jurisprudence": "Criminal",
+    "Murder Conviction": "Criminal",
+    "Departmental Proceeding": "Service Law",
+    "Contractual Breach": "Civil",
+    "Electoral Transparency": "Constitutional",
+    "Criminal Antecedent Disclosure": "Constitutional",
+    "Election Commission Compliance": "Constitutional",
+    "Free And Fair Election": "Constitutional",
+    "Contempt Jurisdiction": "Constitutional",
+    "Benefit Of Doubt": "Criminal",
+    "Conviction Set Aside": "Criminal",
+    "Criminal Appeal Allowed": "Criminal",
+    "Evidentiary Insufficiency": "Criminal",
+    "Appellate Interference": "Criminal",
 }
 
 # =========================================================
 # 🔥 MAIN ENGINE
 # =========================================================
 
+
 def cluster_semantic_issues(
-
     full_text="",
-
     acts=None,
-
     sections=None,
-
     points_of_law=None,
-
-    jurisprudential_chunks=None
+    jurisprudential_chunks=None,
 ):
 
     if acts is None:
@@ -502,8 +288,6 @@ def cluster_semantic_issues(
 
     if jurisprudential_chunks is None:
         jurisprudential_chunks = []
-
-
 
     issue_scores = defaultdict(int)
 
@@ -531,14 +315,7 @@ def cluster_semantic_issues(
 
         for phrase in phrases:
 
-            hits = len(
-
-                re.findall(
-                    re.escape(phrase),
-                    full_text,
-                    flags=re.I
-                )
-            )
+            hits = len(re.findall(re.escape(phrase), full_text, flags=re.I))
 
             total_hits += hits
 
@@ -554,10 +331,7 @@ def cluster_semantic_issues(
 
                 score += 50
 
-            boost_issue(
-                issue,
-                score
-            )
+            boost_issue(issue, score)
 
     # =====================================================
     # 🔥 FALLBACK PATTERN MATCHING
@@ -569,20 +343,11 @@ def cluster_semantic_issues(
 
         for pattern in patterns:
 
-            hits = len(
-
-                re.findall(
-                    re.escape(pattern.lower()),
-                    text
-                )
-            )
+            hits = len(re.findall(re.escape(pattern.lower()), text))
 
             if hits:
 
-                boost_issue(
-                    issue,
-                    hits * 15
-                )
+                boost_issue(issue, hits * 15)
 
     # =====================================================
     # 🔥 ACT BOOSTING
@@ -592,22 +357,13 @@ def cluster_semantic_issues(
 
     if "wakf" in acts_text:
 
-        boost_issue(
-            "Wakf Tribunal Jurisdiction",
-            80
-        )
+        boost_issue("Wakf Tribunal Jurisdiction", 80)
 
-        boost_issue(
-            "Bar Of Civil Court Jurisdiction",
-            80
-        )
+        boost_issue("Bar Of Civil Court Jurisdiction", 80)
 
     if "constitution" in acts_text:
 
-        boost_issue(
-            "Maintainability Of Writ Petition",
-            50
-        )
+        boost_issue("Maintainability Of Writ Petition", 50)
 
     # =====================================================
     # 🔥 SECTION BOOSTING
@@ -619,49 +375,27 @@ def cluster_semantic_issues(
 
         if isinstance(s, dict):
 
-            section_values.append(
-
-                str(
-                    s.get(
-                        "section",
-                        ""
-                    )
-                )
-            )
+            section_values.append(str(s.get("section", "")))
 
         else:
 
-            section_values.append(
-                str(s)
-            )
+            section_values.append(str(s))
 
     if "85" in section_values:
 
-        boost_issue(
-            "Bar Of Civil Court Jurisdiction",
-            100
-        )
+        boost_issue("Bar Of Civil Court Jurisdiction", 100)
 
     if "226" in section_values:
 
-        boost_issue(
-            "Maintainability Of Writ Petition",
-            80
-        )
+        boost_issue("Maintainability Of Writ Petition", 80)
 
     if "227" in section_values:
 
-        boost_issue(
-            "Maintainability Of Writ Petition",
-            80
-        )
+        boost_issue("Maintainability Of Writ Petition", 80)
 
     if "302" in section_values:
 
-        boost_issue(
-            "Murder Conviction",
-            100
-        )
+        boost_issue("Murder Conviction", 100)
 
     # =====================================================
     # 🔥 POINT OF LAW BOOSTING
@@ -671,10 +405,7 @@ def cluster_semantic_issues(
 
         if isinstance(point, dict):
 
-            p = point.get(
-                "point",
-                ""
-            ).lower()
+            p = point.get("point", "").lower()
 
         else:
 
@@ -682,17 +413,11 @@ def cluster_semantic_issues(
 
         if "wakf" in p:
 
-            boost_issue(
-                "Wakf Tribunal Jurisdiction",
-                50
-            )
+            boost_issue("Wakf Tribunal Jurisdiction", 50)
 
         if "bail" in p:
 
-            boost_issue(
-                "Bail Jurisprudence",
-                50
-            )
+            boost_issue("Bail Jurisprudence", 50)
 
     # =====================================================
     # 🔥 OPERATIVE ORDER BOOST
@@ -704,12 +429,7 @@ def cluster_semantic_issues(
 
         issue_lower = issue.lower()
 
-        if any(
-
-            word in operative_zone
-
-            for word in issue_lower.split()
-        ):
+        if any(word in operative_zone for word in issue_lower.split()):
 
             issue_scores[issue] += 80
 
@@ -723,21 +443,11 @@ def cluster_semantic_issues(
 
     dynamic_threshold = 35
 
-    if any(
-
-        "jurisdiction" in k.lower()
-
-        for k in issue_scores
-    ):
+    if any("jurisdiction" in k.lower() for k in issue_scores):
 
         dynamic_threshold = 25
 
-    if any(
-
-        "wakf" in k.lower()
-
-        for k in issue_scores
-    ):
+    if any("wakf" in k.lower() for k in issue_scores):
 
         dynamic_threshold = 20
 
@@ -747,14 +457,7 @@ def cluster_semantic_issues(
     print("🔥 DYNAMIC THRESHOLD:")
     print(dynamic_threshold)
 
-    filtered_issues = {
-
-        k: v
-
-        for k, v in issue_scores.items()
-
-        if v >= dynamic_threshold
-    }
+    filtered_issues = {k: v for k, v in issue_scores.items() if v >= dynamic_threshold}
 
     # =====================================================
     # 🔥 FALLBACK DOMINANT ISSUE RECOVERY
@@ -762,12 +465,7 @@ def cluster_semantic_issues(
 
     if not filtered_issues and issue_scores:
 
-        top_issue = max(
-
-            issue_scores,
-
-            key=issue_scores.get
-        )
+        top_issue = max(issue_scores, key=issue_scores.get)
 
         filtered_issues[top_issue] = issue_scores[top_issue]
 
@@ -781,10 +479,7 @@ def cluster_semantic_issues(
 
         suppress = False
 
-        suppression_terms = DOCTRINAL_SUPPRESSION.get(
-            issue,
-            []
-        )
+        suppression_terms = DOCTRINAL_SUPPRESSION.get(issue, [])
 
         for term in suppression_terms:
 
@@ -808,27 +503,16 @@ def cluster_semantic_issues(
     final_issues = []
 
     for issue, score in sorted(
-
-        filtered_issues.items(),
-
-        key=lambda x: x[1],
-
-        reverse=True
+        filtered_issues.items(), key=lambda x: x[1], reverse=True
     ):
 
-        final_issues.append({
-
-            "issue": issue,
-
-            "category":
-
-                ISSUE_CATEGORY_MAP.get(
-                    issue,
-                    "General"
-                ),
-
-            "score": score
-        })
+        final_issues.append(
+            {
+                "issue": issue,
+                "category": ISSUE_CATEGORY_MAP.get(issue, "General"),
+                "score": score,
+            }
+        )
 
     dominant_issue = None
     dominant_category = None
@@ -840,15 +524,8 @@ def cluster_semantic_issues(
         dominant_category = final_issues[0]["category"]
 
     return {
-
         "issues": final_issues[:8],
-
         "dominant_issue": dominant_issue,
-
         "dominant_category": dominant_category,
-
-        "confidence": min(
-            95,
-            50 + len(final_issues) * 5
-        )
+        "confidence": min(95, 50 + len(final_issues) * 5),
     }

@@ -5,84 +5,34 @@ import re
 # =========================================================
 
 DOCTRINE_PATTERNS = {
-
     "Doctrine Of Natural Justice": [
-
-        r'natural justice',
-        r'audi alteram partem',
-        r'bias',
-        r'nemo judex'
+        r"natural justice",
+        r"audi alteram partem",
+        r"bias",
+        r"nemo judex",
     ],
-
     "Doctrine Of Proportionality": [
-
-        r'proportionality',
-        r'proportionate punishment',
-        r'disproportionate'
+        r"proportionality",
+        r"proportionate punishment",
+        r"disproportionate",
     ],
-
-    "Doctrine Of Legitimate Expectation": [
-
-        r'legitimate expectation'
-    ],
-
-    "Doctrine Of Basic Structure": [
-
-        r'basic structure'
-    ],
-
-    "Doctrine Of Severability": [
-
-        r'severability'
-    ],
-
-    "Doctrine Of Eclipse": [
-
-        r'doctrine of eclipse'
-    ],
-
-    "Doctrine Of Waiver": [
-
-        r'waiver',
-        r'waived'
-    ],
-
-    "Doctrine Of Estoppel": [
-
-        r'estoppel',
-        r'promissory estoppel'
-    ],
-
-    "Doctrine Of Ultra Vires": [
-
-        r'ultra vires'
-    ],
-
-    "Doctrine Of Res Judicata": [
-
-        r'res judicata'
-    ],
-
-    "Doctrine Of Laches": [
-
-        r'laches',
-        r'delay and laches'
-    ],
-
-    "Doctrine Of Pith And Substance": [
-
-        r'pith and substance'
-    ],
-
-    "Doctrine Of Colourable Legislation": [
-
-        r'colourable legislation'
-    ]
+    "Doctrine Of Legitimate Expectation": [r"legitimate expectation"],
+    "Doctrine Of Basic Structure": [r"basic structure"],
+    "Doctrine Of Severability": [r"severability"],
+    "Doctrine Of Eclipse": [r"doctrine of eclipse"],
+    "Doctrine Of Waiver": [r"waiver", r"waived"],
+    "Doctrine Of Estoppel": [r"estoppel", r"promissory estoppel"],
+    "Doctrine Of Ultra Vires": [r"ultra vires"],
+    "Doctrine Of Res Judicata": [r"res judicata"],
+    "Doctrine Of Laches": [r"laches", r"delay and laches"],
+    "Doctrine Of Pith And Substance": [r"pith and substance"],
+    "Doctrine Of Colourable Legislation": [r"colourable legislation"],
 }
 
 # =========================================================
 # 🔥 DETECT DOCTRINE
 # =========================================================
+
 
 def detect_doctrine_context(text, doctrine_name):
 
@@ -99,9 +49,11 @@ def detect_doctrine_context(text, doctrine_name):
 
     return min(score, 100)
 
+
 # =========================================================
 # 🔥 MAIN ENGINE
 # =========================================================
+
 
 def extract_doctrines(full_text=""):
 
@@ -123,12 +75,7 @@ def extract_doctrines(full_text=""):
 
             for pattern in patterns:
 
-                if re.search(
-
-                    pattern,
-                    lowered,
-                    flags=re.IGNORECASE
-                ):
+                if re.search(pattern, lowered, flags=re.IGNORECASE):
 
                     matched = True
                     break
@@ -141,34 +88,21 @@ def extract_doctrines(full_text=""):
 
             seen.add(doctrine)
 
-            doctrines.append({
-
-                "doctrine":
-                    doctrine,
-
-                "confidence":
-                    detect_doctrine_context(
-                        lowered,
-                        doctrine
-                    ),
-
-                "canonical":
-                    True
-            })
+            doctrines.append(
+                {
+                    "doctrine": doctrine,
+                    "confidence": detect_doctrine_context(lowered, doctrine),
+                    "canonical": True,
+                }
+            )
 
         print("✅ Doctrines Extracted:")
         print(doctrines)
 
         return {
-
-            "doctrine_evolution":
-                doctrines,
-
-            "count":
-                len(doctrines),
-
-            "confidence":
-                90
+            "doctrine_evolution": doctrines,
+            "count": len(doctrines),
+            "confidence": 90,
         }
 
     except Exception as e:
@@ -176,9 +110,4 @@ def extract_doctrines(full_text=""):
         print("❌ Doctrine Extraction Error:")
         print(str(e))
 
-        return {
-
-            "doctrine_evolution": [],
-            "count": 0,
-            "confidence": 0
-        }
+        return {"doctrine_evolution": [], "count": 0, "confidence": 0}

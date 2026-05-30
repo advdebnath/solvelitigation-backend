@@ -1,5 +1,6 @@
 import re
 
+
 def extract_judgment_date(text):
     patterns = [
         r"\d{2}-[A-Za-z]{3}-\d{4}",
@@ -30,7 +31,7 @@ def generate_citation(db, date_str, text):
     volume_doc = db.volumes.find_one({"year": year}) or {
         "year": year,
         "volume": 1,
-        "currentPage": 1
+        "currentPage": 1,
     }
 
     start_page = volume_doc["currentPage"]
@@ -45,7 +46,7 @@ def generate_citation(db, date_str, text):
     db.volumes.update_one(
         {"year": year},
         {"$set": {"volume": volume_doc["volume"], "currentPage": end_page}},
-        upsert=True
+        upsert=True,
     )
 
     citation = f"{year} ({volume_doc['volume']}) {prefix} {start_page}"

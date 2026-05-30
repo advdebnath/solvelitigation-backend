@@ -5,7 +5,6 @@ import re
 # =========================================================
 
 CRIMINAL_ACTS = [
-
     "Indian Penal Code",
     "Bharatiya Nyaya Sanhita",
     "Code Of Criminal Procedure",
@@ -20,7 +19,7 @@ CRIMINAL_ACTS = [
     "Juvenile Justice",
     "UAPA",
     "TADA",
-    "MCOCA"
+    "MCOCA",
 ]
 
 # =========================================================
@@ -28,7 +27,6 @@ CRIMINAL_ACTS = [
 # =========================================================
 
 SERVICE_KEYWORDS = [
-
     "departmental proceeding",
     "dismissal",
     "reinstatement",
@@ -38,7 +36,7 @@ SERVICE_KEYWORDS = [
     "pension",
     "disciplinary authority",
     "termination",
-    "compulsory retirement"
+    "compulsory retirement",
 ]
 
 # =========================================================
@@ -46,7 +44,6 @@ SERVICE_KEYWORDS = [
 # =========================================================
 
 TAX_ACTS = [
-
     "Income Tax",
     "GST",
     "Goods And Services Tax",
@@ -56,7 +53,7 @@ TAX_ACTS = [
     "SEBI",
     "Insolvency",
     "SARFAESI",
-    "Negotiable Instruments"
+    "Negotiable Instruments",
 ]
 
 # =========================================================
@@ -64,7 +61,6 @@ TAX_ACTS = [
 # =========================================================
 
 CIVIL_ACTS = [
-
     "Contract Act",
     "Transfer Of Property",
     "Specific Relief",
@@ -73,21 +69,20 @@ CIVIL_ACTS = [
     "Constitution Of India",
     "Consumer Protection",
     "Motor Vehicles",
-    "Wakf Act"
+    "Wakf Act",
 ]
 
 # =========================================================
 # 🔥 ACT BASED CATEGORY
 # =========================================================
 
+
 def infer_category_from_act(acts):
 
     if not acts:
         return "Unknown"
 
-    joined = " ".join(
-        [str(a).lower() for a in acts]
-    )
+    joined = " ".join([str(a).lower() for a in acts])
 
     for act in CRIMINAL_ACTS:
 
@@ -106,9 +101,11 @@ def infer_category_from_act(acts):
 
     return "Unknown"
 
+
 # =========================================================
 # 🔥 SECTION BASED CATEGORY
 # =========================================================
+
 
 def infer_category_from_sections(sections):
 
@@ -118,7 +115,6 @@ def infer_category_from_sections(sections):
     joined = str(sections).lower()
 
     criminal_sections = [
-
         "302",
         "307",
         "376",
@@ -129,7 +125,7 @@ def infer_category_from_sections(sections):
         "409",
         "467",
         "468",
-        "471"
+        "471",
     ]
 
     for sec in criminal_sections:
@@ -139,9 +135,11 @@ def infer_category_from_sections(sections):
 
     return "Unknown"
 
+
 # =========================================================
 # 🔥 CASE NUMBER CATEGORY
 # =========================================================
+
 
 def infer_category_from_case_number(case_number):
 
@@ -170,6 +168,7 @@ def infer_category_from_case_number(case_number):
 
     return "Unknown"
 
+
 # =========================================================
 # 🔥 ONTOLOGY ELIGIBILITY
 # =========================================================
@@ -177,74 +176,37 @@ def infer_category_from_case_number(case_number):
 
 def is_ontology_eligible(data):
 
-    case_number = str(
-        data.get("caseNumber", "")
-    ).strip()
+    case_number = str(data.get("caseNumber", "")).strip()
 
-    citations = data.get(
-        "citations",
-        []
-    )
+    citations = data.get("citations", [])
 
-    doctrines = data.get(
-        "doctrines",
-        []
-    )
+    doctrines = data.get("doctrines", [])
 
-    acts = data.get(
-        "acts",
-        []
-    )
+    acts = data.get("acts", [])
 
-    points_of_law = data.get(
-        "points_of_law",
-        []
-    )
+    points_of_law = data.get("points_of_law", [])
 
-    final_holding = str(
-        data.get(
-            "final_holding",
-            ""
-        )
-    ).strip()
+    final_holding = str(data.get("final_holding", "")).strip()
 
-    dominant_issue = str(
-        data.get(
-            "dominant_issue",
-            "General"
-        )
-    ).strip()
+    dominant_issue = str(data.get("dominant_issue", "General")).strip()
 
     invalid_patterns = [
-
         r"^ITEM",
         r"^NO\.",
         r"SUPREME COURT OF INDIA NOTICE",
-        r"UNKNOWN CASE"
+        r"UNKNOWN CASE",
     ]
 
-    semantic_signals = any([
-
-
-        citations,
-
-        doctrines,
-
-        acts,
-
-        points_of_law,
-
-        final_holding not in [
-            "",
-            "Disposition Unknown"
-        ],
-
-        dominant_issue not in [
-            "",
-            "General",
-            "Unknown"
-        ],
-    ])
+    semantic_signals = any(
+        [
+            citations,
+            doctrines,
+            acts,
+            points_of_law,
+            final_holding not in ["", "Disposition Unknown"],
+            dominant_issue not in ["", "General", "Unknown"],
+        ]
+    )
 
     if semantic_signals:
         return True
@@ -264,11 +226,8 @@ def is_ontology_eligible(data):
 # 🔥 SEMANTIC CATEGORY CONFIDENCE ENGINE
 # =========================================================
 
-def build_category_confidence(
-    acts=None,
-    sections=None,
-    case_number=""
-):
+
+def build_category_confidence(acts=None, sections=None, case_number=""):
 
     acts = acts or []
     sections = sections or []
@@ -277,7 +236,7 @@ def build_category_confidence(
         "Criminal": 0,
         "Civil": 0,
         "Service": 0,
-        "Taxation & Corporate": 0
+        "Taxation & Corporate": 0,
     }
 
     category_signals = []
@@ -286,9 +245,7 @@ def build_category_confidence(
     # 🔥 ACT SIGNALS
     # =====================================================
 
-    acts_joined = " ".join(
-        [str(a).lower() for a in acts]
-    )
+    acts_joined = " ".join([str(a).lower() for a in acts])
 
     for act in CRIMINAL_ACTS:
 
@@ -296,9 +253,7 @@ def build_category_confidence(
 
             category_scores["Criminal"] += 35
 
-            category_signals.append(
-                f"Criminal Act: {act}"
-            )
+            category_signals.append(f"Criminal Act: {act}")
 
     for act in TAX_ACTS:
 
@@ -306,9 +261,7 @@ def build_category_confidence(
 
             category_scores["Taxation & Corporate"] += 35
 
-            category_signals.append(
-                f"Tax Act: {act}"
-            )
+            category_signals.append(f"Tax Act: {act}")
 
     for act in CIVIL_ACTS:
 
@@ -316,9 +269,7 @@ def build_category_confidence(
 
             category_scores["Civil"] += 30
 
-            category_signals.append(
-                f"Civil Act: {act}"
-            )
+            category_signals.append(f"Civil Act: {act}")
 
     # =====================================================
     # 🔥 SECTION SIGNALS
@@ -326,16 +277,7 @@ def build_category_confidence(
 
     section_text = str(sections).lower()
 
-    criminal_sections = [
-        "302",
-        "307",
-        "376",
-        "420",
-        "498a",
-        "467",
-        "468",
-        "471"
-    ]
+    criminal_sections = ["302", "307", "376", "420", "498a", "467", "468", "471"]
 
     for sec in criminal_sections:
 
@@ -343,9 +285,7 @@ def build_category_confidence(
 
             category_scores["Criminal"] += 20
 
-            category_signals.append(
-                f"Criminal Section: {sec}"
-            )
+            category_signals.append(f"Criminal Section: {sec}")
 
     # =====================================================
     # 🔥 CASE NUMBER SIGNALS
@@ -357,46 +297,33 @@ def build_category_confidence(
 
         category_scores["Criminal"] += 40
 
-        category_signals.append(
-            "Case Number: Criminal"
-        )
+        category_signals.append("Case Number: Criminal")
 
     if "civil" in case_text:
 
         category_scores["Civil"] += 40
 
-        category_signals.append(
-            "Case Number: Civil"
-        )
+        category_signals.append("Case Number: Civil")
 
     if "service" in case_text:
 
         category_scores["Service"] += 40
 
-        category_signals.append(
-            "Case Number: Service"
-        )
+        category_signals.append("Case Number: Service")
 
     if "tax" in case_text:
 
         category_scores["Taxation & Corporate"] += 40
 
-        category_signals.append(
-            "Case Number: Tax"
-        )
+        category_signals.append("Case Number: Tax")
 
     # =====================================================
     # 🔥 FINAL CATEGORY
     # =====================================================
 
-    top_category = max(
-        category_scores,
-        key=category_scores.get
-    )
+    top_category = max(category_scores, key=category_scores.get)
 
-    top_confidence = category_scores[
-        top_category
-    ]
+    top_confidence = category_scores[top_category]
 
     if top_confidence < 40:
 
@@ -406,6 +333,5 @@ def build_category_confidence(
         "category": top_category,
         "confidence": top_confidence,
         "scores": category_scores,
-        "signals": category_signals
+        "signals": category_signals,
     }
-

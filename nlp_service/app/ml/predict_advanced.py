@@ -1,6 +1,6 @@
-from sentence_transformers import SentenceTransformer, util
-from pymongo import MongoClient
 import torch
+from pymongo import MongoClient
+from sentence_transformers import SentenceTransformer, util
 
 MONGO_URI = "mongodb://sl_app:Debnath%401966@127.0.0.1:27017/solvelitigation"
 
@@ -8,6 +8,7 @@ client = MongoClient(MONGO_URI)
 db = client["solvelitigation"]
 
 model = SentenceTransformer("all-MiniLM-L6-v2")
+
 
 def extract_outcome(text):
     if not text:

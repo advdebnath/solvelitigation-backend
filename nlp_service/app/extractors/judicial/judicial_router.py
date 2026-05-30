@@ -2,17 +2,11 @@
 # 🔥 JUDICIAL ROUTER
 # =========================================================
 
-from app.extractors.judicial.supreme_court_extractor import (
+from app.extractors.judicial.high_court_extractor import extract_hc_case_number
+from app.extractors.judicial.supreme_court_extractor import \
     extract_sc_case_number
-)
-
-from app.extractors.judicial.high_court_extractor import (
-    extract_hc_case_number
-)
-
-from app.extractors.judicial.tribunal_extractor import (
+from app.extractors.judicial.tribunal_extractor import \
     extract_tribunal_case_number
-)
 
 
 def extract_case_number_v2(text):
@@ -27,9 +21,7 @@ def extract_case_number_v2(text):
 
         print("🔥 ROUTED TO SUPREME COURT ENGINE 🔥")
 
-        result = extract_sc_case_number(
-            text
-        )
+        result = extract_sc_case_number(text)
 
         if result:
             return result
@@ -38,9 +30,7 @@ def extract_case_number_v2(text):
 
         print("🔥 ROUTED TO HIGH COURT ENGINE 🔥")
 
-        result = extract_hc_case_number(
-            text
-        )
+        result = extract_hc_case_number(text)
 
         if result:
             return result
@@ -55,26 +45,17 @@ def extract_case_number_v2(text):
 
         print("🔥 ROUTED TO TRIBUNAL ENGINE 🔥")
 
-        result = extract_tribunal_case_number(
-            text
-        )
+        result = extract_tribunal_case_number(text)
 
         if result:
             return result
 
     return {
-
         "case_number": "Unknown Case",
-
         "normalized_case_number": "UNKNOWN CASE",
-
         "court_type": "UNKNOWN",
-
         "case_type": "UNKNOWN",
-
         "confidence": 0,
-
         "source": "JUDICIAL_ROUTER_V2",
-
-        "validation_passed": False
+        "validation_passed": False,
     }

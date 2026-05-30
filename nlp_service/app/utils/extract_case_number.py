@@ -1,5 +1,6 @@
 import re
 
+
 def extract_case_number(text):
     patterns = [
         r"CIVIL\s+APPEAL\s+NO\.?\s*\d+\s*(OF|/)\s*\d{4}",

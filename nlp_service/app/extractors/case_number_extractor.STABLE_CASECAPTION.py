@@ -1,11 +1,7 @@
-
-from app.utils.legal_header_normalizer import (
-    normalize_legal_header
-)
-
 import re
 
 from app.extractors.caption_preservation import preserve_raw_caption
+from app.utils.legal_header_normalizer import normalize_legal_header
 
 # =========================================================
 # ð¥ CASE NUMBER PATTERNS
@@ -17,47 +13,31 @@ from app.extractors.caption_preservation import preserve_raw_caption
 # =========================================================
 
 SUPREME_COURT_CASE_PATTERNS = [
-
     # -----------------------------------------------------
     # APPEALS
     # -----------------------------------------------------
-
     r"(CIVIL\s+APPEAL\s+NOS?\.?\s*[\dA-Z\-\/ ,.&()]+?\s+OF\s+\d{4})",
-
     r"(CRIMINAL\s+APPEAL\s+NOS?\.?\s*[\dA-Z\-\/ ,.&()]+?\s+OF\s+\d{4})",
-
     # -----------------------------------------------------
     # SLP
     # -----------------------------------------------------
-
     r"(SPECIAL\s+LEAVE\s+PETITION\s*\((?:CRL\.?|CIVIL|CRIMINAL|C)\)\s*NOS?\.?\s*[\dA-Z\-\/ ,.&()]+?\s+OF\s+\d{4})",
-
     r"(SLP\s*\((?:CRL\.?|CIVIL|CRIMINAL|C)\)\s*NOS?\.?\s*[\dA-Z\-\/ ,.&()]+?\s+OF\s+\d{4})",
-
     # -----------------------------------------------------
     # WRITS
     # -----------------------------------------------------
-
     r"(WRIT\s+PETITION\s*\((?:CRL\.?|CIVIL|CRIMINAL|C)\)\s*NOS?\.?\s*[\dA-Z\-\/ ,.&()]+?\s+OF\s+\d{4})",
-
     r"(SUO\s+MOTO\s+WRIT\s*\((?:CRL\.?|CRIMINAL|CIVIL|C)\)\s*NO\.?\(?S?\)?\s*[\dA-Z\-\/ ,.&()]+)",
-
     # -----------------------------------------------------
     # REVIEW / CURATIVE / TRANSFER
     # -----------------------------------------------------
-
     r"(REVIEW\s+PETITION\s*\((?:CRL\.?|CIVIL|CRIMINAL|C)\)\s*NO(?:S|\.\(S\)|\(S\)|S\.)?\.?\s*(?:[\dA-Z\-\/ ,.&()]+)?\s*OF\s+\d{4})",
-
     r"(REVIEW\s+PETITION.*?DIARY\s+NO\.?\s*\d+\s*OF\s*\d{4})",
-
     r"(CURATIVE\s+PETITION\s*\((?:CRL\.?|CIVIL|CRIMINAL|C)\)\s*NOS?\.?\s*[\dA-Z\-\/ ,.&()]+?\s+OF\s+\d{4})",
-
     r"(TRANSFER\s+PETITION\s*\((?:CRL\.?|CIVIL|CRIMINAL|C)\)\s*NOS?\.?\s*[\dA-Z\-\/ ,.&()]+?\s+OF\s+\d{4})",
-
     # -----------------------------------------------------
     # DIARY
     # -----------------------------------------------------
-
     r"(DIARY\s+NO\.?\s*[\dA-Z\-\/ ,.&()]+?\s+OF\s+\d{4})",
 ]
 
@@ -66,45 +46,29 @@ SUPREME_COURT_CASE_PATTERNS = [
 # =========================================================
 
 HIGH_COURT_CASE_PATTERNS = [
-
     # -----------------------------------------------------
     # WRITS
     # -----------------------------------------------------
-
     r"(WP\s*\(C\)\s*NO\.?\s*[\dA-Z\-\/ ,.()]+(?:\s+OF\s+\d{4})?)",
-
     r"(WP\s*\(CRL\)\s*NO\.?\s*[\dA-Z\-\/ ,.()]+(?:\s+OF\s+\d{4})?)",
-
     r"(W\.?(?:P|P\(C\))\.?\s*NO\.?\s*[\dA-Z\-\/ ,.()]+)",
-
     # -----------------------------------------------------
     # CIVIL
     # -----------------------------------------------------
-
     r"(CRP\s*NO\.?\s*[\dA-Z\-\/ ,.()]+(?:\s+OF\s+\d{4})?)",
-
     r"(RSA\s*NO\.?\s*[\dA-Z\-\/ ,.()]+(?:\s+OF\s+\d{4})?)",
-
     r"(FAO\s*NO\.?\s*[\dA-Z\-\/ ,.()]+(?:\s+OF\s+\d{4})?)",
-
     r"(ARB\.?P\.?\s*NO\.?\s*[\dA-Z\-\/ ,.()]+(?:\s+OF\s+\d{4})?)",
-
     # -----------------------------------------------------
     # CRIMINAL
     # -----------------------------------------------------
-
     r"(CRM\-M\s*NO\.?\s*[\dA-Z\-\/ ,.()]+(?:\s+OF\s+\d{4})?)",
-
     r"(BAIL\s+APPLN\.?\s*NO\.?\s*[\dA-Z\-\/ ,.()]+(?:\s+OF\s+\d{4})?)",
-
     r"(CRL\.?\s*REV\.?\s*P\.?\s*NO\.?\s*[\dA-Z\-\/ ,.()]+(?:\s+OF\s+\d{4})?)",
-
     r"(CRIMINAL\s+REVISION\s+NO\.?\s*[\dA-Z\-\/ ,.()]+(?:\s+OF\s+\d{4})?)",
-
     # -----------------------------------------------------
     # MOTOR ACCIDENT
     # -----------------------------------------------------
-
     r"(MAC\s*APP\.?\s*NO\.?\s*[\dA-Z\-\/ ,.()]+(?:\s+OF\s+\d{4})?)",
 ]
 
@@ -114,17 +78,11 @@ HIGH_COURT_CASE_PATTERNS = [
 # =========================================================
 
 CANONICAL_CASE_PATTERNS = [
-
     (r"\bNO\.\s*\(S\)", "NO.(S)"),
-
     (r"\bNOS\.\b", "NOS."),
-
     (r"\bNO\.\b", "NO."),
-
     (r"\s+", " "),
-
     (r"IN RE:?$", ""),
-
     (r"CONNECTED MATTERS?$", ""),
 ]
 
@@ -137,164 +95,100 @@ CANONICAL_CASE_PATTERNS = [
 # =========================================================
 
 CASE_TYPE_CONFIDENCE = {
-
     # -----------------------------------------------------
     # SUPREME COURT
     # -----------------------------------------------------
-
     "CIVIL APPEAL": 95,
-
     "CRIMINAL APPEAL": 95,
-
     "SPECIAL LEAVE PETITION": 92,
-
     "SLP": 90,
-
     "WRIT PETITION": 90,
-
     "SUO MOTO WRIT": 94,
-
     "REVIEW PETITION": 88,
-
     "CURATIVE PETITION": 88,
-
     "TRANSFER PETITION": 87,
-
     "DIARY": 84,
-
     # -----------------------------------------------------
     # HIGH COURT
     # -----------------------------------------------------
-
     "WP(C)": 85,
-
     "WP(CRL)": 85,
-
     "CRP": 82,
-
     "RSA": 82,
-
     "CRM-M": 82,
-
     "CRL.REV": 82,
-
     "MAC APP": 80,
-
     "ARB.P": 80,
-
     "BAIL APPLN": 80,
 }
 
 
-CASE_PATTERNS = SUPREME_COURT_CASE_PATTERNS + HIGH_COURT_CASE_PATTERNS + [
-
-
-    # =====================================================
-    # ð¥ SUPREME COURT
-    # =====================================================
-
-
-    r"(SUO\s+MOTO\s+WRIT\s*\((?:CRL\.?|CRIMINAL|CIVIL|C)\)\s*NO\.?\(?S?\)?\s*[\dA-Z\-\/ ,.&()]+)",
-
-
-    r"(WRIT\s+PETITION\s*\((?:CIVIL|CRIMINAL|CRL\.?|C)\)\s*NOS?\.?\s*[\dA-Z\-\/ ,.&()]+?\s+OF\s+\d{4})",
-
-    r"(SPECIAL\s+LEAVE\s+PETITION\s*\((?:CIVIL|CRIMINAL|CRL\.?|C)\)\s*NOS?\.?\s*[\dA-Z\-\/ ,.&()]+?\s+OF\s+\d{4})",
-
-    r"(SLP\s*\((?:C|CRL\.?|CIVIL|CRIMINAL)\)\s*NOS?\.?\s*[\dA-Z\-\/ ,.&()]+?\s+OF\s+\d{4})",
-
-    r"(CIVIL\s+APPEAL\s+NOS?\.?\s*[\dA-Z\-\/ ,.&()]+?\s+OF\s+\d{4})",
-
-    r"(CRIMINAL\s+APPEAL\s+NOS?\.?\s*[\dA-Z\-\/ ,.&()]+?\s+OF\s+\d{4})",
-
-    r"(SPECIAL\s+LEAVE\s+PETITION\s*\(.*?\)\s*NOS?\.?\s*[\dA-Z\-\/ ,.&()]+?\s+OF\s+\d{4})",
-
-    r"(SLP\s*\(.*?\)\s*NOS?\.?\s*[\dA-Z\-\/ ,.&()]+?\s+OF\s+\d{4})",
-
-    r"(WRIT\s+PETITION\s*\(.*?\)\s*NOS?\.?\s*[\dA-Z\-\/ ,.&()]+?\s+OF\s+\d{4})",
-
-    r"(WRIT\s+PETITION\s+NOS?\.?\s*[\dA-Z\-\/ ,.&()]+?\s+OF\s+\d{4})",
-
-    r"(WRIT\s+PETITION\s+NO\.?\s*[\dA-Z\-\/ ,.&()]+?\s+OF\s+\d{4})",
-
-    r"(CIVIL\s+APPEAL\s+NO\.?\s*[\dA-Z\-\/ ,.&()]+?\s+OF\s+\d{4})",
-
-    r"(CRIMINAL\s+APPEAL\s+NO\.?\s*[\dA-Z\-\/ ,.&()]+?\s+OF\s+\d{4})",
-
-    r"(TRANSFER\s+PETITION\s+NOS?\.?\s*[\dA-Z\-\/ ,.&()]+?\s+OF\s+\d{4})",
-
-    r"(REVIEW\s+PETITION\s+NOS?\.?\s*[\dA-Z\-\/ ,.&()]+?\s+OF\s+\d{4})",
-
-
-    # =====================================================
-    # ð¥ COMPACT / OCR / ABBREVIATED FORMS
-    # =====================================================
-
-    r"(C\.?A\.?\s*NO\.?\s*[\dA-Z\-\/ ,.()]+?(?:\s+OF\s+\d{4})?)",
-
-    r"(CR\.?A\.?\s*NO\.?\s*[\dA-Z\-\/ ,.()]+?(?:\s+OF\s+\d{4})?)",
-
-    r"(W\.?P\.?\s*\((?:C|CRL|CRIMINAL|CIVIL)\)\s*NO\.?\s*[\dA-Z\-\/ ,.()]+?(?:\s+OF\s+\d{4})?)",
-
-    r"(ARB\.?\s*P\.?\s*NO\.?\s*[\dA-Z\-\/ ,.()]+?(?:\s+OF\s+\d{4})?)",
-
-    r"(DIARY\s*NO\.?\s*[\dA-Z\-\/ ,.()]+?(?:\s+OF\s+\d{4})?)",
-
-    r"(B\.?A\.?\s*NO\.?\s*[\dA-Z\-\/ ,.()]+?(?:\s+OF\s+\d{4})?)",
-
-    r"(CRM\-M\s*NO\.?\s*[\dA-Z\-\/ ,.()]+?(?:\s+OF\s+\d{4})?)",
-
-    r"(FAO\s*NO\.?\s*[\dA-Z\-\/ ,.()]+?(?:\s+OF\s+\d{4})?)",
-
-    r"(LPA\s*NO\.?\s*[\dA-Z\-\/ ,.()]+?(?:\s+OF\s+\d{4})?)",
-
-    # =====================================================
-    # ð¥ HIGH COURT
-    # =====================================================
-
-    r"(WP\s*\(C\)\s*NO\.?\s*[\dA-Z\-\/]+(?:\s+OF\s+\d{4})?)",
-
-    r"(WP\s*\(CRL\)\s*NO\.?\s*[\dA-Z\-\/]+(?:\s+OF\s+\d{4})?)",
-
-    r"(CRL\.?A\.?\s*NO\.?\s*[\dA-Z\-\/]+(?:\s+OF\s+\d{4})?)",
-
-    r"(C\.?R\.?P\.?\s*NO\.?\s*[\dA-Z\-\/]+(?:\s+OF\s+\d{4})?)",
-
-    r"(RSA\s+NO\.?\s*[\dA-Z\-\/]+(?:\s+OF\s+\d{4})?)",
-
-    # =====================================================
-    # ð¥ TRIBUNAL
-    # =====================================================
-
-    r"(OA\s+NO\.?\s*[\dA-Z\-\/]+(?:\s+OF\s+\d{4})?)",
-
-    r"(TA\s+NO\.?\s*[\dA-Z\-\/]+(?:\s+OF\s+\d{4})?)",
-
-    r"(MA\s+NO\.?\s*[\dA-Z\-\/]+(?:\s+OF\s+\d{4})?)",
-
-    r"(CP\s*\(IB\)\s*NO\.?\s*[\dA-Z\-\/]+(?:\s+OF\s+\d{4})?)",
-
-    # =====================================================
-    # ð¥ COMPANY / TAX
-    # =====================================================
-
-    r"(COMPANY\s+APPEAL\s+NOS?\.?\s*[\dA-Z\-\/ ,.&()]+?\s+OF\s+\d{4})",
-
-    r"(TAX\s+APPEAL\s+NOS?\.?\s*[\dA-Z\-\/ ,.&()]+?\s+OF\s+\d{4})",
-
-    # =====================================================
-    # ð¥ GENERIC
-    # =====================================================
-
-    r"((?:CIVIL|CRIMINAL|FIRST|SECOND|REGULAR|MISC(?:ELLANEOUS)?|LETTERS\s+PATENT|INTRA-COURT|COMMERCIAL|COMPANY|TAX)\s+APPEAL\s+NOS?\.?\s*[\dA-Z\-\/ ,.&()]+?\s+OF\s+\d{4})",
-]
+CASE_PATTERNS = (
+    SUPREME_COURT_CASE_PATTERNS
+    + HIGH_COURT_CASE_PATTERNS
+    + [
+        # =====================================================
+        # ð¥ SUPREME COURT
+        # =====================================================
+        r"(SUO\s+MOTO\s+WRIT\s*\((?:CRL\.?|CRIMINAL|CIVIL|C)\)\s*NO\.?\(?S?\)?\s*[\dA-Z\-\/ ,.&()]+)",
+        r"(WRIT\s+PETITION\s*\((?:CIVIL|CRIMINAL|CRL\.?|C)\)\s*NOS?\.?\s*[\dA-Z\-\/ ,.&()]+?\s+OF\s+\d{4})",
+        r"(SPECIAL\s+LEAVE\s+PETITION\s*\((?:CIVIL|CRIMINAL|CRL\.?|C)\)\s*NOS?\.?\s*[\dA-Z\-\/ ,.&()]+?\s+OF\s+\d{4})",
+        r"(SLP\s*\((?:C|CRL\.?|CIVIL|CRIMINAL)\)\s*NOS?\.?\s*[\dA-Z\-\/ ,.&()]+?\s+OF\s+\d{4})",
+        r"(CIVIL\s+APPEAL\s+NOS?\.?\s*[\dA-Z\-\/ ,.&()]+?\s+OF\s+\d{4})",
+        r"(CRIMINAL\s+APPEAL\s+NOS?\.?\s*[\dA-Z\-\/ ,.&()]+?\s+OF\s+\d{4})",
+        r"(SPECIAL\s+LEAVE\s+PETITION\s*\(.*?\)\s*NOS?\.?\s*[\dA-Z\-\/ ,.&()]+?\s+OF\s+\d{4})",
+        r"(SLP\s*\(.*?\)\s*NOS?\.?\s*[\dA-Z\-\/ ,.&()]+?\s+OF\s+\d{4})",
+        r"(WRIT\s+PETITION\s*\(.*?\)\s*NOS?\.?\s*[\dA-Z\-\/ ,.&()]+?\s+OF\s+\d{4})",
+        r"(WRIT\s+PETITION\s+NOS?\.?\s*[\dA-Z\-\/ ,.&()]+?\s+OF\s+\d{4})",
+        r"(WRIT\s+PETITION\s+NO\.?\s*[\dA-Z\-\/ ,.&()]+?\s+OF\s+\d{4})",
+        r"(CIVIL\s+APPEAL\s+NO\.?\s*[\dA-Z\-\/ ,.&()]+?\s+OF\s+\d{4})",
+        r"(CRIMINAL\s+APPEAL\s+NO\.?\s*[\dA-Z\-\/ ,.&()]+?\s+OF\s+\d{4})",
+        r"(TRANSFER\s+PETITION\s+NOS?\.?\s*[\dA-Z\-\/ ,.&()]+?\s+OF\s+\d{4})",
+        r"(REVIEW\s+PETITION\s+NOS?\.?\s*[\dA-Z\-\/ ,.&()]+?\s+OF\s+\d{4})",
+        # =====================================================
+        # ð¥ COMPACT / OCR / ABBREVIATED FORMS
+        # =====================================================
+        r"(C\.?A\.?\s*NO\.?\s*[\dA-Z\-\/ ,.()]+?(?:\s+OF\s+\d{4})?)",
+        r"(CR\.?A\.?\s*NO\.?\s*[\dA-Z\-\/ ,.()]+?(?:\s+OF\s+\d{4})?)",
+        r"(W\.?P\.?\s*\((?:C|CRL|CRIMINAL|CIVIL)\)\s*NO\.?\s*[\dA-Z\-\/ ,.()]+?(?:\s+OF\s+\d{4})?)",
+        r"(ARB\.?\s*P\.?\s*NO\.?\s*[\dA-Z\-\/ ,.()]+?(?:\s+OF\s+\d{4})?)",
+        r"(DIARY\s*NO\.?\s*[\dA-Z\-\/ ,.()]+?(?:\s+OF\s+\d{4})?)",
+        r"(B\.?A\.?\s*NO\.?\s*[\dA-Z\-\/ ,.()]+?(?:\s+OF\s+\d{4})?)",
+        r"(CRM\-M\s*NO\.?\s*[\dA-Z\-\/ ,.()]+?(?:\s+OF\s+\d{4})?)",
+        r"(FAO\s*NO\.?\s*[\dA-Z\-\/ ,.()]+?(?:\s+OF\s+\d{4})?)",
+        r"(LPA\s*NO\.?\s*[\dA-Z\-\/ ,.()]+?(?:\s+OF\s+\d{4})?)",
+        # =====================================================
+        # ð¥ HIGH COURT
+        # =====================================================
+        r"(WP\s*\(C\)\s*NO\.?\s*[\dA-Z\-\/]+(?:\s+OF\s+\d{4})?)",
+        r"(WP\s*\(CRL\)\s*NO\.?\s*[\dA-Z\-\/]+(?:\s+OF\s+\d{4})?)",
+        r"(CRL\.?A\.?\s*NO\.?\s*[\dA-Z\-\/]+(?:\s+OF\s+\d{4})?)",
+        r"(C\.?R\.?P\.?\s*NO\.?\s*[\dA-Z\-\/]+(?:\s+OF\s+\d{4})?)",
+        r"(RSA\s+NO\.?\s*[\dA-Z\-\/]+(?:\s+OF\s+\d{4})?)",
+        # =====================================================
+        # ð¥ TRIBUNAL
+        # =====================================================
+        r"(OA\s+NO\.?\s*[\dA-Z\-\/]+(?:\s+OF\s+\d{4})?)",
+        r"(TA\s+NO\.?\s*[\dA-Z\-\/]+(?:\s+OF\s+\d{4})?)",
+        r"(MA\s+NO\.?\s*[\dA-Z\-\/]+(?:\s+OF\s+\d{4})?)",
+        r"(CP\s*\(IB\)\s*NO\.?\s*[\dA-Z\-\/]+(?:\s+OF\s+\d{4})?)",
+        # =====================================================
+        # ð¥ COMPANY / TAX
+        # =====================================================
+        r"(COMPANY\s+APPEAL\s+NOS?\.?\s*[\dA-Z\-\/ ,.&()]+?\s+OF\s+\d{4})",
+        r"(TAX\s+APPEAL\s+NOS?\.?\s*[\dA-Z\-\/ ,.&()]+?\s+OF\s+\d{4})",
+        # =====================================================
+        # ð¥ GENERIC
+        # =====================================================
+        r"((?:CIVIL|CRIMINAL|FIRST|SECOND|REGULAR|MISC(?:ELLANEOUS)?|LETTERS\s+PATENT|INTRA-COURT|COMMERCIAL|COMPANY|TAX)\s+APPEAL\s+NOS?\.?\s*[\dA-Z\-\/ ,.&()]+?\s+OF\s+\d{4})",
+    ]
+)
 
 # =========================================================
 # ð¥ BAD VALUES
 # =========================================================
 
 BAD_PATTERNS = [
-
     ".pdf",
     "judgement_",
     "judgment_",
@@ -304,12 +198,13 @@ BAD_PATTERNS = [
     "document",
     "file",
     ".doc",
-    ".docx"
+    ".docx",
 ]
 
 # =========================================================
 # ð¥ SAFE OCR NORMALIZATION
 # =========================================================
+
 
 def normalize_ocr(text):
 
@@ -327,49 +222,31 @@ def normalize_ocr(text):
     # ð¥ FIX OCR INSIDE NUMBERS ONLY
     # =====================================================
 
-    text = re.sub(
-        r"(?<=\d)O(?=\d)",
-        "0",
-        text
-    )
+    text = re.sub(r"(?<=\d)O(?=\d)", "0", text)
 
-    text = re.sub(
-        r"(?<=\d)I(?=\d)",
-        "1",
-        text
-    )
+    text = re.sub(r"(?<=\d)I(?=\d)", "1", text)
 
-    text = re.sub(
-        r"(?<=\d)l(?=\d)",
-        "1",
-        text
-    )
+    text = re.sub(r"(?<=\d)l(?=\d)", "1", text)
 
     return text
+
 
 # =========================================================
 # ð¥ CLEAN CASE NUMBER
 # =========================================================
 
+
 def clean_case_number(value):
 
-    value = value.replace(
-        "\n",
-        " "
-    )
+    value = value.replace("\n", " ")
 
-    value = re.sub(
-        r"[     ]+",
-        " ",
-        value
-    )
+    value = re.sub(r"[     ]+", " ", value)
 
     # =====================================================
     # ð¥ REMOVE HEADER POLLUTION
     # =====================================================
 
     HEADER_NOISE = [
-
         "REPORTABLE",
         "NON-REPORTABLE",
         "IN THE SUPREME COURT OF INDIA",
@@ -378,65 +255,40 @@ def clean_case_number(value):
         "APPELLATE JURISDICTION",
         "ORIGINAL JURISDICTION",
         "CIVIL APPELLATE JURISDICTION",
-        "CRIMINAL APPELLATE JURISDICTION"
+        "CRIMINAL APPELLATE JURISDICTION",
     ]
 
     for noise in HEADER_NOISE:
 
-        value = re.sub(
-            re.escape(noise),
-            "",
-            value,
-            flags=re.IGNORECASE
-        )
+        value = re.sub(re.escape(noise), "", value, flags=re.IGNORECASE)
 
     # =====================================================
     # ð¥ FIX OCR STYLE
     # =====================================================
 
-    value = re.sub(
-        r"NOS\s+\.",
-        "NOS.",
-        value
-    )
+    value = re.sub(r"NOS\s+\.", "NOS.", value)
 
-    value = re.sub(
-        r"NO\s+\.",
-        "NO.",
-        value
-    )
+    value = re.sub(r"NO\s+\.", "NO.", value)
 
-    value = re.sub(
-        r"\.{2,}",
-        ".",
-        value
-    )
+    value = re.sub(r"\.{2,}", ".", value)
 
     # =====================================================
     # ð¥ FIX SLASH SPACING
     # =====================================================
 
-    value = re.sub(
-        r"\s*/\s*",
-        "/",
-        value
-    )
+    value = re.sub(r"\s*/\s*", "/", value)
 
-    value = value.strip(
-        " :-.," 
-    )
+    value = value.strip(" :-.,")
 
-    value = re.sub(
-        r"[     ]+",
-        " ",
-        value
-    ).strip()
+    value = re.sub(r"[     ]+", " ", value).strip()
 
     return value
+
 
 # =========================================================
 # ð¥ VALIDATION
 # =========================================================
+
 
 def is_valid_case_number(value):
 
@@ -452,21 +304,14 @@ def is_valid_case_number(value):
     # =====================================================
 
     invalid_patterns = [
-
-        r'^ection\s+\d+$',
-        r'^ections\s+\d+$',
-
-        r'^court\s+\d+$',
-
-        r'^unknown\s+case$',
-
-        r'^wat\s+\d+$',
-
-        r'^\d{8,}$',
-
-        r'^section\s+\d+$',
-
-        r'^sections\s+\d+$'
+        r"^ection\s+\d+$",
+        r"^ections\s+\d+$",
+        r"^court\s+\d+$",
+        r"^unknown\s+case$",
+        r"^wat\s+\d+$",
+        r"^\d{8,}$",
+        r"^section\s+\d+$",
+        r"^sections\s+\d+$",
     ]
 
     for pattern in invalid_patterns:
@@ -496,7 +341,6 @@ def is_valid_case_number(value):
     # =====================================================
 
     VALID_KEYWORDS = [
-
         "APPEAL",
         "PETITION",
         "WRIT",
@@ -505,69 +349,46 @@ def is_valid_case_number(value):
         "DIARY",
         "TRANSFER",
         "REVIEW",
-
         # =================================================
         # 🔥 TRIBUNAL / SHORT FORMS
         # =================================================
-
         "OA",
         "TA",
         "MA",
         "BA",
         "WP",
-
         # =================================================
         # 🔥 CRIMINAL SHORT FORMS
         # =================================================
-
         "CRL",
         "CRL.A",
         "CRL.A.",
         "CR.A",
         "CR.A.",
         "CRL APPEAL",
-
         # =================================================
         # 🔥 CIVIL SHORT FORMS
         # =================================================
-
         "C.A",
         "C.A.",
         "CIVIL APPEAL",
-
         # =================================================
         # 🔥 FULL FORMS
         # =================================================
-
         "CIVIL",
-        "CRIMINAL"
+        "CRIMINAL",
     ]
 
-    if not any(
-        keyword in upper
-        for keyword in VALID_KEYWORDS
-    ):
+    if not any(keyword in upper for keyword in VALID_KEYWORDS):
         return False
 
     # =====================================================
     # ð¥ REJECT FILE POLLUTION
     # =====================================================
 
-    BAD_VALUES = [
+    BAD_VALUES = [".PDF", ".DOC", ".DOCX", "UPLOAD", "DOWNLOAD", "SCANNED", "DOCUMENT"]
 
-        ".PDF",
-        ".DOC",
-        ".DOCX",
-        "UPLOAD",
-        "DOWNLOAD",
-        "SCANNED",
-        "DOCUMENT"
-    ]
-
-    if any(
-        x in upper
-        for x in BAD_VALUES
-    ):
+    if any(x in upper for x in BAD_VALUES):
         return False
 
     # =====================================================
@@ -579,29 +400,23 @@ def is_valid_case_number(value):
     # =====================================================
 
     flexible_patterns = [
-
         r"NO\.?\s*[\dA-Z/\-]+",
-
         r"NOS\.?\s*[\dA-Z/\-]+",
-
         r"NO\s+[\dA-Z/\-]+",
-
         r"OF\s+\d{4}",
-
-        r"\d+\s+OF\s+\d{4}"
+        r"\d+\s+OF\s+\d{4}",
     ]
 
-    if not any(
-        re.search(pattern, upper)
-        for pattern in flexible_patterns
-    ):
+    if not any(re.search(pattern, upper) for pattern in flexible_patterns):
         return False
 
     return True
 
+
 # =========================================================
 # ð¥ CASE CANDIDATE PRIORITIZATION ENGINE
 # =========================================================
+
 
 def rank_case_candidates(candidates):
 
@@ -614,19 +429,9 @@ def rank_case_candidates(candidates):
 
         try:
 
-            value = str(
-                item.get(
-                    "case_number",
-                    ""
-                )
-            ).upper()
+            value = str(item.get("case_number", "")).upper()
 
-            confidence = int(
-                item.get(
-                    "confidence",
-                    0
-                )
-            )
+            confidence = int(item.get("confidence", 0))
 
             score = confidence
 
@@ -657,19 +462,17 @@ def rank_case_candidates(candidates):
             # =================================================
 
             complete_case_tokens = [
-
                 "NO.",
                 "NO ",
                 " OF ",
                 "PETITION",
                 "APPEAL",
                 "SLP",
-                "WRIT"
+                "WRIT",
             ]
 
             completeness_hits = sum(
-                1 for token in complete_case_tokens
-                if token in value
+                1 for token in complete_case_tokens if token in value
             )
 
             score += completeness_hits * 6
@@ -679,16 +482,11 @@ def rank_case_candidates(candidates):
             # =================================================
 
             fragment_patterns = [
-
                 r"^[A-Z]*\)\s*\d+/\d{4}$",
-
                 r"^\(?CRL\.\)?\s*\d+/\d{4}$",
-
                 r"^\(?CIVIL\.\)?\s*\d+/\d{4}$",
-
                 r"^\(?CRIMINAL\.\)?\s*\d+/\d{4}$",
-
-                r"^\(?PETITION\.\)?\s*\d+/\d{4}$"
+                r"^\(?PETITION\.\)?\s*\d+/\d{4}$",
             ]
 
             for pattern in fragment_patterns:
@@ -699,13 +497,11 @@ def rank_case_candidates(candidates):
 
             # =================================================
 
-
             # =================================================
             # 🔥 CANONICAL JUDICIARY PRIORITY BOOST
             # =================================================
 
             canonical_patterns = [
-
                 "APPEAL",
                 "CIVIL APPEAL",
                 "CRIMINAL APPEAL",
@@ -714,7 +510,7 @@ def rank_case_candidates(candidates):
                 "SLP",
                 "TRANSFER PETITION",
                 "REVIEW PETITION",
-                "CASE NO"
+                "CASE NO",
             ]
 
             for token in canonical_patterns:
@@ -734,7 +530,6 @@ def rank_case_candidates(candidates):
             # =================================================
 
             secondary_penalties = [
-
                 "IA NO",
                 "INTERLOCUTORY",
                 "DIARY",
@@ -744,7 +539,7 @@ def rank_case_candidates(candidates):
                 "CONTEMPT",
                 "CURATIVE",
                 "CONNECTED",
-                "TRANSFERRED CASE"
+                "TRANSFERRED CASE",
             ]
 
             for token in secondary_penalties:
@@ -762,81 +557,52 @@ def rank_case_candidates(candidates):
             if len(value.split()) >= 3:
                 score += 5
 
-            ranked.append({
-                **item,
-                "ranking_score": score
-            })
+            ranked.append({**item, "ranking_score": score})
 
         except Exception:
             continue
 
-    ranked.sort(
-        key=lambda x: x.get(
-            "ranking_score",
-            0
-        ),
-        reverse=True
-    )
+    ranked.sort(key=lambda x: x.get("ranking_score", 0), reverse=True)
 
     print("RANKED CASE CANDIDATES:")
     print(ranked[:5])
 
     return ranked
 
+
 # =========================================================
 # ð¥ MAIN EXTRACTION
 # =========================================================
-def extract_case_number(
-
-    text,
-
-    fallback="Unknown Case"
-):
+def extract_case_number(text, fallback="Unknown Case"):
 
     try:
 
         if not text:
 
-            return {
-                "case_number": fallback,
-                "confidence": 0
-            }
-
+            return {"case_number": fallback, "confidence": 0}
 
         # =====================================================
         # ð¥ SEMANTIC FIRST-PAGE EXTRACTION
         # =====================================================
 
-
         header = text[:12000]
 
-        
         preserved = preserve_raw_caption(header)
 
         if preserved:
 
             print("🔥 PRESERVED RAW CAPTION:")
-            print(
-                preserved.get(
-                    "case_number"
-                )
-            )
+            print(preserved.get("case_number"))
 
             return preserved
 
-
-        normalized_header = normalize_legal_header(
-            header
-        )
+        normalized_header = normalize_legal_header(header)
 
         print("🔥 NORMALIZED HEADER TRACE:")
         print(normalized_header[:3000])
 
         normalized_header = re.sub(
-            r'CASE\s+NO\.?\s*:\s*\n+\s*',
-            'CASE NO: ',
-            normalized_header,
-            flags=re.I
+            r"CASE\s+NO\.?\s*:\s*\n+\s*", "CASE NO: ", normalized_header, flags=re.I
         )
 
         header = normalized_header
@@ -845,21 +611,13 @@ def extract_case_number(
         # 🔥 ENTERPRISE DIRECT HEADER MATCH ENGINE
         # =====================================================
 
-        direct_header = re.sub(
-            r"\s+",
-            " ",
-            header
-        )
+        direct_header = re.sub(r"\s+", " ", header)
 
         for pattern in CASE_PATTERNS:
 
             try:
 
-                direct_match = re.search(
-                    pattern,
-                    direct_header,
-                    flags=re.I
-                )
+                direct_match = re.search(pattern, direct_header, flags=re.I)
 
                 if direct_match:
 
@@ -872,40 +630,27 @@ def extract_case_number(
                         "case_number": extracted_case,
                         "normalized_case_number": extracted_case.upper(),
                         "confidence": 96,
-                        "source": "DIRECT_HEADER_ENGINE"
+                        "source": "DIRECT_HEADER_ENGINE",
                     }
 
             except Exception:
                 pass
-
-
 
         # =====================================================
         # ð¥ OCR NORMALIZATION FIREWALL
         # =====================================================
 
         OCR_NORMALIZATION_RULES = [
-
             (r"WR[lI]T", "WRIT"),
-
             (r"CR[lI]MINAL", "CRIMINAL"),
-
             (r"CR[lI]L", "CRL"),
-
             (r"N[O0]\.", "NO."),
-
             (r"NO\(S\)", "NO.(S)"),
-
             (r"S\.L\.P\.?", "SLP"),
-
             (r"W\.P\.\(C\)", "WP(C)"),
-
             (r"W\.P\.\(CRL\)", "WP(CRL)"),
-
             (r"APPEALN[O0]", "APPEAL NO"),
-
             (r"PETITIONN[O0]", "PETITION NO"),
-
             (r"\s{2,}", " "),
         ]
 
@@ -919,18 +664,12 @@ def extract_case_number(
 
             try:
 
-              header = re.sub(
-                    pattern,
-                    replacement,
-                    header,
-                    flags=re.I
-                )
+                header = re.sub(pattern, replacement, header, flags=re.I)
 
             except Exception:
                 pass
 
         page_break_patterns = [
-
             r"(?i)for petition",
             r"(?i)for respondent",
             r"(?i)appearance",
@@ -943,7 +682,7 @@ def extract_case_number(
             r"(?i)court no",
             r"(?i)interlocutory application",
             r"(?i)applns?\.\s+for",
-            r"(?i)disposed of"
+            r"(?i)disposed of",
         ]
 
         semantic_cutoffs = []
@@ -968,7 +707,7 @@ def extract_case_number(
 
             if cutoff > 500:
 
-              header = header[:cutoff]
+                header = header[:cutoff]
 
         header = header[:12000]
 
@@ -977,17 +716,11 @@ def extract_case_number(
         # =====================================================
 
         header = re.split(
-
-            r'(?:\bJUDGMENT\b|\bORDER\b|O\s*R\s*D\s*E\s*R|J\s*U\s*D\s*G\s*M\s*E\s*N\s*T)',
-
+            r"(?:\bJUDGMENT\b|\bORDER\b|O\s*R\s*D\s*E\s*R|J\s*U\s*D\s*G\s*M\s*E\s*N\s*T)",
             header,
-
             maxsplit=1,
-
-            flags=re.I
-
+            flags=re.I,
         )[0][:3500]
-
 
         # normalize_ocr temporarily bypassed
 
@@ -996,10 +729,7 @@ def extract_case_number(
 
         print("\nHEADER LINE TRACE")
 
-        for idx, line in enumerate(
-            header.splitlines()[:80],
-            start=1
-        ):
+        for idx, line in enumerate(header.splitlines()[:80], start=1):
             print(f"{idx:03d}: {line}")
         print("ð¥ END HEADER ISOLATION ð¥\n")
 
@@ -1007,19 +737,9 @@ def extract_case_number(
         # ð¥ ADVANCED CASE HEADER RECONSTRUCTION
         # =====================================================
 
-        header = re.sub(
-              r"\bN0\b",
-            "NO",
-            header,
-            flags=re.I
-        )
+        header = re.sub(r"\bN0\b", "NO", header, flags=re.I)
 
-        header = re.sub(
-              r"\b0F\b",
-            "OF",
-            header,
-            flags=re.I
-        )
+        header = re.sub(r"\b0F\b", "OF", header, flags=re.I)
 
         # -----------------------------------------------------
         # ð¥ JOIN BROKEN CASE TYPE LINES
@@ -1028,42 +748,26 @@ def extract_case_number(
         header = re.sub(
             r"(?i)(CRIMINAL|CIVIL|SPECIAL|WRIT|TRANSFER|REVIEW|COMPANY|TAX)\s*\s*(APPEAL|PETITION)",
             r"\1 \2",
-            header
+            header,
         )
 
         # -----------------------------------------------------
         # ð¥ JOIN BROKEN NO LINES
         # -----------------------------------------------------
 
-        header = re.sub(
-            r"(?i)(NO\.?|NOS\.?)\s*\s*(\d)",
-            r"\1 \2",
-            header
-        )
+        header = re.sub(r"(?i)(NO\.?|NOS\.?)\s*\s*(\d)", r"\1 \2", header)
         # ð¥ JOIN BROKEN OF YEAR LINES
         # -----------------------------------------------------
 
-        header = re.sub(
-            r"(?i)(\d)\s*\s*OF\s*\s*(\d{4})",
-            r"\1 OF \2",
-            header
-        )
+        header = re.sub(r"(?i)(\d)\s*\s*OF\s*\s*(\d{4})", r"\1 OF \2", header)
 
-        header = re.sub(
-            r"(?i)(\d)\s*\s*OF\s+(\d{4})",
-            r"\1 OF \2",
-            header
-        )
+        header = re.sub(r"(?i)(\d)\s*\s*OF\s+(\d{4})", r"\1 OF \2", header)
 
         # -----------------------------------------------------
         # ð¥ COLLAPSE EXCESS NEWLINES
         # -----------------------------------------------------
 
-        header = re.sub(
-            r"\n+",
-            "\n",
-            header
-        )
+        header = re.sub(r"\n+", "\n", header)
 
         # =====================================================
         # ð¥ RAW HEADER DEBUG
@@ -1073,40 +777,25 @@ def extract_case_number(
         print(header[:5000])
         print("RAW HEADER END\n")
 
-        header = re.sub(
-            r"[     ]+",
-            " ",
-            header
-        )
+        header = re.sub(r"[     ]+", " ", header)
 
         # =====================================================
         # ð¥ MULTILINE CASE RECONSTRUCTION
         # =====================================================
 
-
         # =====================================================
         # 🔥 SAFE NO./NOS. NORMALIZATION
         # =====================================================
 
-        header = re.sub(
-            r"(NO\.?|NOS\.?)\s+",
-            r" \1 ",
-            header,
-            flags=re.I
-        )
+        header = re.sub(r"(NO\.?|NOS\.?)\s+", r" \1 ", header, flags=re.I)
 
-        header = re.sub(
-            r"\s*(OF\s+\d{4})",
-            r" \1",
-            header,
-            flags=re.I
-        )
+        header = re.sub(r"\s*(OF\s+\d{4})", r" \1", header, flags=re.I)
 
         header = re.sub(
             r"(PETITION|APPEAL|APPLICATION|CASE)\s*\s*(NO\.?|NOS\.?)",
-              r"\1 \2",
+            r"\1 \2",
             header,
-            flags=re.I
+            flags=re.I,
         )
 
         # =====================================================
@@ -1114,108 +803,50 @@ def extract_case_number(
         # =====================================================
 
         OCR_CASE_FIXES = {
-
-            r"APPEA\s+L":
-                "APPEAL",
-
-            r"CRIMINA\s+L":
-                "CRIMINAL",
-
-            r"CIVI\s+L":
-                "CIVIL",
-
-            r"PETITIO\s+N":
-                "PETITION",
-
-            r"APPLICATIO\s+N":
-                "APPLICATION",
-
-            r"SPECIA\s+L":
-                "SPECIAL",
-
-            r"LEAV\s+E":
-                "LEAVE",
-
-            r"N\s+O\s*\.":
-                "NO.",
-
-            r"N\s+O\s*S\s*\.":
-                "NOS.",
-
-            r"WRI\s+T":
-                "WRIT",
-
-            r"CAS\s+E":
-                "CASE",
-
-            r"SUI\s+T":
-                "SUIT"
+            r"APPEA\s+L": "APPEAL",
+            r"CRIMINA\s+L": "CRIMINAL",
+            r"CIVI\s+L": "CIVIL",
+            r"PETITIO\s+N": "PETITION",
+            r"APPLICATIO\s+N": "APPLICATION",
+            r"SPECIA\s+L": "SPECIAL",
+            r"LEAV\s+E": "LEAVE",
+            r"N\s+O\s*\.": "NO.",
+            r"N\s+O\s*S\s*\.": "NOS.",
+            r"WRI\s+T": "WRIT",
+            r"CAS\s+E": "CASE",
+            r"SUI\s+T": "SUIT",
         }
 
         for wrong, correct in OCR_CASE_FIXES.items():
 
-            header = re.sub(
-                wrong,
-                correct,
-              header,
-                flags=re.I
-            )
+            header = re.sub(wrong, correct, header, flags=re.I)
 
-          # whitespace collapse temporarily disabled
+        # whitespace collapse temporarily disabled
         # =====================================================
         # =====================================================
         # ð¥ AGGRESSIVE CASE HEADER RECONSTRUCTION
         # =====================================================
 
         AGGRESSIVE_CASE_FIXES = {
-
-            r"CRIMI\s+NAL":
-                "CRIMINAL",
-
-            r"CIVI\s+L":
-                "CIVIL",
-
-            r"APPEA\s+L":
-                "APPEAL",
-
-            r"PETITI\s+ON":
-                "PETITION",
-
-            r"APPLICATI\s+ON":
-                "APPLICATION",
-
-            r"SPECIA\s+L":
-                "SPECIAL",
-
-            r"LEAV\s+E":
-                "LEAVE",
-
-            r"WRI\s+T":
-                "WRIT",
-
-            r"CAS\s+E":
-                "CASE",
-
-            r"N\s+O\s*\.":
-                "NO.",
-
-            r"N\s+O\s*S\s*\.":
-                "NOS.",
-
-            r"O\s+F\s+(\d{4})":
-                r"OF "
+            r"CRIMI\s+NAL": "CRIMINAL",
+            r"CIVI\s+L": "CIVIL",
+            r"APPEA\s+L": "APPEAL",
+            r"PETITI\s+ON": "PETITION",
+            r"APPLICATI\s+ON": "APPLICATION",
+            r"SPECIA\s+L": "SPECIAL",
+            r"LEAV\s+E": "LEAVE",
+            r"WRI\s+T": "WRIT",
+            r"CAS\s+E": "CASE",
+            r"N\s+O\s*\.": "NO.",
+            r"N\s+O\s*S\s*\.": "NOS.",
+            r"O\s+F\s+(\d{4})": r"OF ",
         }
 
         for wrong, correct in AGGRESSIVE_CASE_FIXES.items():
 
             try:
 
-              header = re.sub(
-                    wrong,
-                    correct,
-                    header,
-                    flags=re.I
-                )
+                header = re.sub(wrong, correct, header, flags=re.I)
 
             except Exception as aggressive_error:
 
@@ -1226,22 +857,15 @@ def extract_case_number(
 
                 continue
 
-
         # =====================================================
         # ð¥ CANONICAL CASE FORMAT NORMALIZATION ENGINE
         # =====================================================
-
 
         for pattern, replacement in CANONICAL_CASE_PATTERNS:
 
             try:
 
-              header = re.sub(
-                    pattern,
-                    replacement,
-                    header,
-                    flags=re.I
-                )
+                header = re.sub(pattern, replacement, header, flags=re.I)
 
             except Exception as canonical_error:
 
@@ -1262,15 +886,11 @@ def extract_case_number(
         # ð¥ CANDIDATE COLLECTION ENGINE
         # =====================================================
 
-                # =====================================================
+        # =====================================================
         # 🔥 LOCKED INDIAN JUDICIARY CASE EXTRACTION ENGINE
         # =====================================================
 
-        normalized_header = re.sub(
-            r"\s+",
-            " ",
-            header
-        )
+        normalized_header = re.sub(r"\s+", " ", header)
 
         print("🚨 REACHED PRE-LOCK REGION 🚨")
 
@@ -1279,60 +899,46 @@ def extract_case_number(
         # =====================================================
 
         early_sc_match = re.search(
-            r'(?:CASE\s*NO\.?\s*:?\s*)?'
-            r'((?:APPEAL\s*\((?:CIVIL|CRIMINAL)\)|'
-            r'(?:C\s*I\s*V\s*I\s*L|C\s*R\s*I\s*M\s*I\s*N\s*A\s*L)\s+APPEAL)'
-            r'\s*'
-            r'(?:NO\.?\s*)?'
-            r'[\d\-]+'
-            r'\s+OF\s+\d{4})',
+            r"(?:CASE\s*NO\.?\s*:?\s*)?"
+            r"((?:APPEAL\s*\((?:CIVIL|CRIMINAL)\)|"
+            r"(?:C\s*I\s*V\s*I\s*L|C\s*R\s*I\s*M\s*I\s*N\s*A\s*L)\s+APPEAL)"
+            r"\s*"
+            r"(?:NO\.?\s*)?"
+            r"[\d\-]+"
+            r"\s+OF\s+\d{4})",
             normalized_header,
-            flags=re.I
+            flags=re.I,
         )
 
-
-
-          # =====================================================
-          # 🔥 UNIVERSAL INDIAN CASE CAPTION LOCK ENGINE
-          # =====================================================
+        # =====================================================
+        # 🔥 UNIVERSAL INDIAN CASE CAPTION LOCK ENGINE
+        # =====================================================
 
         UNIVERSAL_CASE_PATTERNS = [
+            r"(?:CASE\s*NO\.?\s*:?\s*)?"
+            r"(?:APPEAL\s*\(\s*(?:CIVIL|CRIMINAL|CRL\.?)\s*\))"
+            r"\s*(?:NO\.?\s*)?"
+            r"[\d\s\-\/]+"
+            r"\s*OF\s*\d{4}",
+            r"(?:CIVIL|CRIMINAL)\s+APPEAL"
+            r"\s*(?:NO\.?\s*)?"
+            r"[\d\s\-\/]+"
+            r"\s*OF\s*\d{4}",
+            r"SPECIAL\s+LEAVE\s+PETITION"
+            r"(?:\s*\(\s*C\s*R\s*L\s*\))?"
+            r"\s*(?:NO\.?\s*)?"
+            r"[\d\s\-\/]+"
+            r"\s*OF\s*\d{4}",
+            r"WRIT\s+PETITION"
+            r"(?:\s*\(\s*(?:C|CRL|CIVIL|CRIMINAL)\s*\))?"
+            r"\s*(?:NO\.?\s*)?"
+            r"[\d\s\-\/]+"
+            r"\s*OF\s*\d{4}",
+        ]
 
-              r'(?:CASE\s*NO\.?\s*:?\s*)?'
-              r'(?:APPEAL\s*\(\s*(?:CIVIL|CRIMINAL|CRL\.?)\s*\))'
-              r'\s*(?:NO\.?\s*)?'
-              r'[\d\s\-\/]+'
-              r'\s*OF\s*\d{4}',
+        flattened_header = re.sub(r"[^A-Z0-9\(\)\-/ ]+", " ", normalized_header.upper())
 
-              r'(?:CIVIL|CRIMINAL)\s+APPEAL'
-              r'\s*(?:NO\.?\s*)?'
-              r'[\d\s\-\/]+'
-              r'\s*OF\s*\d{4}',
-
-              r'SPECIAL\s+LEAVE\s+PETITION'
-              r'(?:\s*\(\s*C\s*R\s*L\s*\))?'
-              r'\s*(?:NO\.?\s*)?'
-              r'[\d\s\-\/]+'
-              r'\s*OF\s*\d{4}',
-
-              r'WRIT\s+PETITION'
-              r'(?:\s*\(\s*(?:C|CRL|CIVIL|CRIMINAL)\s*\))?'
-              r'\s*(?:NO\.?\s*)?'
-              r'[\d\s\-\/]+'
-              r'\s*OF\s*\d{4}',
-          ]
-
-        flattened_header = re.sub(
-            r'[^A-Z0-9\(\)\-/ ]+',
-            ' ',
-            normalized_header.upper()
-        )
-
-        flattened_header = re.sub(
-            r'\s+',
-            ' ',
-            flattened_header
-        ).strip()
+        flattened_header = re.sub(r"\s+", " ", flattened_header).strip()
 
         print("🔥 FLATTENED HEADER:")
         print(flattened_header[:4000])
@@ -1342,21 +948,17 @@ def extract_case_number(
             try:
 
                 universal_match = re.search(
-                      universal_pattern,
-                      flattened_header,
-                      flags=re.I
-                  )
+                    universal_pattern, flattened_header, flags=re.I
+                )
 
                 if universal_match:
 
                     print("🚨 UNIVERSAL MATCH RAW:")
                     print(universal_match.group(0))
 
-                    early_case = re.sub(
-                          r'\s+',
-                          ' ',
-                          universal_match.group(0)
-                      ).strip().upper()
+                    early_case = (
+                        re.sub(r"\s+", " ", universal_match.group(0)).strip().upper()
+                    )
 
                     print("🔥 UNIVERSAL CASE LOCK:")
                     print(early_case)
@@ -1372,11 +974,7 @@ def extract_case_number(
 
         if early_sc_match:
 
-            early_case = re.sub(
-                r'\s+',
-                ' ',
-                early_sc_match.group(0)
-            ).strip().upper()
+            early_case = re.sub(r"\s+", " ", early_sc_match.group(0)).strip().upper()
 
             print("🔥 EARLY SC CAPTION LOCK:")
             print(early_case)
@@ -1388,16 +986,12 @@ def extract_case_number(
                 "case_number": early_case,
                 "canonical_case_number": early_case,
                 "normalized_case_number": early_case,
-                "case_type": (
-                    "CRIMINAL"
-                    if "CRIMINAL" in early_case
-                    else "CIVIL"
-                ),
+                "case_type": ("CRIMINAL" if "CRIMINAL" in early_case else "CIVIL"),
                 "court_type": "SUPREME COURT",
                 "jurisdiction": "INDIA",
                 "source": "EARLY_SC_CAPTION_LOCK",
                 "confidence": 100,
-                "validation_passed": True
+                "validation_passed": True,
             }
 
         # =====================================================
@@ -1417,19 +1011,11 @@ def extract_case_number(
 
             normalized_header = str(normalized_header)
 
-        normalized_header = normalized_header.encode(
-            "utf-8",
-            errors="ignore"
-        ).decode(
-            "utf-8",
-            errors="ignore"
+        normalized_header = normalized_header.encode("utf-8", errors="ignore").decode(
+            "utf-8", errors="ignore"
         )
 
-        normalized_header = re.sub(
-            r"\s+",
-            " ",
-          normalized_header
-        ).strip()
+        normalized_header = re.sub(r"\s+", " ", normalized_header).strip()
 
         print("🚨 BUILDING COURT CASE PATTERNS 🚨")
 
@@ -1437,102 +1023,64 @@ def extract_case_number(
         print(repr(normalized_header[:3000]))
 
         COURT_CASE_PATTERNS = [
-
             # =================================================
             # 🔥 SUPREME COURT OF INDIA
             # =================================================
-
             r"((?:C\s*I\s*V\s*I\s*L|C\s*R\s*I\s*M\s*I\s*N\s*A\s*L)\s+"
-r"A\s*P\s*P\s*E\s*A\s*L\s+"
-r"N\s*O\.?\s*"
-r"\d+\s+"
-r"O\s*F\s+\d{4})",
-
+            r"A\s*P\s*P\s*E\s*A\s*L\s+"
+            r"N\s*O\.?\s*"
+            r"\d+\s+"
+            r"O\s*F\s+\d{4})",
             r"((?:SPECIAL\s+LEAVE\s+PETITION|SLP).*?\d+\s+OF\s+\d{4})",
-
             r"((?:W\s*R\s*I\s*T\s+P\s*E\s*T\s*I\s*T\s*I\s*O\s*N|W\.?P\.?).*?\d+\s+O\s*F\s+\d{4})",
-
             r"((?:TRANSFER\s+PETITION|TRANSFER\s+CASE).*?\d+\s+OF\s+\d{4})",
-
             r"((?:REVIEW\s+PETITION|CURATIVE\s+PETITION).*?\d+\s+OF\s+\d{4})",
-
             r"((?:CONTEMPT\s+PETITION).*?\d+\s+OF\s+\d{4})",
-
             # =================================================
             # 🔥 HIGH COURTS
             # =================================================
-
             r"((?:CRL\.?|CRM|CRA|CRA-D|CRR|BA|ARB)\s*[-A-Z()\/]*\s*\d+[-\/]\d{4})",
-
             r"((?:CWP|CWJC|LPA|RSA|RFA|FAO|MACA)\s+NO\.?\s*\d+\s+OF\s+\d{4})",
-
             r"((?:W\.?P\.?\(?C?\)?).*?\d+\/\d{4})",
-
             r"((?:CRIMINAL|CIVIL)\s+REVISION\s+NO\.?\s*\d+\s+OF\s+\d{4})",
-
             # =================================================
             # 🔥 TRIBUNALS
             # =================================================
-
             r"((?:OA|TA)\s+NO\.?\s*\d+\/\d{4})",
-
             r"((?:CP\s*\(IB\)|IA\s*\(IB\)).*?\d+\/[A-Z]+\/\d{4})",
-
             r"((?:COMPANY\s+PETITION).*?\d+\s+OF\s+\d{4})",
-
             r"((?:ITA|ITA\s+NO\.?).*?\d+\/[A-Z]+\/\d{4})",
-
             r"((?:GST\s+APPEAL).*?\d+\s+OF\s+\d{4})",
-
             # =================================================
             # 🔥 MULTI-NUMBER SUPREME COURT MATTERS
             # =================================================
-
             r"((?:CIVIL|CRIMINAL)\s+APPEAL\s+NOS?\.?\s*\d+(?:[-–]\d+)?\s+OF\s+\d{4})",
-
             r"((?:SLP|SPECIAL\s+LEAVE\s+PETITION).*?NOS?\.?\s*\d+(?:[-–]\d+)?\s+OF\s+\d{4})",
-
             r"((?:WRIT\s+PETITION|W\.?P\.?).*?NOS?\.?\s*\d+(?:[-–]\d+)?\s+OF\s+\d{4})",
-
             # =================================================
             # 🔥 SUPREME COURT ABBREVIATION FORMS
             # =================================================
-
             r"((?:C\.?A\.?|CR\.?A\.?)\s*NO\.?\s*\d+\s+OF\s+\d{4})",
-
             r"((?:SLP)\s*\((?:C|CRL|CRIMINAL|CIVIL)\).*?\d+\s+OF\s+\d{4})",
-
             r"((?:W\.?P\.?)\s*\((?:C|CRL|CRIMINAL|CIVIL)\).*?\d+\s+OF\s+\d{4})",
-
             r"((?:TRANSFER\s+PETITION|T\.P\.?)\s*\((?:C|CRL|CRIMINAL|CIVIL)\).*?\d+\s+OF\s+\d{4})",
-
             # =================================================
             # 🔥 DIARY NUMBER MATTERS
             # =================================================
-
             r"((?:DIARY)\s+NO\.?\s*\d+\s+OF\s+\d{4})",
-
             r"((?:DY\.?\s*NO\.?)\s*\d+\s+OF\s+\d{4})",
-
             # =================================================
             # 🔥 ALL MAJOR HIGH COURT CASE TYPES
             # =================================================
-
             r"((?:CRP|CRP\(PD\)|CMP|MAT|MAT\.?APP|CO|APO|APOT|CS|EC|ELPET|FA|FAO|FMA|FMAT|MFA|MAT\.APP\(F\.C\)|RCR|SA|SCA|SBCWP|SBCRL|DBSAW|ARB\.?A|ARB\.?P|ARB\.?APPL|CONT\.?CAS|CM\(M\)|CRL\.?A|CRL\.?MC|CRL\.?REV\.?P|CRL\.?O\.?P|CRL\.?PETN|CRL\.?REF|LPA|LPA\(OW\)|MCRC|MP|RFA|RSA|S\.?A\.?|WA|WA\.?NO|W\.?A\.?|WP\(C\)|WPCR|WPC|WPS|WPA|WPO|WPST|W\.?P\.?\(?C?\)?|W\.?P\.?\(?CRL\.?\)?|CWP|CWJC|MC|MACAPP|MACA|CRA|CRA-D|CRR|CRM|CRM-M|CRM-A|BA|ARB)\s*[-A-Z()\/\.]*\s*\d+(?:[-\/]\d{2,4})?)",
-
             # =================================================
             # 🔥 ALL INDIA TRIBUNALS
             # =================================================
-
             r"((?:OA|OA\.?|TA|T\.A\.?|RA|M\.?A\.?|A\.?T\.?)\s+NO\.?\s*\d+\/\d{4})",
-
             r"((?:CP\s*\(IB\)|IA\s*\(IB\)|CA\s*\(AT\)|COMPANY\s+APPEAL\s*\(AT\)|COMPANY\s+PETITION|TCP|C\.P\.?)\s*.*?\d+\/[A-Z]+\/\d{4})",
-
             r"((?:ITA|ITA\.?NO\.?|IT\(SS\)A|ITBA|I\.T\.A\.?)\s*.*?\d+\/[A-Z]+\/\d{4})",
-
             r"((?:GST\s+APPEAL|GSTA|GSTA\.?)\s*.*?\d+\s+OF\s+\d{4})",
-
-            r"((?:NCLAT|NCLT|DRT|DRAT|CAT|CESTAT|AFT|SAT|NGT|TDSAT|NCDRC|STATE\s+COMMISSION|DISTRICT\s+COMMISSION|MACT|RCT|IPAB|AAAR|AAR|SEBI|PMLA|FERA|COMPETITION\s+COMMISSION|CCI)\s+.*?\d+(?:\/\d{4})?)"
+            r"((?:NCLAT|NCLT|DRT|DRAT|CAT|CESTAT|AFT|SAT|NGT|TDSAT|NCDRC|STATE\s+COMMISSION|DISTRICT\s+COMMISSION|MACT|RCT|IPAB|AAAR|AAR|SEBI|PMLA|FERA|COMPETITION\s+COMMISSION|CCI)\s+.*?\d+(?:\/\d{4})?)",
         ]
 
         # =====================================================
@@ -1552,15 +1100,10 @@ r"O\s*F\s+\d{4})",
 
             locked_caption_lines.append(clean_line)
 
-            if re.search(
-                r"(?i)J\s*U\s*D\s*G\s*M\s*E\s*N\s*T",
-                clean_line
-            ):
+            if re.search(r"(?i)J\s*U\s*D\s*G\s*M\s*E\s*N\s*T", clean_line):
                 break
 
-        normalized_header = "\n".join(
-            locked_caption_lines
-        )
+        normalized_header = "\n".join(locked_caption_lines)
 
         print("🔒 HARD LOCKED CAPTION WINDOW:")
         print(normalized_header)
@@ -1570,33 +1113,23 @@ r"O\s*F\s+\d{4})",
         # =====================================================
 
         normalized_header = re.sub(
-            r"(?i)\bSLP\s*\(\s*CRL\s*\)",
-            "SLP (CRL.)",
-          normalized_header
+            r"(?i)\bSLP\s*\(\s*CRL\s*\)", "SLP (CRL.)", normalized_header
         )
 
         normalized_header = re.sub(
-            r"(?i)\bSLP\s*\(\s*C\s*\)",
-            "SLP (C)",
-          normalized_header
+            r"(?i)\bSLP\s*\(\s*C\s*\)", "SLP (C)", normalized_header
         )
 
         normalized_header = re.sub(
-            r"(?i)\bW\.?P\.?\s*\(\s*CRL\s*\)",
-            "W.P.(CRL.)",
-          normalized_header
+            r"(?i)\bW\.?P\.?\s*\(\s*CRL\s*\)", "W.P.(CRL.)", normalized_header
         )
 
         normalized_header = re.sub(
-            r"(?i)\bCRL\.?A\.?\b",
-            "CRIMINAL APPEAL",
-          normalized_header
+            r"(?i)\bCRL\.?A\.?\b", "CRIMINAL APPEAL", normalized_header
         )
 
         normalized_header = re.sub(
-            r"(?i)\bC\.?A\.?\b",
-            "CIVIL APPEAL",
-          normalized_header
+            r"(?i)\bC\.?A\.?\b", "CIVIL APPEAL", normalized_header
         )
 
         print("🔥 PRE-LOCKED NORMALIZED HEADER:")
@@ -1614,17 +1147,11 @@ r"O\s*F\s+\d{4})",
 
             try:
 
-                locked_match = re.search(
-                    locked_pattern,
-                    normalized_header,
-                    flags=re.I
-                )
+                locked_match = re.search(locked_pattern, normalized_header, flags=re.I)
 
                 if locked_match:
 
-                    direct_case = clean_case_number(
-                        locked_match.group(1)
-                    )
+                    direct_case = clean_case_number(locked_match.group(1))
 
                     print("🔥 LOCKED COURT MATCH:")
                     print(direct_case)
@@ -1651,7 +1178,7 @@ r"O\s*F\s+\d{4})",
                         "source": "LOCKED_JUDICIARY_ENGINE",
                         "court": "INDIAN COURT SYSTEM",
                         "confidence": 99,
-                        "validation_passed": True
+                        "validation_passed": True,
                     }
 
             except Exception as locked_error:
@@ -1665,43 +1192,27 @@ r"O\s*F\s+\d{4})",
         # =====================================================
 
         LOCKED_CASE_PATTERNS = [
-
             r"(CRIMINAL\s+APPEAL\s+NO\.?\s*\d+\s+OF\s+\d{4})",
-
             r"(CIVIL\s+APPEAL\s+NO\.?\s*\d+\s+OF\s+\d{4})",
-
             r"(SPECIAL\s+LEAVE\s+PETITION\s*\(?[A-Z]*\)?\s*NO\.?\s*\d+\s+OF\s+\d{4})",
-
             r"(WRIT\s+PETITION\s*\(?[A-Z]*\)?\s*NO\.?\s*\d+\s+OF\s+\d{4})",
-
             r"(TRANSFER\s+PETITION\s*\(?[A-Z]*\)?\s*NO\.?\s*\d+\s+OF\s+\d{4})",
-
             r"(REVIEW\s+PETITION\s*\(?[A-Z]*\)?\s*NO\.?\s*\d+\s+OF\s+\d{4})",
-
             r"(CONTEMPT\s+PETITION\s*\(?[A-Z]*\)?\s*NO\.?\s*\d+\s+OF\s+\d{4})",
-
             r"(CRL\.?A\.?\s*\d+/?\d{4})",
-
             r"(W\.P\.\(C\)\s*NO\.?\s*\d+\s+OF\s+\d{4})",
-
-            r"(W\.P\.\(CRL\.?\)\s*NO\.?\s*\d+\s+OF\s+\d{4})"
+            r"(W\.P\.\(CRL\.?\)\s*NO\.?\s*\d+\s+OF\s+\d{4})",
         ]
 
         for locked_pattern in LOCKED_CASE_PATTERNS:
 
             try:
 
-                locked_match = re.search(
-                    locked_pattern,
-                    header,
-                    flags=re.I
-                )
+                locked_match = re.search(locked_pattern, header, flags=re.I)
 
                 if locked_match:
 
-                    direct_case = clean_case_number(
-                        locked_match.group(1)
-                    )
+                    direct_case = clean_case_number(locked_match.group(1))
 
                     print("🔥 LOCKED COURT MATCH:")
                     print(direct_case)
@@ -1725,7 +1236,7 @@ r"O\s*F\s+\d{4})",
                         "source": "LOCKED_JUDICIARY_ENGINE",
                         "court": "INDIAN COURT SYSTEM",
                         "confidence": 100,
-                        "validation_passed": True
+                        "validation_passed": True,
                     }
 
                     print("🔒 AUTHORITATIVE EXTRACTION LOCKED")
@@ -1739,22 +1250,13 @@ r"O\s*F\s+\d{4})",
                 print(locked_pattern)
                 print(str(locked_error))
 
-        
         # =====================================================
         # 🔒 SAFE DIGIT RECONSTRUCTION LOCK
         # =====================================================
 
-        header = re.sub(
-            r"(?<=\d)\s+(?=\d)",
-            "",
-            header
-        )
+        header = re.sub(r"(?<=\d)\s+(?=\d)", "", header)
 
-        search_text = re.sub(
-            r'\s+',
-            ' ',
-            header
-        ).strip()
+        search_text = re.sub(r"\s+", " ", header).strip()
 
         print("🔥 EARLY SEARCH TEXT:")
         print(search_text[:3000])
@@ -1765,11 +1267,7 @@ r"O\s*F\s+\d{4})",
 
             try:
 
-                matches = re.findall(
-                    pattern,
-                    search_text,
-                    flags=re.I
-                )
+                matches = re.findall(pattern, search_text, flags=re.I)
 
             except Exception as regex_error:
 
@@ -1788,21 +1286,16 @@ r"O\s*F\s+\d{4})",
                 if isinstance(match, tuple):
 
                     match = " ".join(
-                        str(x).strip()
-                        for x in match
-                        if x and str(x).strip()
+                        str(x).strip() for x in match if x and str(x).strip()
                     )
 
-                value = clean_case_number(
-                    str(match)
-                )
+                value = clean_case_number(str(match))
 
                 # ============================================
                 # ð¥ PROCEDURAL SUFFIX FIREWALL
                 # ============================================
 
                 PROCEDURAL_SUFFIXES = [
-
                     " IN RE",
                     " PETITIONER",
                     " PETITIONERS",
@@ -1823,12 +1316,9 @@ r"O\s*F\s+\d{4})",
 
                     if upper_value_cleanup.endswith(suffix):
 
-                        value = value[
-                            : -len(suffix)
-                        ].strip()
+                        value = value[: -len(suffix)].strip()
 
                         upper_value_cleanup = value.upper()
-
 
                 print("ð¥ CANDIDATE BEFORE VALIDATION:")
                 print(value)
@@ -1841,7 +1331,6 @@ r"O\s*F\s+\d{4})",
 
                 print("🧪 LIVE VALIDATION OUTPUT:")
                 print(is_valid_case_number(value))
-
 
                 print("🧪 LIVE VALIDATION INPUT:")
                 print(value)
@@ -1856,8 +1345,6 @@ r"O\s*F\s+\d{4})",
 
                 upper_value = value.upper()
 
-
-                
                 # -------------------------------------------------
                 # ð¥ CANONICAL CONFIDENCE ENGINE
                 # -------------------------------------------------
@@ -1866,12 +1353,7 @@ r"O\s*F\s+\d{4})",
 
                     if case_key in upper_value:
 
-                        confidence = max(
-                            confidence,
-                            score
-                        )
-
-
+                        confidence = max(confidence, score)
 
                 # -------------------------------------------------
                 # ð¥ OCR PENALTIES
@@ -1895,7 +1377,6 @@ r"O\s*F\s+\d{4})",
                 # -------------------------------------------------
 
                 blocked_terms = [
-
                     "SECTION",
                     "SECTIONS",
                     "COURT",
@@ -1903,55 +1384,36 @@ r"O\s*F\s+\d{4})",
                     "PHONE",
                     "MOBILE",
                     "TEL",
-                    "FAX"
+                    "FAX",
                 ]
 
                 upper_candidate = value.upper().strip()
 
-                if any(
-                    upper_candidate.startswith(term)
-                    for term in blocked_terms
-                ):
+                if any(upper_candidate.startswith(term) for term in blocked_terms):
 
                     print(f"❌ POLLUTED CASE NUMBER BLOCKED: {value}")
 
                     continue
 
-                candidate_results.append({
-
-                    "case_number": value,
-
-                    "confidence": max(
-                        0,
-                        min(100, confidence)
-                    )
-                })
+                candidate_results.append(
+                    {"case_number": value, "confidence": max(0, min(100, confidence))}
+                )
 
         # =====================================================
         # ð¥ GENERIC SEMANTIC FALLBACK
         # =====================================================
 
         generic_patterns = [
-
             r"Appeal\s*\((?:civil|crl\.?|criminal)\)\s*[\d\-\/]+\s*of\s*\d{4}",
-
             r"(?:Civil|Criminal)\s+Appeal\s*[\d\-\/]+\s*of\s*\d{4}",
-
             r"CASE\s+NO\.?\s*[:\-]?\s*(Appeal\s*\((?:civil|crl\.?|criminal)\)\s*[\d\/\-]+\s*of\s*\d{4})",
-
             r"Appeal\s*\((?:civil|crl\.?|criminal)\)\s*[\d\/\-]+\s*of\s*\d{4}",
-
             r"Petition\s*\((?:civil|crl\.?|criminal)\)\s*[\d\/\-]+\s*of\s*\d{4}",
-
             r"Transfer\s+(?:Case|Petition)\s*\(?[A-Z]*\)?\s*[\d\/\-]+\s*of\s*\d{4}",
-
             r"(?:CRIMINAL|CIVIL)\s+APPEAL\s+NO\.?\s*[\d\/\-]+\s+OF\s+\d{4}",
-
             r"WRIT\s+PETITION.*?NO\.?\s*[\d\/\-]+\s+OF\s+\d{4}",
-
             r"SLP.*?NO\.?\s*[\d\/\-]+\s+OF\s+\d{4}",
-
-            r"[A-Z .()\/-]+NO\.?\s*[\d\/\-]+\s+OF\s+\d{4}"
+            r"[A-Z .()\/-]+NO\.?\s*[\d\/\-]+\s+OF\s+\d{4}",
         ]
 
         print("🔥 GENERIC SEARCH HEADER:")
@@ -1960,11 +1422,7 @@ r"O\s*F\s+\d{4})",
         print("🔥 GENERIC SEARCH HEADER:")
         print(normalized_header[:3000])
 
-        search_text = re.sub(
-            r'\s+',
-            ' ',
-            normalized_header
-        ).strip()
+        search_text = re.sub(r"\s+", " ", normalized_header).strip()
 
         print("🔥 FINAL SEARCH TEXT:")
         print(search_text[:3000])
@@ -1973,11 +1431,7 @@ r"O\s*F\s+\d{4})",
 
             try:
 
-                fallback_matches = re.findall(
-                    pattern,
-                    header,
-                    flags=re.I
-                )
+                fallback_matches = re.findall(pattern, header, flags=re.I)
 
             except Exception as fallback_error:
 
@@ -1991,11 +1445,9 @@ r"O\s*F\s+\d{4})",
 
                 value = clean_case_number(match)
 
-
                 print("ð¥ CANDIDATE BEFORE VALIDATION:")
                 print(value)
                 print(repr(value))
-
 
                 print("ð¥ VALIDATION RESULT:")
                 print(is_valid_case_number(value))
@@ -2005,7 +1457,6 @@ r"O\s*F\s+\d{4})",
 
                 print("🧪 LIVE VALIDATION OUTPUT:")
                 print(is_valid_case_number(value))
-
 
                 print("🧪 LIVE VALIDATION INPUT:")
                 print(value)
@@ -2021,7 +1472,6 @@ r"O\s*F\s+\d{4})",
                 # -------------------------------------------------
 
                 blocked_terms = [
-
                     "SECTION",
                     "SECTIONS",
                     "COURT",
@@ -2029,26 +1479,18 @@ r"O\s*F\s+\d{4})",
                     "PHONE",
                     "MOBILE",
                     "TEL",
-                    "FAX"
+                    "FAX",
                 ]
 
                 upper_candidate = value.upper().strip()
 
-                if any(
-                    upper_candidate.startswith(term)
-                    for term in blocked_terms
-                ):
+                if any(upper_candidate.startswith(term) for term in blocked_terms):
 
                     print(f"❌ GENERIC POLLUTION BLOCKED: {value}")
 
                     continue
 
-                candidate_results.append({
-
-                    "case_number": value,
-
-                    "confidence": 60
-                })
+                candidate_results.append({"case_number": value, "confidence": 60})
 
         # =====================================================
         # ð¥ FINAL BEST CANDIDATE
@@ -2066,9 +1508,9 @@ r"O\s*F\s+\d{4})",
             try:
 
                 title_match = re.search(
-                    r'([A-Z][A-Z\\s\\.\\&]+?)\\s*(?:Vs\\.?|VERSUS)\\s*([A-Z][A-Z\\s\\.\\&]+)',
+                    r"([A-Z][A-Z\\s\\.\\&]+?)\\s*(?:Vs\\.?|VERSUS)\\s*([A-Z][A-Z\\s\\.\\&]+)",
                     header,
-                    flags=re.I
+                    flags=re.I,
                 )
 
                 print("🔥 PARTY TITLE REGEX MATCH:")
@@ -2076,56 +1518,37 @@ r"O\s*F\s+\d{4})",
 
                 if title_match:
 
-                    petitioner = (
-                        title_match.group(1).strip()
-                    )
+                    petitioner = title_match.group(1).strip()
 
-                    respondent = (
-                        title_match.group(2).strip()
-                    )
+                    respondent = title_match.group(2).strip()
 
-                    synthetic_case = (
-                        f"{petitioner} Vs. {respondent}"
-                    )
+                    synthetic_case = f"{petitioner} Vs. {respondent}"
 
                     # ============================================
                     # 🔥 CAPTION TAIL POLLUTION CLEANER
                     # ============================================
 
                     synthetic_case = re.sub(
-                        r'\bDATE OF.*$',
-                        '',
-                        synthetic_case,
-                        flags=re.I
+                        r"\bDATE OF.*$", "", synthetic_case, flags=re.I
                     ).strip()
 
-                    synthetic_case = re.sub(
-                        r'\s+',
-                        ' ',
-                        synthetic_case
-                    ).strip()
+                    synthetic_case = re.sub(r"\s+", " ", synthetic_case).strip()
 
                     print("🔥 AUTHORITATIVE PARTY TITLE FALLBACK:")
                     print(synthetic_case)
 
-                    candidate_results.append({
-
-                        "case_number": synthetic_case,
-
-                        "confidence": 55
-                    })
+                    candidate_results.append(
+                        {"case_number": synthetic_case, "confidence": 55}
+                    )
 
             except Exception as fallback_error:
 
                 print("❌ PARTY TITLE FALLBACK ERROR:")
                 print(str(fallback_error))
 
-
         if candidate_results:
 
-            candidate_results = rank_case_candidates(
-                candidate_results
-            )
+            candidate_results = rank_case_candidates(candidate_results)
 
             best = candidate_results[0]
 
@@ -2149,9 +1572,9 @@ r"O\s*F\s+\d{4})",
             try:
 
                 title_match = re.search(
-                    r'PETITIONER\s*[:\-]?\s*([A-Z][A-Z\s\.\&]+?)\s*(?:Vs\.?|VERSUS)\s*RESPONDENT\s*[:\-]?\s*([A-Z][A-Z\s\.\&]+(?:ORS\.)?)',
+                    r"PETITIONER\s*[:\-]?\s*([A-Z][A-Z\s\.\&]+?)\s*(?:Vs\.?|VERSUS)\s*RESPONDENT\s*[:\-]?\s*([A-Z][A-Z\s\.\&]+(?:ORS\.)?)",
                     header,
-                    flags=re.I
+                    flags=re.I,
                 )
 
                 print("🔥 PARTY TITLE REGEX MATCH:")
@@ -2159,70 +1582,43 @@ r"O\s*F\s+\d{4})",
 
                 if title_match:
 
-                    petitioner = (
-                        title_match.group(1).strip()
-                    )
+                    petitioner = title_match.group(1).strip()
 
-                    respondent = (
-                        title_match.group(2).strip()
-                    )
+                    respondent = title_match.group(2).strip()
 
-                    synthetic_case = (
-                        f"{petitioner} Vs. {respondent}"
-                    )
+                    synthetic_case = f"{petitioner} Vs. {respondent}"
 
                     # ============================================
                     # 🔥 CAPTION TAIL POLLUTION CLEANER
                     # ============================================
 
                     synthetic_case = re.sub(
-                        r'\bDATE OF.*$',
-                        '',
-                        synthetic_case,
-                        flags=re.I
+                        r"\bDATE OF.*$", "", synthetic_case, flags=re.I
                     ).strip()
 
-                    synthetic_case = re.sub(
-                        r'\s+',
-                        ' ',
-                        synthetic_case
-                    ).strip()
+                    synthetic_case = re.sub(r"\s+", " ", synthetic_case).strip()
 
                     print("🔥 AUTHORITATIVE PARTY TITLE FALLBACK:")
                     print(synthetic_case)
 
-                    best = {
-                        "case_number": synthetic_case,
-                        "confidence": 55
-                    }
+                    best = {"case_number": synthetic_case, "confidence": 55}
 
                 else:
 
-                    best = {
-                        "case_number": "Unknown Case",
-                        "confidence": 0
-                    }
+                    best = {"case_number": "Unknown Case", "confidence": 0}
 
             except Exception as fallback_error:
 
                 print("❌ PARTY TITLE FALLBACK ERROR:")
                 print(str(fallback_error))
 
-                best = {
-                    "case_number": "Unknown Case",
-                    "confidence": 0
-                }
+                best = {"case_number": "Unknown Case", "confidence": 0}
 
             # =====================================================
             # 🔥 SEMANTIC PROCEEDING RESOLUTION ENGINE
             # =====================================================
 
-            best_value = str(
-                best.get(
-                    "case_number",
-                    ""
-                )
-            ).upper()
+            best_value = str(best.get("case_number", "")).upper()
 
             normalized_header_upper = header.upper()
 
@@ -2245,16 +1641,10 @@ r"O\s*F\s+\d{4})",
             ):
                 case_type = "CRIMINAL"
 
-            elif (
-                "CIVIL APPEAL" in best_value
-                or "C.A." in best_value
-            ):
+            elif "CIVIL APPEAL" in best_value or "C.A." in best_value:
                 case_type = "CIVIL"
 
-            elif (
-                "WRIT PETITION" in best_value
-                or "WP(" in best_value
-            ):
+            elif "WRIT PETITION" in best_value or "WP(" in best_value:
                 case_type = "WRIT"
 
             elif "SLP" in best_value:
@@ -2302,10 +1692,7 @@ r"O\s*F\s+\d{4})",
             # 🔥 PROCEEDING FAMILY
             # -----------------------------------------------------
 
-            if (
-                "INTERLOCUTORY" in best_value
-                or "IA" in best_value
-            ):
+            if "INTERLOCUTORY" in best_value or "IA" in best_value:
                 proceeding_family = "INTERLOCUTORY"
 
             elif "REVIEW" in best_value:
@@ -2336,7 +1723,6 @@ r"O\s*F\s+\d{4})",
         # ð¥ FINAL FAILURE
         # =====================================================
 
-
         # =====================================================
         # ð¥ PARTY TITLE FALLBACK
         # =====================================================
@@ -2344,13 +1730,13 @@ r"O\s*F\s+\d{4})",
         petitioner_match = re.search(
             r"PETITIONER\s*:?\s*([A-Z0-9][A-Z0-9\s\.\&\,\-\(\)\/\']+?)(?=RESPONDENT|DATE OF JUDGMENT|BENCH|JUDGMENT|$)",
             header,
-            flags=re.I
+            flags=re.I,
         )
 
         respondent_match = re.search(
             r"RESPONDENT\s*:?\s*([A-Z0-9][A-Z0-9\s\.\&\,\-\(\)\/\']+?)(?=DATE OF JUDGMENT|BENCH|JUDGMENT|$)",
             header,
-            flags=re.I
+            flags=re.I,
         )
 
         print("🔥 FINAL CANDIDATE_RESULTS STATE:")
@@ -2371,59 +1757,31 @@ r"O\s*F\s+\d{4})",
         print("🔥 CANDIDATE_RESULTS:")
         print(candidate_results)
 
-        if (
-            petitioner_match
-            and respondent_match
-            and not candidate_results
-        ):
+        if petitioner_match and respondent_match and not candidate_results:
 
             petitioner = petitioner_match.group(1).strip()
             respondent = respondent_match.group(1).strip()
 
             respondent = re.sub(
-                r"(?i)^\s*(V|VS|VS\.|VERSUS)\s+",
-                "",
-                respondent
+                r"(?i)^\s*(V|VS|VS\.|VERSUS)\s+", "", respondent
             ).strip()
 
-            title_case = (
-                f"{petitioner} Vs. {respondent}"
-            )
+            title_case = f"{petitioner} Vs. {respondent}"
 
-            title_case = re.sub(
-                r"Vs\.\s+Vs\.",
-                "Vs.",
-                title_case,
-                flags=re.I
-            )
+            title_case = re.sub(r"Vs\.\s+Vs\.", "Vs.", title_case, flags=re.I)
 
-            title_case = re.sub(
-                r"\s+",
-                " ",
-                title_case
-            ).strip()
+            title_case = re.sub(r"\s+", " ", title_case).strip()
 
             invalid_caption_tokens = [
-
                 "DATE OF",
-
                 "DATE OF JUDGMENT",
-
                 "BENCH",
-
                 "JUDGMENT",
-
                 "RESPONDENT:",
-
-                "PETITIONER:"
+                "PETITIONER:",
             ]
 
-            if any(
-
-                token in title_case.upper()
-
-                for token in invalid_caption_tokens
-            ):
+            if any(token in title_case.upper() for token in invalid_caption_tokens):
 
                 print("❌ INVALID PARTY TITLE FALLBACK BLOCKED")
                 print(title_case)
@@ -2436,7 +1794,7 @@ r"O\s*F\s+\d{4})",
                     "source": None,
                     "court": None,
                     "confidence": 0,
-                    "validation_passed": False
+                    "validation_passed": False,
                 }
 
             print("🔥 AUTHORITATIVE PARTY TITLE FALLBACK:")
@@ -2450,15 +1808,12 @@ r"O\s*F\s+\d{4})",
                 "source": "PETITIONER_RESPONDENT_CAPTION",
                 "court": "SUPREME COURT OF INDIA",
                 "confidence": 82,
-                "validation_passed": True
+                "validation_passed": True,
             }
 
         print("â CASE NUMBER NOT FOUND")
 
-        return {
-            "case_number": fallback,
-            "confidence": 0
-        }
+        return {"case_number": fallback, "confidence": 0}
 
     except Exception as e:
 
@@ -2470,7 +1825,4 @@ r"O\s*F\s+\d{4})",
         print("❌ FULL TRACEBACK:")
         traceback.print_exc()
 
-        return {
-            "case_number": fallback,
-            "confidence": 0
-        }
+        return {"case_number": fallback, "confidence": 0}
