@@ -74,6 +74,27 @@ def remove_noise(text):
     )
 
     # =====================================================
+    # 🔥 REMOVE SUPREME COURT APPEAL NUMBER POLLUTION
+    # =====================================================
+
+    text = re.sub(
+        r"(?:CIVIL|CRIMINAL)"
+        r"\s+APPEAL\s+NOS?\.?\s*"
+        r"[\d\-/, ]+"
+        r"\s+OF\s+\d{4}",
+        " ",
+        text,
+        flags=re.I,
+    )
+
+    text = re.sub(
+        r"\b\d+(?:\s*[-/]\s*\d+)*\s+OF\s+\d{4}\b",
+        " ",
+        text,
+        flags=re.I,
+    )
+
+    # =====================================================
     # 🔥 REMOVE ADVOCATES
     # =====================================================
 
@@ -160,6 +181,38 @@ def clean_name(text):
 
         return "Unknown"
 
+    # =====================================================
+    # 🔥 HEADER LABEL CLEANUP
+    # =====================================================
+
+    text = re.sub(
+        r"\b(VS\.?|VERSUS|V\.)\b$",
+        "",
+        text,
+        flags=re.I
+    ).strip()
+
+    text = re.sub(
+        r"\bDATE\s+OF.*$",
+        "",
+        text,
+        flags=re.I
+    ).strip()
+
+    text = re.sub(
+        r"\bPETITIONER\b$",
+        "",
+        text,
+        flags=re.I
+    ).strip()
+
+    text = re.sub(
+        r"\bRESPONDENT\b$",
+        "",
+        text,
+        flags=re.I
+    ).strip()
+
     return text.title()
 
 
@@ -221,8 +274,75 @@ def extract_role_based(header):
 
 
 # =========================================================
+# 🔥 APPELLANT / RESPONDENT EXTRACTION
+# =========================================================
+
+def extract_appellant_respondent(header):
+
+    m = re.search(
+        r"([A-Z][A-Z0-9 ,.&'()/\\-]{3,250})"
+        r".{0,120}?"
+        r"APPELLANT"
+        r".{0,300}?"
+        r"(VERSUS|VS\\.?|V\\.)"
+        r".{0,300}?"
+        r"([A-Z][A-Z0-9 ,.&'()/\\-]{3,350})"
+        r".{0,120}?"
+        r"RESPONDENT",
+        header,
+        flags=re.I | re.S
+    )
+
+    if not m:
+        return {
+            "petitioner": "Unknown",
+            "respondent": "Unknown",
+            "confidence": 0
+        }
+
+    return {
+        "petitioner": clean_name(m.group(1)),
+        "respondent": clean_name(m.group(3)),
+        "confidence": 85
+    }
+
+
+# =========================================================
 # 🔥 FALLBACK VERSUS EXTRACTION
 # =========================================================
+
+
+
+def extract_label_based(header):
+
+    pet = re.search(
+        r"PETITIONER\s*:\s*([A-Z0-9 ,.&'()/\\-]{2,300})",
+        header,
+        flags=re.I
+    )
+
+    res = re.search(
+        r"RESPONDENT\s*:\s*([A-Z0-9 ,.&'()/\\-]{2,300})",
+        header,
+        flags=re.I
+    )
+
+    return {
+        "petitioner":
+            clean_name(pet.group(1))
+            if pet else "Unknown",
+
+        "respondent":
+            clean_name(res.group(1))
+            if res else "Unknown",
+
+        "confidence":
+            (
+                90
+                if pet and res
+                else 0
+            )
+    }
 
 
 def extract_versus_based(header):
@@ -276,9 +396,9 @@ def extract_parties(text):
         # 🔥 HEADER ZONE
         # =====================================================
 
-        header = text[:12000]
+        header_raw = text[:12000]
 
-        header = normalize_spaces(header)
+        header = normalize_spaces(header_raw)
 
         # =====================================================
         # 🔥 HEADER OCR SANITIZATION
@@ -300,25 +420,44 @@ def extract_parties(text):
         # 🔥 ROLE-BASED EXTRACTION
         # =====================================================
 
-        result = extract_role_based(header)
+        role_result = extract_role_based(header)
 
         # =====================================================
         # 🔥 FALLBACK VERSUS
         # =====================================================
 
-        if result["petitioner"] == "Unknown" or result["respondent"] == "Unknown":
+        label_result = extract_label_based(
+            header_raw
+        )
 
-            fallback = extract_versus_based(header)
+        appellant_result = extract_appellant_respondent(
+           header_raw
+        )
 
-            if result["petitioner"] == "Unknown":
+        versus_result = extract_versus_based(
+            header_raw
+        )
 
-                result["petitioner"] = fallback["petitioner"]
+        print("ROLE RESULT:", role_result)
+        print("LABEL RESULT:", label_result)
+        print("APPELLANT RESULT:", appellant_result)
+        print("VERSUS RESULT:", versus_result)
 
-            if result["respondent"] == "Unknown":
+        candidates = [
+            role_result,
+            label_result,
+            appellant_result,
+            versus_result
+        ]
 
-                result["respondent"] = fallback["respondent"]
+        result = max(
+            candidates,
+            key=lambda x: x.get(
+                "confidence",
+                0
+            )
+        )
 
-            result["confidence"] = max(result["confidence"], fallback["confidence"])
 
         # =====================================================
         # 🔥 FINAL SAFETY

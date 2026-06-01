@@ -214,6 +214,21 @@ def normalize_ocr(text):
 
     text = text.replace("|", "1")
 
+    # =====================================================
+    # 🔥 UNICODE DASH NORMALIZATION
+    # =====================================================
+
+    text = text.replace("\u00ad", "-")
+    text = text.replace("\u2010", "-")
+    text = text.replace("\u2011", "-")
+    text = text.replace("\u2012", "-")
+    text = text.replace("\u2013", "-")
+    text = text.replace("\u2014", "-")
+    text = text.replace("\u2015", "-")
+
+    text = text.replace("\xa0", " ")
+
+
     text = text.replace("â", "-")
 
     text = text.replace("â", "-")
@@ -290,6 +305,28 @@ def clean_case_number(value):
 # =========================================================
 
 
+def clean_case_number_candidate(value):
+
+    if not value:
+        return value
+
+    value = re.split(
+        r'(?i)\b('
+        r'PETITIONER:|'
+        r'RESPONDENT:|'
+        r'DATE OF JUDGMENT:|'
+        r'BENCH:|'
+        r'JUDGMENT:|'
+        r'ORDER:'
+        r')',
+        value
+    )[0]
+
+    value = re.sub(r'\s+', ' ', value)
+
+    return value.strip()
+
+
 def is_valid_case_number(value):
 
     if not value:
@@ -312,6 +349,12 @@ def is_valid_case_number(value):
         r"^\d{8,}$",
         r"^section\s+\d+$",
         r"^sections\s+\d+$",
+        r"^article\s+\d+[a-z]*$",
+        r"^articles\s+\d+[a-z]*$",
+        r"^para\s+\d+$",
+        r"^paragraph\s+\d+$",
+        r"^clause\s+\d+$",
+        r"^sub[- ]section\s+\d+$",
     ]
 
     for pattern in invalid_patterns:
@@ -598,6 +641,14 @@ def extract_case_number(text, fallback="Unknown Case"):
 
         normalized_header = normalize_legal_header(header)
 
+        # =====================================================
+        # 🔥 OCR NORMALIZATION BEFORE DIRECT MATCH
+        # =====================================================
+
+        normalized_header = normalize_ocr(
+            normalized_header
+        )
+
         print("🔥 NORMALIZED HEADER TRACE:")
         print(normalized_header[:3000])
 
@@ -623,11 +674,16 @@ def extract_case_number(text, fallback="Unknown Case"):
 
                     extracted_case = direct_match.group(1).strip()
 
+                    extracted_case = clean_case_number_candidate(
+                        extracted_case
+                    )
+
                     print("✅ DIRECT HEADER CASE MATCH:")
                     print(extracted_case)
 
                     return {
                         "case_number": extracted_case,
+                        "canonical_case_number": extracted_case,
                         "normalized_case_number": extracted_case.upper(),
                         "confidence": 96,
                         "source": "DIRECT_HEADER_ENGINE",
@@ -1028,6 +1084,9 @@ def extract_case_number(text, fallback="Unknown Case"):
             r"N\s*O\.?\s*"
             r"\d+\s+"
             r"O\s*F\s+\d{4})",
+            r"((?:CIVIL|CRIMINAL)\s+APPEAL\s+NO(?:S)?\.?\s*[\d\-–]+\s*/\s*\d{4})",
+            r"((?:APPEAL)\s*\((?:CIVIL|CRL|CRIMINAL)\)\s*[\d\-–]+\s*/\s*\d{4})",
+            r"((?:SLP|SPECIAL\s+LEAVE\s+PETITION)\s*\((?:C|CRL|CIVIL|CRIMINAL)\)\s*[\d\-–]+\s*/\s*\d{4})",
             r"((?:SPECIAL\s+LEAVE\s+PETITION|SLP).*?\d+\s+OF\s+\d{4})",
             r"((?:W\s*R\s*I\s*T\s+P\s*E\s*T\s*I\s*T\s*I\s*O\s*N|W\.?P\.?).*?\d+\s+O\s*F\s+\d{4})",
             r"((?:TRANSFER\s+PETITION|TRANSFER\s+CASE).*?\d+\s+OF\s+\d{4})",
@@ -1563,7 +1622,15 @@ def extract_case_number(text, fallback="Unknown Case"):
                     print("🔥 AUTHORITATIVE PARTY TITLE FALLBACK:")
                     print(synthetic_case)
 
-                    best = {"case_number": synthetic_case, "confidence": 55}
+                    print(
+                        "⚠ PARTY TITLE FOUND "
+                        "(not a case number)"
+                    )
+
+                    best = {
+                        "case_number": "Unknown Case",
+                        "confidence": 0
+                    }
 
                 else:
 
@@ -1582,14 +1649,50 @@ def extract_case_number(text, fallback="Unknown Case"):
 
             best_value = str(best.get("case_number", "")).upper()
 
+            best_value = clean_case_number_candidate(
+                best_value
+            )
+
+            best_value = re.sub(
+                r'(?i)^CASE\s+NO\.?\s+',
+                '',
+                best_value
+            )
+
+            if len(best_value) > 250:
+                best_value = "UNKNOWN_CASE_NUMBER"
+
+            # =====================================================
+            # 🔥 PARTY TITLE CORRUPTION GUARD
+            # =====================================================
+
+            if (
+                (
+                    " VS. " in best_value
+                    or " V. " in best_value
+                    or "VERSUS" in best_value
+                )
+                and not re.search(r"\d", best_value)
+            ):
+
+                print(
+                    "❌ INVALID CASE NUMBER "
+                    "(party title fallback detected)"
+                )
+
+                best = {
+                    "case_number": "UNKNOWN_CASE_NUMBER",
+                    "confidence": 0,
+                    "validation_status": "INVALID"
+                }
+
+                best_value = "UNKNOWN_CASE_NUMBER"
+
             normalized_header_upper = header.upper()
 
             case_type = "UNKNOWN"
-
             court_type = "UNKNOWN"
-
             jurisdiction = "UNKNOWN"
-
             proceeding_family = "PRIMARY"
 
             # -----------------------------------------------------
@@ -1674,6 +1777,7 @@ def extract_case_number(text, fallback="Unknown Case"):
 
             best["proceeding_family"] = proceeding_family
 
+            best["case_number"] = best_value
             best["normalized_case_number"] = best_value
 
             print("🔥 SEMANTIC CASE RESOLUTION:")
