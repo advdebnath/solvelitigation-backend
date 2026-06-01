@@ -9,8 +9,22 @@ import subprocess
 import traceback
 import unicodedata
 from datetime import datetime
+from dateutil import parser
 
 from app.celery_app import celery_app
+
+import time
+
+def stage_start(name):
+    print(f"🚀 STAGE_START: {name}")
+    return time.time()
+
+def stage_end(name, started):
+    print(
+        f"✅ STAGE_END: {name} "
+        f"({time.time()-started:.2f}s)"
+    )
+
 from app.core_intelligence.headnote_jurisprudential_engine import \
     build_headnote_jurisprudence
 from app.core_intelligence.immutable_layout_engine import (
@@ -64,7 +78,7 @@ from app.extractors.precedent_extractor import extract_precedents
 from app.extractors.procedural_history_detector import \
     detect_procedural_history
 from app.extractors.ratio_detector import extract_ratio
-from app.extractors.ratio_extractor import extract_ratio
+from app.extractors.ratio_extractor import extract_ratio as extract_ratio_legacy
 from app.extractors.ratio_issue_fusion_engine import build_ratio_issue_fusion
 from app.extractors.section_act_mapper import (enrich_sections_with_acts,
                                                extract_act_names)
@@ -473,6 +487,7 @@ def process_judgment(ingestion_id):
 
         ingestion = db.judgmentingestions.find_one({"_id": ObjectId(ingestion_id)})
 
+
         if not ingestion:
 
             print("❌ Ingestion not found:", ingestion_id)
@@ -659,7 +674,13 @@ def process_judgment(ingestion_id):
             # 🔥 LEGAL OCR RECONSTRUCTION ENGINE
             # =====================================================
 
+            print("\n=== BEFORE_OCR_RECON ===")
+            print(full_text[:2000])
+
             full_text = reconstruct_legal_ocr_text(full_text)
+
+            print("\n=== AFTER_OCR_RECON ===")
+            print(full_text[:2000])
 
             print("✅ LEGAL OCR RECONSTRUCTION APPLIED")
 
@@ -725,7 +746,6 @@ def process_judgment(ingestion_id):
 
         print("\n" + "=" * 80)
         print("🔥 RAW HEADER TEXT BEFORE NORMALIZATION")
-        print("=" * 80)
         print(raw_header_text[:5000])
         print("=" * 80 + "\n")
 
@@ -733,7 +753,6 @@ def process_judgment(ingestion_id):
 
         print("\n" + "=" * 80)
         print("🔥 NORMALIZED HEADER TEXT")
-        print("=" * 80)
         print(header_text[:5000])
         print("=" * 80 + "\n")
 
@@ -777,6 +796,8 @@ def process_judgment(ingestion_id):
         print("🔥 NORMALIZED CASE NUMBER OBJECT:", flush=True)
         print(case_number)
 
+        print(case_number)
+
         court_data = extract_court(header_text)
 
         # =====================================================
@@ -794,7 +815,15 @@ def process_judgment(ingestion_id):
         print("\n🔥 RAW HEADER FOR JUDGE EXTRACTION:")
         print(raw_header_text[:3000])
 
+
+        _t_judges = stage_start("JUDGES")
+
         judges = extract_judges(file_path)
+
+        stage_end("JUDGES", _t_judges)
+
+
+        print("CHECKPOINT_01_JUDGES_DONE")
 
         # =============================================
         # 🔥 RAW MULTILINE DATE EXTRACTION
@@ -807,6 +836,8 @@ def process_judgment(ingestion_id):
         # =====================================================
 
         sections = extract_sections(body_text)
+
+        print("CHECKPOINT_02_SECTIONS_DONE")
 
         # =====================================================
         # 🔥 SECTION HIERARCHY INTELLIGENCE
@@ -884,6 +915,11 @@ def process_judgment(ingestion_id):
 
         points_of_law = extract_points_of_law(normalized_semantic_text)
 
+        print("🔥 POINTS OF LAW FINAL:")
+        print(points_of_law)
+
+        print("CHECKPOINT_03_POINTS_DONE")
+
         # =====================================================
 
         jurisprudential_chunks = []
@@ -905,6 +941,9 @@ def process_judgment(ingestion_id):
 
         issue_data = semantic_issues
 
+        print("🔥 ISSUE DATA FINAL:")
+        print(issue_data)
+
         # =====================================================
         # 🔥 OPERATIVE ORDER EXTRACTION
         # =====================================================
@@ -921,6 +960,7 @@ def process_judgment(ingestion_id):
         # 🔥 HEADNOTE
         # =====================================================
 
+        print("CHECKPOINT_04_BEFORE_HEADNOTE")
         headnote_data = generate_headnote(
             full_text,
             issue_data=issue_data,
@@ -928,6 +968,9 @@ def process_judgment(ingestion_id):
             sections_data=sections,
             operative_data=operative_data,
         )
+
+        print("🔥 HEADNOTE DATA FINAL:")
+        print(headnote_data)
 
         # =====================================================
         # 🔥 AUTHORITATIVE HEADNOTE JURISPRUDENTIAL COGNITION
@@ -991,6 +1034,8 @@ def process_judgment(ingestion_id):
         # =====================================================
 
         citation_data = extract_citations(full_text)
+
+        print("CHECKPOINT_05_CITATIONS_DONE")
 
         print("✅ Citation Data:")
         print(citation_data)
@@ -1097,6 +1142,8 @@ def process_judgment(ingestion_id):
 
         immutable_page_objects = build_page_objects(doc)
 
+        print("CHECKPOINT_06_LAYOUT_DONE")
+
         print("✅ IMMUTABLE PAGE OBJECTS BUILT")
 
         print(f"✅ PAGE COUNT: {len(immutable_page_objects)}")
@@ -1150,6 +1197,17 @@ def process_judgment(ingestion_id):
             r"LISTING PROFORMA",
         ]
 
+        RECORD_OF_PROCEEDINGS_PATTERNS = [
+            r"RECORD OF PROCEEDINGS",
+            r"VIDEO CONFERENCING",
+            r"HEARING THROUGH VIDEO CONFERENCING",
+            r"INTERLOCUTORY APPLICATION",
+            r"IA\s+NO\.",
+            r"CORAM\s*:",
+            r"UPON HEARING THE COUNSEL",
+            r"O\s+R\s+D\s+E\s+R",
+        ]
+
         normalized_detection_text = canonical_header_text.upper()
 
         # =====================================================
@@ -1198,7 +1256,22 @@ def process_judgment(ingestion_id):
 
                 break
 
-        if detected_non_judgment and judgment_signal_count < 3:
+        is_record_of_proceedings = any(
+            re.search(
+                pattern,
+                normalized_detection_text,
+                flags=re.I
+            )
+            for pattern in RECORD_OF_PROCEEDINGS_PATTERNS
+        )
+
+        if is_record_of_proceedings:
+
+            print(
+                "✅ RECORD OF PROCEEDINGS DETECTED — ALLOWING INGESTION"
+            )
+
+        elif detected_non_judgment and judgment_signal_count < 3:
 
             db.judgmentingestions.update_one(
                 {"_id": ingestion_id},
@@ -1746,6 +1819,8 @@ def process_judgment(ingestion_id):
 
             raw_sentences = extract_jurisprudential_sentences(semantic_extraction_text)
 
+            print("CHECKPOINT_07_SENTENCES_DONE")
+
             for sent_obj in raw_sentences:
 
                 if sent_obj is None:
@@ -1849,6 +1924,7 @@ def process_judgment(ingestion_id):
         # =====================================================
         # 🔥 CONNECTED LEGAL INTELLIGENCE
         # =====================================================
+        print("CHECKPOINT_08_BEFORE_MEMORY")
         semantic_memory_data = build_cross_case_semantic_memory(
             full_text, existing_cases
         )
@@ -1856,6 +1932,8 @@ def process_judgment(ingestion_id):
         doctrine_evolution_data = extract_doctrines(full_text)
 
         precedent_data = extract_precedents(full_text)
+
+        print("CHECKPOINT_09_PRECEDENTS_DONE")
 
         # =====================================================
         # 🔥 JUDGE ANALYTICS
@@ -2606,6 +2684,10 @@ def process_judgment(ingestion_id):
 
                         print(self_validation)
 
+                        rag_reasoning = {}
+                          
+                        agentic_reasoning = {}
+                          
                         # =====================================================
                         # 🔥 AUTONOMOUS LEGAL STRATEGY ORCHESTRATION ENGINE
                         # =====================================================
@@ -3837,15 +3919,55 @@ def process_judgment(ingestion_id):
 
         try:
 
-            raw_date = judgment_date.get("date", "")
+            raw_date = str(
+                judgment_date.get(
+                    "date",
+                    ""
+                )
+            ).strip()
 
             if raw_date:
 
-                parsed_judgment_date = datetime.strptime(raw_date, "%d-%m-%Y")
+                if re.match(
+                    r"^\d{4}-\d{2}-\d{2}$",
+                    raw_date
+                ):
 
-        except Exception:
+                    parsed_judgment_date = datetime.strptime(
+                        raw_date,
+                        "%Y-%m-%d"
+                    )
+
+                else:
+
+                    parsed_judgment_date = parser.parse(
+                        raw_date,
+                        fuzzy=True
+                    )
+
+                if (
+                    parsed_judgment_date.year < 1950
+                    or
+                    parsed_judgment_date.year >
+                    datetime.utcnow().year + 1
+                ):
+                    parsed_judgment_date = None
+
+        except Exception as e:
+
+            print("❌ DATE NORMALIZATION ERROR:")
+            print(str(e))
 
             parsed_judgment_date = None
+
+        print("🔥 RAW JUDGMENT DATE:")
+        print(judgment_date)
+
+        print("🔥 PARSED JUDGMENT DATE:")
+        print(parsed_judgment_date)
+
+        print("🔥 PARSED JUDGMENT DATE TYPE:")
+        print(type(parsed_judgment_date))
 
         # =====================================================
         # 🔥 FINAL DOCUMENT
@@ -3947,6 +4069,7 @@ def process_judgment(ingestion_id):
             ]
         )
 
+        print(case_number)
         judgment_doc = {
             "ingestionId": str(ingestion_id),
             "caseNumber": case_number.get("case_number", "Unknown Case"),
