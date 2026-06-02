@@ -230,6 +230,7 @@ async function startWorker() {
           // =====================================================
 
           ingestion.nlpQueued = true;
+            ingestion.status = "PROCESSING";
 
           ingestion.stage = "PROCESSING";
 
