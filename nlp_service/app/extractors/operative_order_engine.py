@@ -780,6 +780,12 @@ def extract_operative_order(
         # 🔥 SUPREME COURT FINAL OVERRIDE
         # ====================================================
 
+        print("🔥 BEST PARAGRAPH:")
+        print(best_paragraph)
+
+        print("🔥 DISPOSITION SCORES:")
+        print(dict(disposition_scores))
+
         best_paragraph_lower = best_paragraph.lower()
 
         print("🔥 BEST PARAGRAPH LOWER:")
@@ -788,6 +794,12 @@ def extract_operative_order(
         # ====================================================
         # 🔥 GENERIC FINAL OPERATIVE FALLBACK
         # ====================================================
+
+        print("🔥 FINAL HOLDING BEFORE FALLBACK:")
+        print(final_holding)
+
+        print("🔥 HIGHEST SCORE:")
+        print(highest_score)
 
         if final_holding == "Disposition Unknown" or highest_score <= 0:
 

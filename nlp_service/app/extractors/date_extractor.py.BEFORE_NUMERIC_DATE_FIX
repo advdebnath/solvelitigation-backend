@@ -329,7 +329,7 @@ def extract_judgment_date(text):
 
         numeric = re.findall(r"(\d{1,2})[\-\/](\d{1,2})[\-\/](\d{4})", text)
 
-        for item in numeric:
+        for item in reversed(numeric):
 
             day, month, year = item
 

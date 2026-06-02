@@ -7,7 +7,7 @@ module.exports = {
 
       script: ".venv/bin/celery",
 
-      args: "-A app.celery_app worker -Q nlp --loglevel=info",
+      args: "-A app.celery_app worker -Q celery --loglevel=info",
 
       interpreter: "none",
 
