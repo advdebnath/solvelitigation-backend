@@ -144,6 +144,14 @@ CASE_PATTERNS = (
         r"(CIVIL\s+APPEAL\s+NO\.?\s*[\dA-Z\-\/ ,.&()]+?\s+OF\s+\d{4})",
         r"(CRIMINAL\s+APPEAL\s+NO\.?\s*[\dA-Z\-\/ ,.&()]+?\s+OF\s+\d{4})",
         r"(TRANSFER\s+PETITION\s+NOS?\.?\s*[\dA-Z\-\/ ,.&()]+?\s+OF\s+\d{4})",
+        r"(TRANSFER\s+PETITION\s*\(S\)\s*\((?:CIVIL|CRIMINAL|C|CRL\.?)\)\s*NO\.?\s*[\d\-\/]+)",
+        r"(T\.?P\.?\s*\((?:CIVIL|CRIMINAL|C|CRL\.?)\)\s*NO\.?\s*[\d\-\/]+)",
+        r"(SLP\s*\((?:CIVIL|CRIMINAL|C|CRL\.?)\)\s*NO(?:S)?\.?\s*[\d\-\/]+)",
+        r"(CONMT\.?PET\.?\s*\((?:CIVIL|CRIMINAL|C|CRL\.?)\)\s*NO\.?\s*[\d\-\/]+)",
+        r"(I\.?A\.?\s*NO\.?\s*[\d\-\/]+)",
+        r"(M\.?A\.?\s*NO\.?\s*[\d\-\/]+)",
+        r"(ARBITRATION\s+PETITION.*?[\d\-\/]+)",
+
         r"(REVIEW\s+PETITION\s+NOS?\.?\s*[\dA-Z\-\/ ,.&()]+?\s+OF\s+\d{4})",
         # =====================================================
         # ð¥ COMPACT / OCR / ABBREVIATED FORMS
