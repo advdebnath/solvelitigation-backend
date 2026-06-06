@@ -10,7 +10,6 @@ export type IngestionStatus =
 
 export type DocumentType =
   | "JUDGMENT"
-  | "CAUSE_LIST"
   | "ACT"
   | "RULE"
   | "NOTIFICATION"
@@ -31,12 +30,6 @@ export interface IJudgmentIngestion extends Document {
 
   fileName: string;
   documentType: DocumentType;
-
-  processingMode?:
-    | "FULL_NLP"
-    | "STORE_ONLY";
-
-  documentClassificationConfidence?: number;
 
   progress: number;
   stage: IngestionStage;
@@ -101,31 +94,9 @@ const JudgmentIngestionSchema = new Schema<IJudgmentIngestion>(
 
     documentType: {
       type: String,
-      enum: [
-        "JUDGMENT",
-        "CAUSE_LIST",
-        "ACT",
-        "RULE",
-        "NOTIFICATION",
-        "CIRCULAR",
-      ],
+      enum: ["JUDGMENT", "ACT", "RULE", "NOTIFICATION", "CIRCULAR"],
       default: "JUDGMENT",
     },
-
-    processingMode: {
-      type: String,
-      enum: [
-        "FULL_NLP",
-        "STORE_ONLY",
-      ],
-      default: "FULL_NLP",
-    },
-
-    documentClassificationConfidence: {
-      type: Number,
-      default: 100,
-    },
-
 
     progress: {
       type: Number,

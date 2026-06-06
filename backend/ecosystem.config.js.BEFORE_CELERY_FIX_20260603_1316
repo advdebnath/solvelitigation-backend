@@ -80,8 +80,8 @@ module.exports = {
       name: "sl-celery-worker",
       cwd: "/var/www/solvelitigation/nlp_service",
 
-      script: "/var/www/solvelitigation/nlp_service/.venv/bin/python",
-      args: "-m celery -A app.celery_app worker -Q celery -l info",
+      script: "/var/www/solvelitigation/nlp_service/.venv/bin/celery",
+      args: "-A app.celery_app worker -Q nlp -l info",
 
       interpreter: "none",
       exec_mode: "fork",

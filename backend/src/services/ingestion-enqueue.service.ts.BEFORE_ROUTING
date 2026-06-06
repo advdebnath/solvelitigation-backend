@@ -76,82 +76,19 @@ export async function enqueueIngestions(ingestionIds: string[]) {
     }
   }
 
-  // ============================================
-  // 🔥 ROUTE BY PROCESSING MODE
-  // ============================================
-
-  const fullNlpIds =
-    ingestions
-      .filter(
-        (i: any) =>
-          i.processingMode !== "STORE_ONLY"
-      )
-      .map(
-        (i: any) => i._id
-      );
-
-  const storeOnlyIds =
-    ingestions
-      .filter(
-        (i: any) =>
-          i.processingMode === "STORE_ONLY"
-      )
-      .map(
-        (i: any) => i._id
-      );
-
-  // ============================================
-  // 🔥 FULL NLP
-  // ============================================
-
-  if (fullNlpIds.length) {
-
-    await JudgmentIngestion.updateMany(
-      {
-        _id: {
-          $in: fullNlpIds
-        },
-        status: "UPLOADED",
+  // 🔥 Finally move to QUEUED
+  await JudgmentIngestion.updateMany(
+    {
+      _id: { $in: ingestionIds },
+      status: "UPLOADED",
+    },
+    {
+      $set: {
+        status: "QUEUED",
+        queuedAt: new Date(),
       },
-      {
-        $set: {
-          status: "QUEUED",
-          stage: "QUEUED",
-          queuedAt: new Date(),
-        },
-      }
-    );
+    }
+  );
 
-    console.log(
-      `🚀 FULL_NLP queued: ${fullNlpIds.length}`
-    );
-  }
-
-  // ============================================
-  // 🔥 STORE ONLY
-  // ============================================
-
-  if (storeOnlyIds.length) {
-
-    await JudgmentIngestion.updateMany(
-      {
-        _id: {
-          $in: storeOnlyIds
-        },
-        status: "UPLOADED",
-      },
-      {
-        $set: {
-          status: "COMPLETED",
-          stage: "COMPLETED",
-          isCompleted: true,
-          completedAt: new Date(),
-        },
-      }
-    );
-
-    console.log(
-      `📦 STORE_ONLY completed: ${storeOnlyIds.length}`
-    );
-  }
+  console.log(`🚀 Enqueued ${ingestionIds.length} ingestion(s)`);
 }

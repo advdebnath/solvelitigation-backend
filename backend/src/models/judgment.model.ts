@@ -141,7 +141,6 @@ const JudgmentSchema = new Schema<IJudgment>(
 
     canonicalIdentifier: {
       type: String,
-      index: true,
       default: null,
     },
 
@@ -175,13 +174,11 @@ const JudgmentSchema = new Schema<IJudgment>(
 
     judgmentDate: {
       type: Date,
-      index: true,
     },
 
     category: {
       type: String,
       required: true,
-      index: true,
     },
 
     subCategory: String,
@@ -193,13 +190,11 @@ const JudgmentSchema = new Schema<IJudgment>(
     acts: {
       type: [String],
       default: [],
-      index: true,
     },
 
     sections: {
       type: [String],
       default: [],
-      index: true,
     },
 
     sectionActMap: {
@@ -267,7 +262,6 @@ const JudgmentSchema = new Schema<IJudgment>(
 
     dominantIssue: {
       type: String,
-      index: true,
     },
 
     finalHolding: {
@@ -321,7 +315,6 @@ const JudgmentSchema = new Schema<IJudgment>(
 
     nlpStatus: {
       type: String,
-      index: true,
     },
 
     createdBy: {

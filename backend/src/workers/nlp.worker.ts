@@ -26,6 +26,8 @@ async function markCompleted(ingestionId: string, judgmentId?: string) {
     { _id: ingestionId },
     {
       status: "COMPLETED",
+      stage: "COMPLETED",
+      isCompleted: true,
       completedAt: new Date(),
       ...(judgmentId ? { judgmentId } : {}),
       error: undefined,

@@ -4,14 +4,6 @@ import fs from "fs";
 import path from "path";
 import JudgmentIngestion from "../models/JudgmentIngestion";
 
-import {
-  classifyDocument,
-} from "../services/documentClassifier";
-
-import {
-  extractClassificationText,
-} from "../services/classificationExtractor";
-
 /**
  * 🔹 Extract date from filename
  */
@@ -90,29 +82,9 @@ export const uploadJudgmentFolder = async (req: Request, res: Response) => {
       const filename = generateSafeFileName(file);
 
       const detectedDate = extractDate(filename);
+      const documentType = detectDocumentType(filename);
 
-      const classificationText =
-        extractClassificationText(
-          file.path
-        );
-
-      const classification =
-        classifyDocument(
-          classificationText
-        );
-
-      const documentType =
-        classification.documentType;
-
-      const processingMode =
-        classification.processingMode;
-
-      const confidence =
-        classification.confidence;
-
-      console.log(
-        `📌 Processing: ${filename} → ${documentType} (${confidence}%)`
-      );
+      console.log(`📌 Processing: ${filename} → ${documentType}`);
 
       // ============================================
       // 🔐 FILE EXISTENCE CHECK
@@ -158,11 +130,6 @@ export const uploadJudgmentFolder = async (req: Request, res: Response) => {
         fileName: filename, // 🔥 GUARANTEED SAFE
 
         documentType,
-
-        processingMode,
-
-        documentClassificationConfidence:
-          confidence,
 
         extractedMeta: {
           year: detectedDate.getFullYear(),

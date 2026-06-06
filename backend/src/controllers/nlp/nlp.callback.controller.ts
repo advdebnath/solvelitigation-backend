@@ -199,6 +199,20 @@ export const nlpCallbackController = async (
         status: "COMPLETED",
       });
 
+      await JudgmentIngestion.updateOne(
+        { _id: ingestion._id },
+        {
+          $set: {
+            status: "COMPLETED",
+            stage: "COMPLETED",
+            isCompleted: true,
+            completedAt: new Date(),
+            error: null,
+            nlpProcessed: true,
+          },
+        }
+      );
+
       return res.json({ success: true });
     }
 

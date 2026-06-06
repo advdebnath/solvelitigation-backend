@@ -192,45 +192,6 @@ async function startWorker() {
           }
 
           // =====================================================
-          // 🔥 FILE TYPE HARDENING
-          // =====================================================
-
-          const ext =
-            path.extname(filePath)
-              .toLowerCase();
-
-          if (
-            [
-              ".zip",
-              ".rar",
-              ".7z",
-              ".tar",
-              ".gz"
-            ].includes(ext)
-          ) {
-
-            throw new Error(
-              "Archive files are not supported"
-            );
-          }
-
-          // =====================================================
-          // 🔥 EMPTY FILE HARDENING
-          // =====================================================
-
-          const stats =
-            fs.statSync(filePath);
-
-          if (
-            stats.size === 0
-          ) {
-
-            throw new Error(
-              "Empty file"
-            );
-          }
-
-          // =====================================================
           // 🔥 SEND TO NLP
           // =====================================================
 
@@ -269,7 +230,6 @@ async function startWorker() {
           // =====================================================
 
           ingestion.nlpQueued = true;
-            ingestion.status = "PROCESSING";
 
           ingestion.stage = "PROCESSING";
 
