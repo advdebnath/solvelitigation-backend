@@ -1,3 +1,9 @@
+
+print(
+    "🔥🔥🔥 CASE EXTRACTOR VERSION: JUN13_RUNTIME_AUDIT_V1 🔥🔥🔥",
+    flush=True
+)
+
 import re
 
 from app.extractors.caption_preservation import preserve_raw_caption
@@ -16,29 +22,32 @@ SUPREME_COURT_CASE_PATTERNS = [
     # -----------------------------------------------------
     # APPEALS
     # -----------------------------------------------------
-    r"(CIVIL\s+APPEAL\s+NOS?\.?\s*[\dA-Z\-\/ ,.&()]+?\s+OF\s+\d{4})",
-    r"(CRIMINAL\s+APPEAL\s+NOS?\.?\s*[\dA-Z\-\/ ,.&()]+?\s+OF\s+\d{4})",
+    r"(CIVIL\s+APPEAL\s+NO\s*S\.?\s*[\dA-Z\-\/ ,.&()]+(?:\s+OF\s+\d{4})?)",
+    r"(CIVIL\s+APPEAL\s+NOS?\.?\s*[\dA-Z\-\/ ,.&()]+(?:\s+OF\s+\d{4})?)",
+    r"(CRIMINAL\s+APPEAL\s+NOS?\.?\s*[\dA-Z\-\/ ,.&()]+(?:\s+OF\s+\d{4})?)",
     # -----------------------------------------------------
     # SLP
     # -----------------------------------------------------
-    r"(SPECIAL\s+LEAVE\s+PETITION\s*\((?:CRL\.?|CIVIL|CRIMINAL|C)\)\s*NOS?\.?\s*[\dA-Z\-\/ ,.&()]+?\s+OF\s+\d{4})",
-    r"(SLP\s*\((?:CRL\.?|CIVIL|CRIMINAL|C)\)\s*NOS?\.?\s*[\dA-Z\-\/ ,.&()]+?\s+OF\s+\d{4})",
+    r"(SPECIAL\s+LEAVE\s+PETITION\s*\((?:CRL\.?|CIVIL|CRIMINAL|C)\)\s*NOS?\.?\s*[\dA-Z\-\/ ,.&()]+(?:\s+OF\s+\d{4})?)",
+    r"(SLP\s*\((?:CRL\.?|CIVIL|CRIMINAL|C)\)\s*NOS?\.?\s*[\dA-Z\-\/ ,.&()]+(?:\s+OF\s+\d{4})?)",
     # -----------------------------------------------------
     # WRITS
     # -----------------------------------------------------
-    r"(WRIT\s+PETITION\s*\((?:CRL\.?|CIVIL|CRIMINAL|C)\)\s*NOS?\.?\s*[\dA-Z\-\/ ,.&()]+?\s+OF\s+\d{4})",
+    r"(WRIT\s+PETITION\s*\((?:CRL\.?|CIVIL|CRIMINAL|C)\)\s*NO(?:S)?\.?\s*[\d\-]+/\d{4})",
+    r"(WRIT\s+PETITION\s*\((?:CRL\.?|CIVIL|CRIMINAL|C)\)\s*NO(?:S)?\.?\s*[\d,\-\s]+/\d{4})",
+    r"(WRIT\s+PETITION\s*\((?:CRL\.?|CIVIL|CRIMINAL|C)\)\s*NOS?\.?\s*[\dA-Z\-\/ ,.&()]+(?:\s+OF\s+\d{4})?)",
     r"(SUO\s+MOTO\s+WRIT\s*\((?:CRL\.?|CRIMINAL|CIVIL|C)\)\s*NO\.?\(?S?\)?\s*[\dA-Z\-\/ ,.&()]+)",
     # -----------------------------------------------------
     # REVIEW / CURATIVE / TRANSFER
     # -----------------------------------------------------
     r"(REVIEW\s+PETITION\s*\((?:CRL\.?|CIVIL|CRIMINAL|C)\)\s*NO(?:S|\.\(S\)|\(S\)|S\.)?\.?\s*(?:[\dA-Z\-\/ ,.&()]+)?\s*OF\s+\d{4})",
     r"(REVIEW\s+PETITION.*?DIARY\s+NO\.?\s*\d+\s*OF\s*\d{4})",
-    r"(CURATIVE\s+PETITION\s*\((?:CRL\.?|CIVIL|CRIMINAL|C)\)\s*NOS?\.?\s*[\dA-Z\-\/ ,.&()]+?\s+OF\s+\d{4})",
-    r"(TRANSFER\s+PETITION\s*\((?:CRL\.?|CIVIL|CRIMINAL|C)\)\s*NOS?\.?\s*[\dA-Z\-\/ ,.&()]+?\s+OF\s+\d{4})",
+    r"(CURATIVE\s+PETITION\s*\((?:CRL\.?|CIVIL|CRIMINAL|C)\)\s*NOS?\.?\s*[\dA-Z\-\/ ,.&()]+(?:\s+OF\s+\d{4})?)",
+    r"(TRANSFER\s+PETITION\s*\((?:CRL\.?|CIVIL|CRIMINAL|C)\)\s*NOS?\.?\s*[\dA-Z\-\/ ,.&()]+(?:\s+OF\s+\d{4})?)",
     # -----------------------------------------------------
     # DIARY
     # -----------------------------------------------------
-    r"(DIARY\s+NO\.?\s*[\dA-Z\-\/ ,.&()]+?\s+OF\s+\d{4})",
+    r"(DIARY\s+NO\.?\s*[\dA-Z\-\/ ,.&()]+(?:\s+OF\s+\d{4})?)",
 ]
 
 # =========================================================
@@ -131,28 +140,29 @@ CASE_PATTERNS = (
         # ð¥ SUPREME COURT
         # =====================================================
         r"(SUO\s+MOTO\s+WRIT\s*\((?:CRL\.?|CRIMINAL|CIVIL|C)\)\s*NO\.?\(?S?\)?\s*[\dA-Z\-\/ ,.&()]+)",
-        r"(WRIT\s+PETITION\s*\((?:CIVIL|CRIMINAL|CRL\.?|C)\)\s*NOS?\.?\s*[\dA-Z\-\/ ,.&()]+?\s+OF\s+\d{4})",
-        r"(SPECIAL\s+LEAVE\s+PETITION\s*\((?:CIVIL|CRIMINAL|CRL\.?|C)\)\s*NOS?\.?\s*[\dA-Z\-\/ ,.&()]+?\s+OF\s+\d{4})",
-        r"(SLP\s*\((?:C|CRL\.?|CIVIL|CRIMINAL)\)\s*NOS?\.?\s*[\dA-Z\-\/ ,.&()]+?\s+OF\s+\d{4})",
-        r"(CIVIL\s+APPEAL\s+NOS?\.?\s*[\dA-Z\-\/ ,.&()]+?\s+OF\s+\d{4})",
-        r"(CRIMINAL\s+APPEAL\s+NOS?\.?\s*[\dA-Z\-\/ ,.&()]+?\s+OF\s+\d{4})",
-        r"(SPECIAL\s+LEAVE\s+PETITION\s*\(.*?\)\s*NOS?\.?\s*[\dA-Z\-\/ ,.&()]+?\s+OF\s+\d{4})",
-        r"(SLP\s*\(.*?\)\s*NOS?\.?\s*[\dA-Z\-\/ ,.&()]+?\s+OF\s+\d{4})",
-        r"(WRIT\s+PETITION\s*\(.*?\)\s*NOS?\.?\s*[\dA-Z\-\/ ,.&()]+?\s+OF\s+\d{4})",
-        r"(WRIT\s+PETITION\s+NOS?\.?\s*[\dA-Z\-\/ ,.&()]+?\s+OF\s+\d{4})",
-        r"(WRIT\s+PETITION\s+NO\.?\s*[\dA-Z\-\/ ,.&()]+?\s+OF\s+\d{4})",
-        r"(CIVIL\s+APPEAL\s+NO\.?\s*[\dA-Z\-\/ ,.&()]+?\s+OF\s+\d{4})",
-        r"(CRIMINAL\s+APPEAL\s+NO\.?\s*[\dA-Z\-\/ ,.&()]+?\s+OF\s+\d{4})",
-        r"(TRANSFER\s+PETITION\s+NOS?\.?\s*[\dA-Z\-\/ ,.&()]+?\s+OF\s+\d{4})",
+
+        r"(WRIT\s+PETITION\s*\((?:CIVIL|CRIMINAL|CRL\.?|C)\)\s*NO(?:S)?\.?\s*[\d,\-\s]+/\d{4})",
+        r"(WRIT\s+PETITION\s*\((?:CIVIL|CRIMINAL|CRL\.?|C)\)\s*NO(?:S)?\.?\s*[\d\-]+/\d{4})",
+
+        r"(WRIT\s+PETITION\s*\((?:CIVIL|CRIMINAL|CRL\.?|C)\)\s*NOS?\.?\s*[\dA-Z\-\/ ,.&()]+(?:\s+OF\s+\d{4})?)",
+        r"(SPECIAL\s+LEAVE\s+PETITION\s*\((?:CIVIL|CRIMINAL|CRL\.?|C)\)\s*NOS?\.?\s*[\dA-Z\-\/ ,.&()]+(?:\s+OF\s+\d{4})?)",
+        r"(SLP\s*\((?:C|CRL\.?|CIVIL|CRIMINAL)\)\s*NOS?\.?\s*[\dA-Z\-\/ ,.&()]+(?:\s+OF\s+\d{4})?)",
+        r"(CIVIL\s+APPEAL\s+NOS?\.?\s*[\dA-Z\-\/ ,.&()]+(?:\s+OF\s+\d{4})?)",
+        r"(CRIMINAL\s+APPEAL\s+NOS?\.?\s*[\dA-Z\-\/ ,.&()]+(?:\s+OF\s+\d{4})?)",
+        r"(SPECIAL\s+LEAVE\s+PETITION\s*\(.*?\)\s*NOS?\.?\s*[\dA-Z\-\/ ,.&()]+(?:\s+OF\s+\d{4})?)",
+        r"(SLP\s*\(.*?\)\s*NOS?\.?\s*[\dA-Z\-\/ ,.&()]+(?:\s+OF\s+\d{4})?)",
+        r"(WRIT\s+PETITION\s*\(.*?\)\s*NOS?\.?\s*[\dA-Z\-\/ ,.&()]+(?:\s+OF\s+\d{4})?)",
+        r"(WRIT\s+PETITION\s+NOS?\.?\s*[\dA-Z\-\/ ,.&()]+(?:\s+OF\s+\d{4})?)",
+        r"(WRIT\s+PETITION\s+NO\.?\s*[\dA-Z\-\/ ,.&()]+(?:\s+OF\s+\d{4})?)",
+        r"(CIVIL\s+APPEAL\s+NO\.?\s*[\dA-Z\-\/ ,.&()]+(?:\s+OF\s+\d{4})?)",
+        r"(CRIMINAL\s+APPEAL\s+NO\.?\s*[\dA-Z\-\/ ,.&()]+(?:\s+OF\s+\d{4})?)",
+        r"(TRANSFER\s+PETITION\s+NOS?\.?\s*[\dA-Z\-\/ ,.&()]+(?:\s+OF\s+\d{4})?)",
         r"(TRANSFER\s+PETITION\s*\(S\)\s*\((?:CIVIL|CRIMINAL|C|CRL\.?)\)\s*NO\.?\s*[\d\-\/]+)",
         r"(T\.?P\.?\s*\((?:CIVIL|CRIMINAL|C|CRL\.?)\)\s*NO\.?\s*[\d\-\/]+)",
         r"(SLP\s*\((?:CIVIL|CRIMINAL|C|CRL\.?)\)\s*NO(?:S)?\.?\s*[\d\-\/]+)",
         r"(CONMT\.?PET\.?\s*\((?:CIVIL|CRIMINAL|C|CRL\.?)\)\s*NO\.?\s*[\d\-\/]+)",
-        r"(I\.?A\.?\s*NO\.?\s*[\d\-\/]+)",
-        r"(M\.?A\.?\s*NO\.?\s*[\d\-\/]+)",
-        r"(ARBITRATION\s+PETITION.*?[\d\-\/]+)",
 
-        r"(REVIEW\s+PETITION\s+NOS?\.?\s*[\dA-Z\-\/ ,.&()]+?\s+OF\s+\d{4})",
+        r"(REVIEW\s+PETITION\s+NOS?\.?\s*[\dA-Z\-\/ ,.&()]+(?:\s+OF\s+\d{4})?)",
         # =====================================================
         # ð¥ COMPACT / OCR / ABBREVIATED FORMS
         # =====================================================
@@ -183,12 +193,18 @@ CASE_PATTERNS = (
         # =====================================================
         # ð¥ COMPANY / TAX
         # =====================================================
-        r"(COMPANY\s+APPEAL\s+NOS?\.?\s*[\dA-Z\-\/ ,.&()]+?\s+OF\s+\d{4})",
-        r"(TAX\s+APPEAL\s+NOS?\.?\s*[\dA-Z\-\/ ,.&()]+?\s+OF\s+\d{4})",
+        r"(COMPANY\s+APPEAL\s+NOS?\.?\s*[\dA-Z\-\/ ,.&()]+(?:\s+OF\s+\d{4})?)",
+        r"(TAX\s+APPEAL\s+NOS?\.?\s*[\dA-Z\-\/ ,.&()]+(?:\s+OF\s+\d{4})?)",
+        # =====================================================
+        # 🔥 INTERLOCUTORY / MISC APPLICATIONS
+        # =====================================================
+
         # =====================================================
         # ð¥ GENERIC
         # =====================================================
-        r"((?:CIVIL|CRIMINAL|FIRST|SECOND|REGULAR|MISC(?:ELLANEOUS)?|LETTERS\s+PATENT|INTRA-COURT|COMMERCIAL|COMPANY|TAX)\s+APPEAL\s+NOS?\.?\s*[\dA-Z\-\/ ,.&()]+?\s+OF\s+\d{4})",
+        r"((?:CIVIL|CRIMINAL|FIRST|SECOND|REGULAR|MISC(?:ELLANEOUS)?|LETTERS\s+PATENT|INTRA-COURT|COMMERCIAL|COMPANY|TAX)\s+APPEAL\s+NOS?\.?\s*[\dA-Z\-\/ ,.&()]+(?:\s+OF\s+\d{4})?)",
+        r"(I\.?A\.?\s*NO\.?\s*[\d\-\/]+)",
+        r"(M\.?A\.?\s*NO\.?\s*[\d\-\/]+)",
     ]
 )
 
@@ -454,6 +470,12 @@ def is_valid_case_number(value):
         r"NO\.?\s*[\dA-Z/\-]+",
         r"NOS\.?\s*[\dA-Z/\-]+",
         r"NO\s+[\dA-Z/\-]+",
+
+        # 🔥 SUPREME COURT NO(S) FORMS
+        r"NO\.\(S\)\.?\s*[\dA-Z/\-]+",
+        r"NO\(S\)\.?\s*[\dA-Z/\-]+",
+        r"NOS\.\s*[\dA-Z/\-]+",
+
         r"OF\s+\d{4}",
         r"\d+\s+OF\s+\d{4}",
     ]
@@ -495,6 +517,25 @@ def rank_case_candidates(candidates):
 
             if "CRIMINAL APPEAL" in value:
                 score += 40
+
+            # =================================================
+            # 🔥 SUPREME COURT APPEAL PRIORITY
+            # =================================================
+
+            if "CIVIL APPEAL" in value:
+                score += 110
+
+            if "CRIMINAL APPEAL" in value:
+                score += 110
+
+            if "ARISING OUT OF" in value:
+                score -= 120
+
+            if re.search(r"\bOF\s+\d{4}\b", value):
+                score += 50
+
+            elif value.endswith(" OF"):
+                score -= 100
 
             if "WRIT PETITION" in value:
                 score += 35
@@ -608,6 +649,10 @@ def rank_case_candidates(candidates):
             if len(value.split()) >= 3:
                 score += 5
 
+            print("🔥 CANDIDATE SCORE:")
+            print(value)
+            print(score)
+
             ranked.append({**item, "ranking_score": score})
 
         except Exception:
@@ -667,6 +712,71 @@ def extract_case_number(text, fallback="Unknown Case"):
         header = normalized_header
 
         # =====================================================
+        # 🔒 IN RE / SUO MOTU CASE LOCK
+        # =====================================================
+
+        in_re_match = re.search(
+            r"IN\s+RE\s*:?\s*([^\n]{5,300})",
+            header,
+            flags=re.I
+        )
+
+        if in_re_match:
+
+            title = clean_case_number_candidate(
+                in_re_match.group(1)
+            )
+
+            # ==========================================
+            # 🔒 IN RE CAPTION FIREWALL
+            # ==========================================
+
+            title = title.replace("\\n", "\n")
+
+            title = re.split(
+                r"(?is)\n\s*o\s*r\s*d\s*e\s*r\s*\n",
+                title,
+                maxsplit=1
+            )[0]
+
+            title = re.split(
+                r"(?is)\n\s*j\s*u\s*d\s*g\s*m\s*e\s*n\s*t\s*\n",
+                title,
+                maxsplit=1
+            )[0]
+
+            title = re.sub(
+                r"\s+",
+                " ",
+                title
+            ).strip()
+
+            print("🔥 IN RE CASE LOCK:")
+            print(title)
+
+            return {
+                "case_number": f"IN RE: {title}",
+                "confidence": 99,
+                "source": "IN_RE_ENGINE",
+                "court_type": "SUPREME_COURT"
+            }
+
+        if re.search(
+            r"COGNIZANCE\s+FOR\s+EXTENSION\s+OF\s+LIMITATION",
+            header,
+            flags=re.I
+        ):
+
+            print("🔥 SUO MOTU CASE LOCK")
+
+            return {
+                "case_number":
+                    "IN RE: COGNIZANCE FOR EXTENSION OF LIMITATION",
+                "confidence": 99,
+                "source": "SUO_MOTU_ENGINE"
+            }
+
+        # =====================================================
         # 🔥 ENTERPRISE DIRECT HEADER MATCH ENGINE
         # =====================================================
 
@@ -676,15 +786,69 @@ def extract_case_number(text, fallback="Unknown Case"):
 
             try:
 
+                print("🔥 TESTING PATTERN:")
+                print(pattern)
+
                 direct_match = re.search(pattern, direct_header, flags=re.I)
 
                 if direct_match:
+
+                    print("🔥 RAW DIRECT MATCH:")
+                    print(direct_match.group(1))
 
                     extracted_case = direct_match.group(1).strip()
 
                     extracted_case = clean_case_number_candidate(
                         extracted_case
                     )
+
+                    if re.search(
+                        r"^(?:I\.?A\.?|M\.?A\.?|INTERLOCUTORY\s+APPLICATION)",
+                        extracted_case,
+                        flags=re.I,
+                    ):
+                        print("🚫 PROCEDURAL APPLICATION SKIPPED:")
+                        print(extracted_case)
+                        continue
+
+                    # =====================================================
+                    # 🔒 DIRECT HEADER VALIDATION FIREWALL
+                    # =====================================================
+
+                    if re.search(
+                        r"(SPECIAL\s+LEAVE\s+PETITION|SLP)",
+                        extracted_case,
+                        flags=re.I,
+                    ):
+                        if not re.search(
+                            r"OF\s+\d{4}",
+                            extracted_case,
+                            flags=re.I,
+                        ):
+                            print("🚫 INVALID SLP HEADER MATCH")
+                            print(extracted_case)
+                            continue
+
+                    # =====================================================
+                    # 🔒 INCOMPLETE CASE NUMBER FIREWALL
+                    # =====================================================
+
+                    if re.search(
+                        r"(WRIT\s+PETITION|APPEAL|TRANSFER\s+PETITION|REVIEW\s+PETITION|CURATIVE\s+PETITION)",
+                        extracted_case,
+                        flags=re.I,
+                    ):
+                        if not re.search(
+                            r"(OF\s+\d{4}|/\d{4})",
+                            extracted_case,
+                            flags=re.I,
+                        ):
+                            print("🚫 INCOMPLETE CASE NUMBER REJECTED")
+                            print(extracted_case)
+                            continue
+
+                    print("🔥 DIRECT HEADER SOURCE")
+                    print(extracted_case)
 
                     print("✅ DIRECT HEADER CASE MATCH:")
                     print(extracted_case)
@@ -903,7 +1067,7 @@ def extract_case_number(text, fallback="Unknown Case"):
             r"CAS\s+E": "CASE",
             r"N\s+O\s*\.": "NO.",
             r"N\s+O\s*S\s*\.": "NOS.",
-            r"O\s+F\s+(\d{4})": r"OF ",
+            r"O\s+F\s+(\d{4})": r"OF \\1",
         }
 
         for wrong, correct in AGGRESSIVE_CASE_FIXES.items():
@@ -985,14 +1149,24 @@ def extract_case_number(text, fallback="Unknown Case"):
             r"[\d\s\-\/]+"
             r"\s*OF\s*\d{4}",
             r"(?:CIVIL|CRIMINAL)\s+APPEAL"
-            r"\s*(?:NO\.?\s*)?"
-            r"[\d\s\-\/]+"
-            r"\s*OF\s*\d{4}",
+            r"\s*(?:NO(?:S)?\.?\s*)?"
+            r"[\d,\-\s\/]+"
+            r"(?:\s*OF\s*\d{4}|/\d{4})",
             r"SPECIAL\s+LEAVE\s+PETITION"
             r"(?:\s*\(\s*C\s*R\s*L\s*\))?"
             r"\s*(?:NO\.?\s*)?"
             r"[\d\s\-\/]+"
             r"\s*OF\s*\d{4}",
+            r"WRIT\s+PETITION"
+            r"(?:\s*\(\s*(?:C|CRL|CIVIL|CRIMINAL)\s*\))?"
+            r"\s*(?:NO(?:S)?\.?\s*)?"
+            r"[\d,\-\s]+/\d{4}",
+
+            r"WRIT\s+PETITION"
+            r"(?:\s*\(\s*(?:C|CRL|CIVIL|CRIMINAL)\s*\))?"
+            r"\s*(?:NO(?:S)?\.?\s*)?"
+            r"[\d,\-\s]+/\d{4}",
+
             r"WRIT\s+PETITION"
             r"(?:\s*\(\s*(?:C|CRL|CIVIL|CRIMINAL)\s*\))?"
             r"\s*(?:NO\.?\s*)?"
@@ -1003,6 +1177,68 @@ def extract_case_number(text, fallback="Unknown Case"):
         flattened_header = re.sub(r"[^A-Z0-9\(\)\-/ ]+", " ", normalized_header.upper())
 
         flattened_header = re.sub(r"\s+", " ", flattened_header).strip()
+
+        print("🚨 FIREWALL HEADER SAMPLE 🚨")
+        print(flattened_header[:3000])
+
+        # =====================================================
+        # 🔒 PRIMARY APPEAL VS ARISING-OUT-OF SLP FIREWALL
+        # =====================================================
+
+        # =====================================================
+        # 🔥 OCR APPEAL CAPTION RECONSTRUCTION FIREWALL
+        # =====================================================
+
+        flattened_header = re.sub(
+            r"CIVIL\s+APPEAL\s+NO\s+N\s*S\s*N\s+",
+            "CIVIL APPEAL NOS. ",
+            flattened_header,
+            flags=re.I,
+        )
+
+        flattened_header = re.sub(
+            r"CRIMINAL\s+APPEAL\s+NO\s+N\s*S\s*N\s+",
+            "CRIMINAL APPEAL NOS. ",
+            flattened_header,
+            flags=re.I,
+        )
+
+
+        primary_appeal_match = re.search(
+            r"CIVIL\s+APPEAL\s+NO(?:S)?\.?\s*[\d\-–,/ ]+(?:OF\s*\d{4}|/\d{4})",
+            flattened_header,
+            flags=re.I,
+        )
+
+        arising_out_of_slp = re.search(
+            r"ARISING\s+OUT\s+OF\s+"
+            r"(?:SPECIAL\s+LEAVE\s+PETITION|SLP(?:\s*\(\s*C\s*\))?)",
+            flattened_header,
+            flags=re.I,
+        )
+
+        if primary_appeal_match and arising_out_of_slp:
+
+            primary_case = re.sub(
+                r"\s+",
+                " ",
+                primary_appeal_match.group(0)
+            ).strip().upper()
+
+            print("🔥 PRIMARY APPEAL FIREWALL ACTIVATED")
+            print(primary_case)
+
+            return {
+                "case_number": primary_case,
+                "canonical_case_number": primary_case,
+                "normalized_case_number": primary_case,
+                "case_type": "CIVIL",
+                "court_type": "SUPREME COURT",
+                "jurisdiction": "INDIA",
+                "source": "PRIMARY_APPEAL_FIREWALL",
+                "confidence": 100,
+                "validation_passed": True,
+            }
 
         print("🔥 FLATTENED HEADER:")
         print(flattened_header[:4000])
@@ -1041,6 +1277,9 @@ def extract_case_number(text, fallback="Unknown Case"):
             early_case = re.sub(r"\s+", " ", early_sc_match.group(0)).strip().upper()
 
             print("🔥 EARLY SC CAPTION LOCK:")
+            print(early_case)
+
+            print("🔥 EARLY SC RETURN OBJECT")
             print(early_case)
 
             return {
@@ -1093,6 +1332,7 @@ def extract_case_number(text, fallback="Unknown Case"):
             r"\d+\s+"
             r"O\s*F\s+\d{4})",
             r"((?:CIVIL|CRIMINAL)\s+APPEAL\s+NO(?:S)?\.?\s*[\d\-–]+\s*/\s*\d{4})",
+            r"((?:CIVIL|CRIMINAL)\s+APPEAL\s+NO\(?S\)?\.?\s*[\d\-–]+\s*/\s*\d{4})",
             r"((?:APPEAL)\s*\((?:CIVIL|CRL|CRIMINAL)\)\s*[\d\-–]+\s*/\s*\d{4})",
             r"((?:SLP|SPECIAL\s+LEAVE\s+PETITION)\s*\((?:C|CRL|CIVIL|CRIMINAL)\)\s*[\d\-–]+\s*/\s*\d{4})",
             r"((?:SPECIAL\s+LEAVE\s+PETITION|SLP).*?\d+\s+OF\s+\d{4})",
@@ -1253,8 +1493,8 @@ def extract_case_number(text, fallback="Unknown Case"):
         # =====================================================
 
         LOCKED_CASE_PATTERNS = [
-            r"(CRIMINAL\s+APPEAL\s+NO\.?\s*\d+\s+OF\s+\d{4})",
-            r"(CIVIL\s+APPEAL\s+NO\.?\s*\d+\s+OF\s+\d{4})",
+            r"(CRIMINAL\s+APPEAL\s+NOS?\.?\s*[\d\-\/]+(?:\s+OF\s+\d{4})?)",
+            r"(CIVIL\s+APPEAL\s+NOS?\.?\s*[\d\-\/]+(?:\s+OF\s+\d{4})?)",
             r"(SPECIAL\s+LEAVE\s+PETITION\s*\(?[A-Z]*\)?\s*NO\.?\s*\d+\s+OF\s+\d{4})",
             r"(WRIT\s+PETITION\s*\(?[A-Z]*\)?\s*NO\.?\s*\d+\s+OF\s+\d{4})",
             r"(TRANSFER\s+PETITION\s*\(?[A-Z]*\)?\s*NO\.?\s*\d+\s+OF\s+\d{4})",
@@ -1459,6 +1699,7 @@ def extract_case_number(text, fallback="Unknown Case"):
             r"Appeal\s*\((?:civil|crl\.?|criminal)\)\s*[\d\/\-]+\s*of\s*\d{4}",
             r"Petition\s*\((?:civil|crl\.?|criminal)\)\s*[\d\/\-]+\s*of\s*\d{4}",
             r"Transfer\s+(?:Case|Petition)\s*\(?[A-Z]*\)?\s*[\d\/\-]+\s*of\s*\d{4}",
+              r"(?:CIVIL|CRIMINAL)\s+APPEAL\s+NO\.?\s*\(?S\)?\.?\s*[\d\/\-]+\/\d{4}",
             r"(?:CRIMINAL|CIVIL)\s+APPEAL\s+NO\.?\s*[\d\/\-]+\s+OF\s+\d{4}",
             r"WRIT\s+PETITION.*?NO\.?\s*[\d\/\-]+\s+OF\s+\d{4}",
             r"SLP.*?NO\.?\s*[\d\/\-]+\s+OF\s+\d{4}",
@@ -1589,6 +1830,8 @@ def extract_case_number(text, fallback="Unknown Case"):
             print("BEST CASE NUMBER:")
             print(best)
 
+            return best
+
             # =====================================================
             # 🔥 SEMANTIC PROCEEDING RESOLUTION ENGINE
             # =====================================================
@@ -1603,17 +1846,41 @@ def extract_case_number(text, fallback="Unknown Case"):
 
             try:
 
-                title_match = re.search(
-                    r"PETITIONER\s*[:\-]?\s*([A-Z][A-Z\s\.\&]+?)\s*(?:Vs\.?|VERSUS)\s*RESPONDENT\s*[:\-]?\s*([A-Z][A-Z\s\.\&]+(?:ORS\.)?)",
+                pet_match = re.search(
+                    r"PETITIONER\s*[:\-]?\s*(.*?)\s*(?:VS\.?|VERSUS)",
                     header,
-                    flags=re.I,
+                    flags=re.I | re.S,
                 )
 
-                if title_match:
+                resp_match = re.search(
+                    r"RESPONDENT\s*[:\-]?\s*(.*?)(?:DATE OF|JUDGMENT|ORDER|CORAM|$)",
+                    header,
+                    flags=re.I | re.S,
+                )
 
-                    petitioner = title_match.group(1).strip()
+                print("🔥 PET_MATCH:")
+                print(bool(pet_match))
 
-                    respondent = title_match.group(2).strip()
+                print("🔥 RESP_MATCH:")
+                print(bool(resp_match))
+
+                if pet_match:
+                    print("🔥 PETITIONER RAW:")
+                    print(pet_match.group(1)[:500])
+
+                if resp_match:
+                    print("🔥 RESPONDENT RAW:")
+                    print(resp_match.group(1)[:500])
+
+                if pet_match and resp_match:
+
+                    petitioner = pet_match.group(1).strip()
+
+                    respondent = resp_match.group(1).strip()
+
+                    petitioner = re.sub(r"\s+", " ", petitioner)
+
+                    respondent = re.sub(r"\s+", " ", respondent)
 
                     synthetic_case = f"{petitioner} Vs. {respondent}"
 
@@ -1636,8 +1903,11 @@ def extract_case_number(text, fallback="Unknown Case"):
                     )
 
                     best = {
-                        "case_number": "Unknown Case",
-                        "confidence": 0
+                          "case_number": synthetic_case,
+                          "confidence": 15,
+                          "validation_status": "VALID_LEGACY_IDENTIFIER",
+                          "identifier_type": "PARTY_TITLE",
+                          "source": "PARTY_TITLE_ENGINE"
                     }
 
                 else:
@@ -1680,7 +1950,12 @@ def extract_case_number(text, fallback="Unknown Case"):
                     or " V. " in best_value
                     or "VERSUS" in best_value
                 )
-                and not re.search(r"\d", best_value)
+                and str(
+                    best.get(
+                        "identifier_type",
+                        ""
+                    )
+                ).upper() != "PARTY_TITLE"
             ):
 
                 print(
@@ -1729,11 +2004,35 @@ def extract_case_number(text, fallback="Unknown Case"):
             elif "CONTEMPT" in best_value:
                 case_type = "CONTEMPT"
 
+            elif re.search(
+                r"\bOA\b",
+                best_value
+            ):
+                case_type = "ORIGINAL_APPLICATION"
+
+            elif re.search(
+                r"\bTA\b",
+                best_value
+            ):
+                case_type = "TRANSFER_APPLICATION"
+
+            elif re.search(
+                r"\bMA\b",
+                best_value
+            ):
+                case_type = "MISC_APPLICATION"
+
             # -----------------------------------------------------
             # 🔥 COURT RESOLUTION
             # -----------------------------------------------------
 
-            if "SUPREME COURT" in normalized_header_upper:
+            if re.search(
+                r"\b(OA|TA|MA)\b",
+                best_value
+            ):
+                court_type = "TRIBUNAL"
+
+            elif "SUPREME COURT" in normalized_header_upper:
                 court_type = "SUPREME_COURT"
 
             elif "HIGH COURT" in normalized_header_upper:
@@ -1745,7 +2044,6 @@ def extract_case_number(text, fallback="Unknown Case"):
             ):
                 court_type = "TRIBUNAL"
 
-            # -----------------------------------------------------
             # 🔥 JURISDICTION RESOLUTION
             # -----------------------------------------------------
 
@@ -1761,6 +2059,13 @@ def extract_case_number(text, fallback="Unknown Case"):
             elif case_type == "SPECIAL_LEAVE":
                 jurisdiction = "APPELLATE"
 
+
+            elif case_type in (
+                "ORIGINAL_APPLICATION",
+                "TRANSFER_APPLICATION",
+                "MISC_APPLICATION"
+            ):
+                jurisdiction = "SERVICE"
             # -----------------------------------------------------
             # 🔥 PROCEEDING FAMILY
             # -----------------------------------------------------
@@ -1878,7 +2183,9 @@ def extract_case_number(text, fallback="Unknown Case"):
                 "case_number": title_case,
                 "canonical_case_number": title_case,
                 "normalized_case_number": title_case,
-                "case_type": "PARTY_TITLE_FALLBACK",
+                "case_type": "PARTY_TITLE",
+                "validation_status": "VALID_LEGACY_IDENTIFIER",
+                "identifier_type": "PARTY_TITLE",
                 "source": "PETITIONER_RESPONDENT_CAPTION",
                 "court": "SUPREME COURT OF INDIA",
                 "confidence": 82,

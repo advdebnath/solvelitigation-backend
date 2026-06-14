@@ -206,6 +206,40 @@ def extract_court(text):
             return tribunal
 
         # =====================================================
+        # 🔥 SUPREME COURT CASE-TYPE RESCUE
+        # =====================================================
+
+        if re.search(
+            r"""
+CIVIL\s+APPEAL
+|CRIMINAL\s+APPEAL
+|APPEAL\s*\(CRL
+|APPEAL\s*\(CIVIL
+|APPEAL\s+NOS?
+|SPECIAL\s+LEAVE\s+PETITION
+|SLP\s*\(
+|WRIT\s+PETITION
+|W\.?\s*P\.?\s*\(
+|TRANSFER\s+PETITION
+""",
+            header_upper,
+            re.I | re.VERBOSE
+        ):
+
+            supreme = {
+                "court_type": "SUPREME",
+                "court_name": "Supreme Court Of India",
+                "court_code": "SC",
+                "confidence": 80,
+            }
+
+            print("🔥 SUPREME COURT RESCUE:")
+            print(supreme)
+
+            return supreme
+
+
+        # =====================================================
         # 🔥 FALLBACK
         # =====================================================
 

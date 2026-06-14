@@ -832,7 +832,10 @@ def generate_jurisprudential_headnote(
 
     except Exception as e:
 
-        print("❌ JURISPRUDENTIAL HEADNOTE ERROR:", e)
+        import traceback
+
+        print("❌ JURISPRUDENTIAL HEADNOTE ERROR:")
+        traceback.print_exc()
 
         return {
             "headnote": "",

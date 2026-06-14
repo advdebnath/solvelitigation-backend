@@ -18,6 +18,67 @@ def normalize_ocr(text):
 
     text = text.encode("utf-8", errors="ignore").decode("utf-8", errors="ignore")
 
+    # =====================================================
+    # 🔥 UNIVERSAL LEGAL OCR NORMALIZATION
+    # =====================================================
+
+    OCR_REPAIRS = [
+        (r"\bNO\s+N\s+S\s*\.?", "NOS."),
+        (r"\bNO\s+S\s*\.?", "NOS."),
+        (r"\bNO\s*\(\s*S\s*\)\.?\b", "NOS."),
+        (r"\bNO\s*\(S\)\.?\b", "NOS."),
+
+        (r"\bC\s*R\s*L\b", "CRL"),
+        (r"\bW\s*P\b", "WP"),
+        (r"\bS\s*L\s*P\b", "SLP"),
+        (r"\bT\s*P\b", "TP"),
+
+        (r"\bA\s*P\s*P\s*E\s*A\s*L\b", "APPEAL"),
+        (r"\bP\s*E\s*T\s*I\s*T\s*I\s*O\s*N\b", "PETITION"),
+        (r"\bJ\s*U\s*R\s*I\s*S\s*D\s*I\s*C\s*T\s*I\s*O\s*N\b", "JURISDICTION"),
+    ]
+
+    for pattern, replacement in OCR_REPAIRS:
+        text = re.sub(
+            pattern,
+            replacement,
+            text,
+            flags=re.I
+        )
+
+    # =====================================================
+    # 🔥 UNIVERSAL LEGAL OCR NORMALIZATION
+    # =====================================================
+
+    OCR_REPAIRS = [
+
+        # NO(S) variants
+        (r"\bNO\s+N\s+S\s*\.?", "NOS."),
+        (r"\bNO\s+S\s*\.?", "NOS."),
+        (r"\bNO\s*\(\s*S\s*\)\.?\b", "NOS."),
+        (r"\bNO\s*\(S\)\.?\b", "NOS."),
+
+        # OCR punctuation variants
+        (r"NO\s*\.\s*S\b", "NOS."),
+
+        # Common legal abbreviations
+        (r"\bC\s*R\s*L\s*\.\s*\b", "CRL."),
+        (r"\bI\s*A\s*\.\s*\b", "IA."),
+        (r"\bM\s*A\s*\.\s*\b", "MA."),
+        (r"\bS\s*L\s*P\s*\.\s*\b", "SLP."),
+        (r"\bW\s*P\s*\.\s*\b", "WP."),
+        (r"\bT\s*P\s*\.\s*\b", "TP."),
+    ]
+
+    for pattern, replacement in OCR_REPAIRS:
+
+        text = re.sub(
+            pattern,
+            replacement,
+            text,
+            flags=re.I
+        )
+
     return text.strip()
 
 

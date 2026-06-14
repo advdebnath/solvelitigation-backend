@@ -51,6 +51,26 @@ def normalize_case_number_object(case_data):
     # =====================================================
 
     authoritative_sources = [
+
+        # =================================================
+        # SUPREME COURT AUTHORITATIVE ENGINES
+        # =================================================
+
+        "SC_EXTRACTOR_V2",
+        "SC_NUMBERED_CASE_OVERRIDE",
+        "SC_HISTORICAL_FALLBACK",
+
+        # ============================================
+        # 🔒 IN RE / SUO MOTU AUTHORITATIVE ENGINES
+        # ============================================
+
+        "IN_RE_ENGINE",
+        "SUO_MOTU_ENGINE",
+
+        # =================================================
+        # LEGACY AUTHORITATIVE ENGINES
+        # =================================================
+
         "LOCKED_JUDICIARY_ENGINE",
         "ULTRA_PRIORITY_SC_LOCK",
         "PETITIONER_RESPONDENT_CAPTION",
@@ -64,10 +84,12 @@ def normalize_case_number_object(case_data):
 
     incoming_case = str(case_data.get("case_number", "")).strip()
 
+    print("🔥 NORMALIZER INPUT:")
+    print(case_data)
+
     if (
         incoming_source in authoritative_sources
         and incoming_confidence >= 90
-        and re.search(r"\d{2,}", incoming_case)
     ):
 
         print("🔒 AUTHORITATIVE CASE PRESERVATION LOCK")
@@ -115,6 +137,36 @@ def normalize_case_number_object(case_data):
 
     normalized["source"] = case_data.get("source", normalized["source"])
 
+    normalized["validation_status"] = case_data.get(
+        "validation_status",
+        normalized["validation_status"]
+    )
+
+    # =====================================================
+    # 🔥 AUTHORITATIVE COURT LOCK
+    # =====================================================
+
+    authoritative_court = str(
+        normalized.get(
+            "court_type",
+            ""
+        )
+    ).upper()
+
+    normalized["_court_locked"] = (
+        authoritative_court in [
+            "SUPREME_COURT",
+            "HIGH_COURT",
+            "TRIBUNAL"
+        ]
+    )
+
+    print("🔥 COURT LOCK STATUS:")
+    print(normalized.get("_court_locked"))
+
+    print("🔥 COURT TYPE BEFORE INFERENCE:")
+    print(normalized.get("court_type"))
+
     # =====================================================
     # 🔥 YEAR EXTRACTION
     # =====================================================
@@ -127,10 +179,13 @@ def normalize_case_number_object(case_data):
     upper = raw_case.upper()
 
     if (
-        "CRL.A" in upper
-        or "SLP" in upper
-        or "CIVIL APPEAL" in upper
-        or "CRIMINAL APPEAL" in upper
+        not normalized.get("_court_locked")
+        and (
+            "CRL.A" in upper
+            or "SLP" in upper
+            or "CIVIL APPEAL" in upper
+            or "CRIMINAL APPEAL" in upper
+        )
     ):
         normalized["court_type"] = "SUPREME_COURT"
 
@@ -281,7 +336,17 @@ def normalize_case_number_object(case_data):
 
     for item in CASE_TYPES:
 
-        if item in upper:
+        if item in ["OA", "TA", "MA"]:
+
+            if re.search(
+                rf"\b{re.escape(item)}\b",
+                upper
+            ):
+
+                normalized["case_type"] = item
+                break
+
+        elif item in upper:
 
             normalized["case_type"] = item
             break
@@ -290,7 +355,11 @@ def normalize_case_number_object(case_data):
     # 🔥 COURT INFERENCE
     # =====================================================
 
-    if any(
+    if normalized.get("_court_locked"):
+
+        pass
+
+    elif any(
         x in upper
         for x in [
             "SLP",
@@ -307,7 +376,10 @@ def normalize_case_number_object(case_data):
 
         normalized["court_type"] = "HIGH COURT"
 
-    elif any(x in upper for x in ["OA", "TA", "MA"]):
+    elif re.search(
+        r"\b(OA|TA|MA)\b",
+        upper
+    ):
 
         normalized["court_type"] = "TRIBUNAL"
 

@@ -28,7 +28,13 @@ INVALID_JUDGE_TERMS = [
     "Legislative History",
     "The Challenge",
     "Be Done To The Complainant",
+
+
 ]
+INVALID_JUDGE_TERMS_UPPER = {
+    item.upper()
+    for item in INVALID_JUDGE_TERMS
+}
 
 # =========================================================
 # 🔥 CANONICAL JUDGE HEADER NORMALIZER
@@ -489,8 +495,8 @@ def extract_names_from_text(full_text):
 
         matches = re.findall(pattern, full_text, flags=re.I | re.S)
 
-        print(f"🔥 PATTERN: {pattern}")
-        print(f"🔥 MATCHES: {matches}")
+#         print(f"🔥 PATTERN: {pattern}")
+#         print(f"🔥 MATCHES: {matches}")
 
         for match in matches:
 
@@ -504,11 +510,11 @@ def extract_names_from_text(full_text):
 
                 name = clean_name(part)
 
-                print("🧪 RAW PART:")
-                print(part)
+#                 print("🧪 RAW PART:")
+#                 print(part)
 
-                print("🧪 CLEANED NAME:")
-                print(name)
+#                 print("🧪 CLEANED NAME:")
+#                 print(name)
 
                 candidate_clean = name.strip()
 
@@ -538,9 +544,7 @@ def extract_names_from_text(full_text):
                 # INVALID TERM FILTER
                 # =====================================
 
-                if candidate_clean.upper() in [
-                    item.upper() for item in INVALID_JUDGE_TERMS
-                ]:
+                if candidate_clean.upper() in INVALID_JUDGE_TERMS_UPPER:
                     continue
 
                 # =====================================
@@ -985,15 +989,26 @@ def extract_judges(pdf_path):
 
             if i == 0:
 
-                ocr_text = ocr_page(page)
+                  existing_judges = extract_names_from_text(text)
 
-                if ocr_text and len(ocr_text) > len(text):
+                  if not existing_judges:
 
-                    text = ocr_text
+                      ocr_text = ocr_page(page)
 
-            elif not text or len(text.strip()) < 50:
+                      if ocr_text and len(ocr_text) > len(text):
 
-                text = ocr_page(page)
+                          text = ocr_text
+
+            elif (
+                not text
+                or len(text.strip()) < 50
+            ):
+
+                existing_judges = extract_names_from_text(text)
+
+                if not existing_judges:
+
+                    text = ocr_page(page)
 
             if text:
 
@@ -1023,11 +1038,13 @@ def extract_judges(pdf_path):
 
                 print("🔥 EARLY HEADER JUDGES:", early_judges)
 
-            ocr_text = ocr_page(page)
+            elif not text or len(text.strip()) < 50:
 
-            if ocr_text and len(ocr_text) > len(text):
+                ocr_text = ocr_page(page)
 
-                text = ocr_text
+                if ocr_text and len(ocr_text) > len(text):
+
+                    text = ocr_text
 
             if text:
 
@@ -1158,12 +1175,55 @@ def extract_judges(pdf_path):
             # 🔥 BENCH FAST-PATH PRESERVATION ENGINE
             # -------------------------------------------------
 
-            if re.fullmatch(r"[A-Za-z\.\s]+", candidate) and (
-                "." in candidate or len(candidate.split()) >= 2
+
+            if re.fullmatch(
+                r"[A-Za-z\.\s]+",
+                candidate
             ):
 
-                validated_judges.append(candidate.strip())
-                continue
+                words = candidate.split()
+
+                pollution_terms_fastpath = [
+                    "and",
+                    "the",
+                    "circle",
+                    "award",
+                    "awards",
+                    "short",
+                    "lic",
+                    "insurance",
+                    "corporation",
+                    "canteen",
+                    "employee",
+                    "employees",
+                    "union",
+                    "bank",
+                    "state"
+                ]
+
+                if any(
+                    term in lower_candidate
+                    for term in pollution_terms_fastpath
+                ):
+                    pass
+
+                elif (
+                    2 <= len(words) <= 4
+                    and any("." in w for w in words)
+                    and all(
+                        re.fullmatch(
+                            r"[A-Z][a-z]+|[A-Z]\.",
+                            w
+                        )
+                        for w in words
+                    )
+                ):
+
+                    validated_judges.append(
+                        candidate.strip()
+                    )
+
+                    continue
 
             rejection_terms = [
                 "offence",
@@ -1182,7 +1242,31 @@ def extract_judges(pdf_path):
                 "order dated",
             ]
 
-            if any(term in lower_candidate for term in rejection_terms):
+            pollution_terms = [
+                "and the",
+                "circle",
+                "award",
+                "awards",
+                "for short",
+                "lic",
+                "insurance",
+                "corporation",
+                "canteen",
+                "employee",
+                "employees",
+                "union",
+            ]
+
+            if any(
+                term in lower_candidate
+                for term in pollution_terms
+            ):
+                continue
+
+            if any(
+                term in lower_candidate
+                for term in rejection_terms
+            ):
                 continue
 
             # -------------------------------------------------
@@ -1223,7 +1307,6 @@ def extract_judges(pdf_path):
 
                 if len(capital_words) < 2:
                     print("❌ REJECTED JUDGE STRUCTURE:", candidate)
-                    continue
                     continue
 
             # -------------------------------------------------

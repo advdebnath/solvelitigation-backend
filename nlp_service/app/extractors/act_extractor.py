@@ -56,6 +56,66 @@ ACT_REGISTRY = {
         "category": "Civil",
         "patterns": [r"\bContract Act\b", r"\bIndian Contract Act\b"],
     },
+
+    "HINDU_MARRIAGE": {
+        "canonical": "Hindu Marriage Act, 1955",
+        "short": "HMA",
+        "category": "Civil",
+        "patterns": [
+            r"\bHindu Marriage Act\b",
+            r"\bHindu Marriage Act[, ]*1955\b",
+        ],
+    },
+
+    "HINDU_SUCCESSION": {
+        "canonical": "Hindu Succession Act, 1956",
+        "short": "HSA",
+        "category": "Civil",
+        "patterns": [
+            r"\bHindu Succession Act\b",
+            r"\bHindu Succession Act[, ]*1956\b",
+        ],
+    },
+
+    "TRANSFER_PROPERTY": {
+        "canonical": "Transfer Of Property Act, 1882",
+        "short": "TPA",
+        "category": "Civil",
+        "patterns": [
+            r"\bTransfer Of Property Act\b",
+            r"\bTransfer of Property Act[, ]*1882\b",
+        ],
+    },
+
+    "SPECIFIC_RELIEF": {
+        "canonical": "Specific Relief Act, 1963",
+        "short": "SRA",
+        "category": "Civil",
+        "patterns": [
+            r"\bSpecific Relief Act\b",
+            r"\bSpecific Relief Act[, ]*1963\b",
+        ],
+    },
+
+    "REGISTRATION": {
+        "canonical": "Registration Act, 1908",
+        "short": "Registration Act",
+        "category": "Civil",
+        "patterns": [
+            r"\bRegistration Act\b",
+            r"\bRegistration Act[, ]*1908\b",
+        ],
+    },
+
+    "STAMP": {
+        "canonical": "Indian Stamp Act, 1899",
+        "short": "Stamp Act",
+        "category": "Civil",
+        "patterns": [
+            r"\bIndian Stamp Act\b",
+            r"\bStamp Act\b",
+        ],
+    },
 }
 
 # =========================================================
@@ -96,6 +156,16 @@ def calculate_act_confidence(
         "contract act",
         "evidence act",
         "ni act",
+        "hindu marriage act",
+        "hma",
+        "hindu succession act",
+        "hsa",
+        "transfer of property act",
+        "tpa",
+        "specific relief act",
+        "sra",
+        "registration act",
+        "stamp act",
     ]
 
     for token in short_tokens:

@@ -29,6 +29,10 @@ RAW_CAPTION_PATTERNS = [
         "family": "ORIGINAL_APPLICATION",
         "pattern": r"(OA\s*No\.?\s*" r"[\d\-\/]+(?:\/\d{4})?(?:\s*OF\s*\d{4})?)",
     },
+    {
+        "family": "TRANSFER_APPLICATION",
+        "pattern": r"(TA\s*No\.?\s*" r"[\d\-\/]+(?:\/\d{4})?(?:\s*OF\s*\d{4})?)",
+    },
 ]
 
 

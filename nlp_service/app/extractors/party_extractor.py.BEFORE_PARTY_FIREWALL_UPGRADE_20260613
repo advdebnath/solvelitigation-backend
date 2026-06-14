@@ -1,0 +1,568 @@
+import re
+
+# =========================================================
+# 🔥 CONSTANTS
+# =========================================================
+
+ROLE_WORDS = [
+    "APPELLANT",
+    "APPELLANT(S)",
+    "PETITIONER",
+    "PETITIONER(S)",
+    "RESPONDENT",
+    "RESPONDENT(S)",
+    "ACCUSED",
+    "COMPLAINANT",
+    "APPLICANT",
+]
+
+NOISE_PATTERNS = [
+    r"IN THE SUPREME COURT OF INDIA",
+    r"SUPREME COURT OF INDIA",
+    r"HIGH COURT OF [A-Z ]+",
+    r"CIVIL APPELLATE JURISDICTION",
+    r"CRIMINAL APPELLATE JURISDICTION",
+    r"CIVIL ORIGINAL JURISDICTION",
+    r"CRIMINAL ORIGINAL JURISDICTION",
+    r"JUDGMENT",
+    r"J U D G M E N T",
+    r"ORDER",
+    r"REPORTABLE",
+    r"NON[- ]REPORTABLE",
+    r"DATED[: ]",
+]
+
+# =========================================================
+# 🔥 NORMALIZE SPACES
+# =========================================================
+
+
+def normalize_spaces(text):
+
+    text = re.sub(r"\r", "\n", text)
+
+    text = re.sub(r"\t", " ", text)
+
+    text = re.sub(r"[ ]+", " ", text)
+
+    text = re.sub(r"\n+", "\n", text)
+
+    return text.strip()
+
+
+# =========================================================
+# 🔥 REMOVE NOISE
+# =========================================================
+
+
+def remove_noise(text):
+
+    for pattern in NOISE_PATTERNS:
+
+        text = re.sub(pattern, " ", text, flags=re.I)
+
+    # =====================================================
+    # 🔥 REMOVE CASE NUMBERS
+    # =====================================================
+
+    text = re.sub(
+        r"(CIVIL|CRIMINAL|WRIT|SPECIAL LEAVE|TRANSFER)"
+        r".{0,80}?NO\.?\s*[\w\-\/() ]+OF\s+\d{4}",
+        " ",
+        text,
+        flags=re.I,
+    )
+
+    # =====================================================
+    # 🔥 REMOVE SUPREME COURT APPEAL NUMBER POLLUTION
+    # =====================================================
+
+    text = re.sub(
+        r"(?:CIVIL|CRIMINAL)"
+        r"\s+APPEAL\s+NOS?\.?\s*"
+        r"[\d\-/, ]+"
+        r"\s+OF\s+\d{4}",
+        " ",
+        text,
+        flags=re.I,
+    )
+
+    text = re.sub(
+        r"\b\d+(?:\s*[-/]\s*\d+)*\s+OF\s+\d{4}\b",
+        " ",
+        text,
+        flags=re.I,
+    )
+
+    # =====================================================
+    # 🔥 REMOVE ADVOCATES
+    # =====================================================
+
+    text = re.sub(r"FOR THE APPELLANT.*", " ", text, flags=re.I)
+
+    text = re.sub(r"FOR THE RESPONDENT.*", " ", text, flags=re.I)
+
+    return text
+
+
+# =========================================================
+# 🔥 CLEAN PARTY NAME
+# =========================================================
+
+
+def clean_name(text):
+
+    if not text:
+
+        return "Unknown"
+
+    text = normalize_spaces(text)
+
+    text = remove_noise(text)
+
+    # =====================================================
+    # 🔥 REMOVE ROLE LABELS
+    # =====================================================
+
+    text = re.sub(
+        r"\.*\s*("
+        r"APPELLANT"
+        r"|APPELLANT\(S\)"
+        r"|PETITIONER"
+        r"|PETITIONER\(S\)"
+        r"|RESPONDENT"
+        r"|RESPONDENT\(S\)"
+        r"|ACCUSED"
+        r"|COMPLAINANT"
+        r"|APPLICANT"
+        r")",
+        " ",
+        text,
+        flags=re.I,
+    )
+
+    # =====================================================
+    # 🔥 REMOVE DOT CHAINS
+    # =====================================================
+
+    text = re.sub(r"[.…·]{2,}", " ", text)
+
+    # =====================================================
+    # 🔥 REMOVE SYMBOL NOISE
+    # =====================================================
+
+    text = re.sub(r"[^A-Za-z0-9\/ ,.()&'\-]", " ", text)
+
+    # =====================================================
+    # 🔥 NORMALIZE
+    # =====================================================
+
+    text = re.sub(r"\s+", " ", text)
+
+    text = text.strip(" .,-:")
+
+    # =====================================================
+    # 🔥 LIMIT EXTREME LENGTHS
+    # =====================================================
+
+    words = text.split()
+
+    if len(words) > 25:
+
+        words = words[:25]
+
+    text = " ".join(words)
+
+    # =====================================================
+    # 🔥 SAFETY
+    # =====================================================
+
+    if len(text) < 2:
+
+        return "Unknown"
+
+    # =====================================================
+    # 🔥 HEADER LABEL CLEANUP
+    # =====================================================
+
+    text = re.sub(
+        r"\b(VS\.?|VERSUS|V\.)\b$",
+        "",
+        text,
+        flags=re.I
+    ).strip()
+
+    text = re.sub(
+        r"\bDATE\s+OF.*$",
+        "",
+        text,
+        flags=re.I
+    ).strip()
+
+    text = re.sub(
+        r"\bPETITIONER\b$",
+        "",
+        text,
+        flags=re.I
+    ).strip()
+
+    text = re.sub(
+        r"\bRESPONDENT\b$",
+        "",
+        text,
+        flags=re.I
+    ).strip()
+
+    return text.title()
+
+
+# =========================================================
+# 🔥 ROLE-BASED EXTRACTION
+# =========================================================
+
+
+def extract_role_based(header):
+
+    petitioner = "Unknown"
+
+    respondent = "Unknown"
+
+    confidence = 0
+
+    # =====================================================
+    # 🔥 PETITIONER / APPELLANT
+    # =====================================================
+
+    pet_match = re.search(
+        r"([A-Z0-9\/ ,.()&'\-\n]{3,400}?)"
+        r"\s*[.…·]{0,10}\s*"
+        r"(APPELLANT|PETITIONER|APPLICANT)",
+        header,
+        flags=re.I | re.S,
+    )
+
+    if pet_match:
+
+        petitioner = clean_name(pet_match.group(1))
+
+        petitioner = re.sub(
+            r"(?i)^.*?(?:SLP\s*\(C\).*?\)\s*)?([A-Z][A-Z\s.&\'\-]{5,})$",
+            r"\1",
+            petitioner
+        ).strip()
+
+        confidence += 45
+
+    # =====================================================
+    # 🔥 RESPONDENT
+    # =====================================================
+
+    res_match = re.search(
+        r"(VERSUS|VS\.?|V\.)\s+"
+        r"([A-Z0-9\/ ,.()&'\-\n]{3,500}?)"
+        r"\s*[.…·]{0,10}\s*"
+        r"(RESPONDENT|ACCUSED)",
+        header,
+        flags=re.I | re.S,
+    )
+
+    if res_match:
+
+        respondent = clean_name(res_match.group(2))
+
+        confidence += 45
+
+    return {
+        "petitioner": petitioner,
+        "respondent": respondent,
+        "confidence": confidence,
+    }
+
+
+# =========================================================
+# 🔥 APPELLANT / RESPONDENT EXTRACTION
+# =========================================================
+
+def extract_appellant_respondent(header):
+
+    m = re.search(
+        r"([A-Z][A-Z0-9 ,.&'()/\\-]{3,250})"
+        r".{0,120}?"
+        r"APPELLANT"
+        r".{0,300}?"
+        r"(VERSUS|VS\\.?|V\\.)"
+        r".{0,300}?"
+        r"([A-Z][A-Z0-9 ,.&'()/\\-]{3,350})"
+        r".{0,120}?"
+        r"RESPONDENT",
+        header,
+        flags=re.I | re.S
+    )
+
+    if not m:
+        return {
+            "petitioner": "Unknown",
+            "respondent": "Unknown",
+            "confidence": 0
+        }
+
+    return {
+        "petitioner": clean_name(m.group(1)),
+        "respondent": clean_name(m.group(3)),
+        "confidence": 85
+    }
+
+
+# =========================================================
+# 🔥 FALLBACK VERSUS EXTRACTION
+# =========================================================
+
+
+
+def extract_label_based(header):
+
+    pet = re.search(
+        r"PETITIONER\s*:\s*([A-Z0-9 ,.&'()/\\-]{2,300})",
+        header,
+        flags=re.I
+    )
+
+    res = re.search(
+        r"RESPONDENT\s*:\s*([A-Z0-9 ,.&'()/\\-]{2,300})",
+        header,
+        flags=re.I
+    )
+
+    print("🔥 LABEL PET RAW:")
+    print(pet.group(1) if pet else None)
+
+    print("🔥 LABEL RES RAW:")
+    print(res.group(1) if res else None)
+    return {
+        "petitioner":
+            clean_name(pet.group(1))
+            if pet else "Unknown",
+
+        "respondent":
+            clean_name(res.group(1))
+            if res else "Unknown",
+
+        "confidence":
+            (
+                90
+                if pet and res
+                else 0
+            )
+    }
+
+
+def extract_versus_based(header):
+
+    petitioner = "Unknown"
+    respondent = "Unknown"
+    confidence = 0
+
+    print("🔥 VERSUS HEADER SAMPLE 🔥")
+    print(str(header)[:5000])
+    print("🔥 END VERSUS HEADER SAMPLE 🔥")
+
+    pet = re.search(
+        r"PETITIONER\s*:\s*([\s\S]{1,300}?)\s*VS\.?",
+        header,
+        flags=re.I
+    )
+
+    res = re.search(
+        r"RESPONDENT\s*:\s*([\s\S]{1,300}?)\s*DATE\s+OF\s+JUDGMENT",
+        header,
+        flags=re.I
+    )
+
+    if pet and res:
+
+        return {
+            "petitioner": clean_name(pet.group(1)),
+            "respondent": clean_name(res.group(1)),
+            "confidence": 95,
+        }
+
+    versus_match = re.search(
+        r"([A-Z][A-Z0-9\/ ,.()&'\-]{3,250})"
+        r"\s*(?:VS\.?|VERSUS|V\.)\s*"
+        r"([A-Z][A-Z0-9\/ ,.()&'\-]{3,350})",
+        header,
+        flags=re.I | re.S,
+    )
+
+    if versus_match:
+
+        petitioner = clean_name(
+            versus_match.group(1)
+        )
+
+        respondent = clean_name(
+            versus_match.group(2)
+        )
+
+        confidence = 80
+
+    return {
+        "petitioner": petitioner,
+        "respondent": respondent,
+        "confidence": confidence,
+    }
+
+
+def extract_parties(text):
+
+    try:
+
+        if not text:
+
+            return {"petitioner": "Unknown", "respondent": "Unknown", "confidence": 0}
+
+        # =====================================================
+        # 🔥 HEADER ZONE
+        # =====================================================
+
+        header_raw = text[:2500]
+
+        header = normalize_spaces(header_raw)
+
+        # =====================================================
+        # 🔥 HEADER OCR SANITIZATION
+        # =====================================================
+
+        header = re.sub(
+            r"//Judis\.Nic\.In\s*Page\s*\d+\s*Of\s*\d+", " ", header, flags=re.I
+        )
+
+        header = re.sub(r"Signature\s+Not\s+Verified", " ", header, flags=re.I)
+
+        header = re.sub(r"Digitally\s+signed\s+by.*", " ", header, flags=re.I)
+
+        header = re.sub(r"Page\s+\d+\s+Of\s+\d+", " ", header, flags=re.I)
+
+        header = re.sub(r"\s+", " ", header).strip()
+
+        # =====================================================
+        # 🔥 ROLE-BASED EXTRACTION
+        # =====================================================
+
+        role_result = extract_role_based(header)
+
+        # =====================================================
+        # 🔥 FALLBACK VERSUS
+        # =====================================================
+
+        label_result = extract_label_based(
+            header_raw
+        )
+
+        appellant_result = extract_appellant_respondent(
+           header_raw
+        )
+
+        versus_result = extract_versus_based(
+            header_raw
+        )
+
+        print("ROLE RESULT:", role_result)
+        print("LABEL RESULT:", label_result)
+        print("APPELLANT RESULT:", appellant_result)
+        print("VERSUS RESULT:", versus_result)
+
+        # =====================================================
+        # 🔥 PRIORITY ORDER
+        # LABEL > APPELLANT > VERSUS > ROLE
+        # =====================================================
+
+        if label_result.get("confidence", 0) >= 90:
+
+            result = label_result
+
+        elif appellant_result.get("confidence", 0) >= 85:
+
+            result = appellant_result
+
+        elif versus_result.get("confidence", 0) >= 70:
+
+            result = versus_result
+
+        else:
+
+            result = role_result
+
+
+        # =====================================================
+        # 🔥 FINAL SAFETY
+        # =====================================================
+
+        # =====================================================
+        # 🔒 INVALID PARTY DEFENSE
+        # =====================================================
+
+        INVALID_PARTY_PATTERNS = [
+            r"(?i)^appeal\s*\(",
+            r"(?i)^civil\s+appeal",
+            r"(?i)^criminal\s+appeal",
+            r"(?i)^special\s+leave\s+petition",
+            r"(?i)^writ\s+petition",
+            r"(?i)^transfer\s+petition",
+            r"(?i)^review\s+petition",
+            r"(?i)^case\s+no",
+            r"(?i)judis\.nic\.in",
+            r"(?i)^page\s+\d+",
+            r"(?i)signature\s+not\s+verified",
+            r"(?i)digitally\s+signed",
+        ]
+
+        for pattern in INVALID_PARTY_PATTERNS:
+
+            if re.search(pattern, result["petitioner"]):
+
+                print("❌ INVALID PETITIONER BLOCKED:")
+                print(result["petitioner"])
+
+                result["petitioner"] = "Unknown"
+
+                result["confidence"] -= 25
+
+            if re.search(pattern, result["respondent"]):
+
+                print("❌ INVALID RESPONDENT BLOCKED:")
+                print(result["respondent"])
+
+                result["respondent"] = "Unknown"
+
+                result["confidence"] -= 25
+
+        if result["petitioner"] == result["respondent"]:
+
+            result["confidence"] -= 20
+
+        result["confidence"] = max(0, min(100, result["confidence"]))
+
+        print("✅ Parties Extracted:", result)
+
+        return result
+
+    except Exception as e:
+
+        print("❌ PARTY EXTRACTION ERROR:", e)
+
+        return {"petitioner": "Unknown", "respondent": "Unknown", "confidence": 0}
+
+    # =====================================================
+    # 🔥 HEADER OCR SANITIZATION
+    # =====================================================
+
+    header = re.sub(r"http[s]?://\S+", " ", header, flags=re.I)
+
+    header = re.sub(r"Page\s+\d+\s+of\s+\d+", " ", header, flags=re.I)
+
+    header = re.sub(r"SUPREME COURT OF INDIA", " ", header, flags=re.I)
+
+    header = re.sub(r"HIGH COURT OF[^\n]*", " ", header, flags=re.I)
+
+    header = re.sub(r"[ \t]+", " ", header)

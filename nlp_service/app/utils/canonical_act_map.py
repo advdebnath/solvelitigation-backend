@@ -1,3 +1,5 @@
+import re
+
 # =========================================================
 # 🔥 CANONICAL ACT NORMALIZATION MAP
 # =========================================================
@@ -71,10 +73,28 @@ def canonicalize_act_name(value):
 
         return value
 
-    cleaned = str(value).strip().lower()
+    value = str(value).strip()
+
+    value = re.sub(
+        r'^(the|under the|of the)\s+',
+        '',
+        value,
+        flags=re.I
+    )
+
+    value = re.sub(
+        r'\s+',
+        ' ',
+        value
+    )
+
+    cleaned = value.lower()
 
     cleaned = cleaned.replace(".", "")
 
     cleaned = " ".join(cleaned.split())
 
-    return CANONICAL_ACT_MAP.get(cleaned, str(value).strip())
+    return CANONICAL_ACT_MAP.get(
+        cleaned,
+        value
+    )

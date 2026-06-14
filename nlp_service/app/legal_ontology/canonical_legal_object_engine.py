@@ -34,9 +34,27 @@ def canonicalize_act_name(act):
     if not act:
         return None
 
-    normalized = re.sub(r"\s+", " ", str(act).strip().lower())
+    act = str(act).strip()
 
-    return CANONICAL_ACT_MAP.get(normalized, str(act).strip())
+    act = re.sub(
+        r'^(the|under the|of the)\s+',
+        '',
+        act,
+        flags=re.I
+    )
+
+    act = re.sub(
+        r'\s+',
+        ' ',
+        act
+    )
+
+    normalized = act.lower()
+
+    return CANONICAL_ACT_MAP.get(
+        normalized,
+        act
+    )
 
 
 # =========================================================

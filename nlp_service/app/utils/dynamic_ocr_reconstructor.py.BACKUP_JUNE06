@@ -1,0 +1,81 @@
+import json
+import os
+import re
+
+LEGAL_DICTIONARY = set()
+
+DICT_FILE = (
+    "/var/www/solvelitigation/nlp_service/app/data/legal_dictionary.json"
+)
+
+if os.path.exists(DICT_FILE):
+    try:
+        with open(DICT_FILE, "r", encoding="utf-8") as f:
+            data = json.load(f)
+
+            if isinstance(data, dict):
+                LEGAL_DICTIONARY = {
+                    k.lower()
+                    for k in data.keys()
+                }
+
+            elif isinstance(data, list):
+                LEGAL_DICTIONARY = {
+                    str(x).lower()
+                    for x in data
+                }
+
+    except Exception as e:
+        print(
+            "❌ LEGAL DICTIONARY LOAD ERROR:",
+            e
+        )
+
+
+def dynamic_ocr_reconstruct(text):
+
+    if not text:
+        return ""
+
+    repaired = str(text)
+
+    # ------------------------------------------------
+    # OCR FRAGMENT PATTERNS
+    # ------------------------------------------------
+
+    patterns = [
+
+        r"\b([a-z]{3,})\s+([a-z]{1,3})\b",
+
+        r"\b([a-z]{4,})\s+([a-z]{1,2})\b",
+
+    ]
+
+    for pattern in patterns:
+
+        matches = list(
+            re.finditer(
+                pattern,
+                repaired,
+                flags=re.I
+            )
+        )
+
+        for match in reversed(matches):
+
+            left = match.group(1)
+            right = match.group(2)
+
+            candidate = (
+                left + right
+            ).lower()
+
+            if candidate in LEGAL_DICTIONARY:
+
+                repaired = (
+                    repaired[:match.start()]
+                    + candidate
+                    + repaired[match.end():]
+                )
+
+    return repaired

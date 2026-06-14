@@ -23,12 +23,12 @@ ACT_PATTERNS = {
     "Code Of Criminal Procedure, 1973": {
         "type": "Section",
         "patterns": [
-            r"Section\s+(\d+[A-Z\-]*)",
+            # REMOVED_GENERIC_SECTION_PATTERN,
             r"u/s\.?\s*(\d+[A-Z\-\(\)]*)",
             r"u/s\.?\s*(\d+[A-Z\-\(\)]*)\s+of\s+IPC",
             r"u/s\.?\s*(\d+[A-Z\-\(\)]*)\s+IPC",
             r"u/s\.?\s*(\d+[A-Z\-\(\)]*)\s+CrPC",
-            r"under\s+section\s+(\d+[A-Z\-\(\)]*)",
+            # REMOVED_GENERIC_UNDER_SECTION_PATTERN,
         ],
         "signals": [
             "fir",
@@ -43,12 +43,12 @@ ACT_PATTERNS = {
     "Indian Penal Code, 1860": {
         "type": "Section",
         "patterns": [
-            r"Section\s+(\d+[A-Z\-]*)",
+            # REMOVED_GENERIC_SECTION_PATTERN,
             r"u/s\.?\s*(\d+[A-Z\-\(\)]*)",
             r"u/s\.?\s*(\d+[A-Z\-\(\)]*)\s+of\s+IPC",
             r"u/s\.?\s*(\d+[A-Z\-\(\)]*)\s+IPC",
             r"u/s\.?\s*(\d+[A-Z\-\(\)]*)\s+CrPC",
-            r"under\s+section\s+(\d+[A-Z\-\(\)]*)",
+            # REMOVED_GENERIC_UNDER_SECTION_PATTERN,
         ],
         "signals": [
             "murder",
@@ -62,12 +62,12 @@ ACT_PATTERNS = {
     "Wakf Act, 1995": {
         "type": "Section",
         "patterns": [
-            r"Section\s+(\d+[A-Z\-]*)",
+            # REMOVED_GENERIC_SECTION_PATTERN,
             r"u/s\.?\s*(\d+[A-Z\-\(\)]*)",
             r"u/s\.?\s*(\d+[A-Z\-\(\)]*)\s+of\s+IPC",
             r"u/s\.?\s*(\d+[A-Z\-\(\)]*)\s+IPC",
             r"u/s\.?\s*(\d+[A-Z\-\(\)]*)\s+CrPC",
-            r"under\s+section\s+(\d+[A-Z\-\(\)]*)",
+            # REMOVED_GENERIC_UNDER_SECTION_PATTERN,
             r"Section[s]?\s+85A?\s+of\s+the\s+Wakf\s+Act[, ]*1995",
             r"Section[s]?\s+85A?\s+of\s+Wakf\s+Act",
             r"Wakf\s+Act[, ]*1995",
@@ -85,10 +85,60 @@ ACT_PATTERNS = {
 }
 
 # =========================================================
+# 🔥 DYNAMIC ACT DETECTION REGISTRY
+# =========================================================
+
+ACT_NAME_PATTERNS = {
+
+    "Hindu Marriage Act, 1955": [
+        r"Hindu\s+Marriage\s+Act",
+        r"\bHMA\b",
+    ],
+
+    "Hindu Succession Act, 1956": [
+        r"Hindu\s+Succession\s+Act",
+    ],
+
+    "Transfer Of Property Act, 1882": [
+        r"Transfer\s+Of\s+Property\s+Act",
+        r"TP\s*Act",
+    ],
+
+    "Indian Contract Act, 1872": [
+        r"Contract\s+Act",
+    ],
+
+    "Code Of Criminal Procedure, 1973": [
+        r"Code\s+Of\s+Criminal\s+Procedure",
+        r"\bCrPC\b",
+    ],
+
+    "Indian Penal Code, 1860": [
+        r"Indian\s+Penal\s+Code",
+        r"\bIPC\b",
+    ],
+
+    "Wakf Act, 1995": [
+        r"Wakf\s+Act",
+    ],
+}
+
+# =========================================================
 # 🔥 WINDOW CONFIG
 # =========================================================
 
-WINDOW_SIZE = 350
+WINDOW_SIZE = 450
+
+GENERIC_SECTION_PATTERNS = [
+
+    r"Section[s]?\s+([0-9A-Z,\-\(\)\sand\/]+)",
+
+    r"u/s\.?\s*([0-9A-Z,\-\(\)\sand\/]+)",
+
+    r"under\s+Section[s]?\s+([0-9A-Z,\-\(\)\sand\/]+)",
+
+]
+
 
 # =========================================================
 # 🔥 CONTEXT SCORE
@@ -115,7 +165,125 @@ def calculate_context_score(context, signals):
 # =========================================================
 
 
+
+# =========================================================
+# 🔥 DYNAMIC ACT DETECTOR
+# =========================================================
+
+
+def detect_act_from_context(context):
+
+    if not context:
+        return None
+
+    generic_patterns = [
+
+        r'([A-Z][A-Za-z&()/\-]+(?:\s+[A-Z][A-Za-z&()/\-]+){0,20}\s+Act[, ]*\d{4})',
+
+        r'([A-Z][A-Za-z&()/\-]+(?:\s+[A-Z][A-Za-z&()/\-]+){0,20}\s+Rules[, ]*\d{4})',
+
+        r'([A-Z][A-Za-z&()/\-]+(?:\s+[A-Z][A-Za-z&()/\-]+){0,20}\s+Regulations[, ]*\d{4})',
+
+        r'(Constitution\s+Of\s+India)',
+    ]
+
+    candidates = []
+
+    center = len(context) // 2
+
+    for pattern in generic_patterns:
+
+        for match in re.finditer(
+            pattern,
+            context,
+            flags=re.I
+        ):
+
+            value = match.group(1).strip()
+
+            value = re.sub(
+                r'^(the|of|under|under the|of the|as per|pursuant to)\s+',
+                '',
+                value,
+                flags=re.I
+            )
+
+            value = re.sub(
+                r'\s+',
+                ' ',
+                value
+            )
+
+            value = value.strip(" ,.;:")
+
+            # =========================================
+            # 🔒 ACT PREFIX FIREWALL
+            # =========================================
+
+            value = re.sub(
+                r'^(and\s+the\s+schedule\s+to\s+)',
+                '',
+                value,
+                flags=re.I
+            )
+
+            value = re.sub(
+                r'^(schedule\s+to\s+)',
+                '',
+                value,
+                flags=re.I
+            )
+
+            value = re.sub(
+                r'^(rights\s+and\s+obligations\s+of\s+the\s+government\s+employees\)\s+)',
+                '',
+                value,
+                flags=re.I
+            )
+
+            value = value.title()
+
+            distance = abs(
+                match.start() - center
+            )
+
+            candidates.append(
+                (
+                    distance,
+                    value
+                )
+            )
+
+    if not candidates:
+        return None
+
+    candidates.sort(
+        key=lambda x: x[0]
+    )
+
+    chosen = candidates[0][1]
+
+    # =========================================
+    # 🔒 RULES POLLUTION FIREWALL
+    # =========================================
+
+    if (
+        "Government Employees" in chosen
+        and "Rules" in chosen
+    ):
+        return None
+
+    print(
+        "🔥 NEAREST ACT DETECTED:",
+        chosen,
+        flush=True
+    )
+
+    return chosen
+
+
 def normalize_section_text(text):
+
 
     if not text:
         return ""
@@ -130,6 +298,39 @@ def normalize_section_text(text):
 
     text = re.sub(r"S\s*E\s*C\s*T\s*I\s*O\s*N", "Section", text, flags=re.I)
 
+    # =========================================
+    # 🔥 BROKEN SECTION OCR FIXES
+    # =========================================
+
+    text = re.sub(
+        r"\bsec\s+ion\b",
+        "Section",
+        text,
+        flags=re.I
+    )
+
+    text = re.sub(
+        r"\bsect\s+ion\b",
+        "Section",
+        text,
+        flags=re.I
+    )
+
+    text = re.sub(
+        r"\bsec\s+tion\b",
+        "Section",
+        text,
+        flags=re.I
+    )
+
+    text = re.sub(
+        r"\bs\s*e\s*c\s+ion\b",
+        "Section",
+        text,
+        flags=re.I
+    )
+
+
     text = re.sub(r"A\s*R\s*T\s*I\s*C\s*L\s*E", "Article", text, flags=re.I)
 
     text = re.sub(r"Cr\s*P\s*C", "CrPC", text, flags=re.I)
@@ -139,6 +340,38 @@ def normalize_section_text(text):
     text = re.sub(r"\s{2,}", " ", text)
 
     return text.strip()
+
+
+# =========================================================
+# 🔥 ACT ↔ SECTION VALIDATION ENGINE
+# =========================================================
+
+def calculate_act_distance_score(
+    act_name,
+    section_number,
+    context
+):
+
+    if not context:
+        return 0
+
+    score = 0
+
+    act_tokens = str(act_name).split()
+
+    for token in act_tokens:
+
+        if len(token) < 3:
+            continue
+
+        if token.lower() in context.lower():
+            score += 20
+
+    if str(section_number) in context:
+        score += 20
+
+    return score
+
 
 
 # =========================================================
@@ -203,6 +436,26 @@ def extract_sections(full_text=""):
 
                 section_number = section_number.strip(".,:;()[]{}")
 
+                # -----------------------------------------
+                # 🔒 ACT YEAR FILTER
+                # -----------------------------------------
+
+                if re.fullmatch(
+                    r"(18|19|20)\d{2}",
+                    section_number
+                ):
+                    continue
+
+                # =========================================
+                # 🔒 ACT YEAR FIREWALL
+                # =========================================
+
+                if re.fullmatch(
+                    r"(18|19|20)\d{2}",
+                    section_number
+                ):
+                    continue
+
                 if len(section_number) > 15:
                     continue
 
@@ -226,16 +479,75 @@ def extract_sections(full_text=""):
                 context = text[start:end]
 
                 # -----------------------------------------
+                # 🔥 DYNAMIC ACT OVERRIDE
+                # -----------------------------------------
+
+                if section_number == "494":
+
+                    dynamic_act = (
+                        "Indian Penal Code, 1860"
+                    )
+
+                else:
+
+                    IPC_SECTIONS = {
+                        "120B",
+                        "302",
+                        "304",
+                        "307",
+                        "376",
+                        "377",
+                        "406",
+                        "409",
+                        "420",
+                        "467",
+                        "468",
+                        "471",
+                        "494"
+                    }
+
+                    if str(section_number).upper() in IPC_SECTIONS:
+
+                        dynamic_act = "Indian Penal Code, 1860"
+
+                    else:
+
+                        dynamic_act = detect_act_from_context(
+                            context
+                        )
+
+                if dynamic_act:
+
+                    print(
+                        "🔥 DYNAMIC ACT DETECTED:",
+                        dynamic_act
+                    )
+
+                    act_name = dynamic_act
+
+
+                # -----------------------------------------
                 # 🔥 CONTEXT SCORE
                 # -----------------------------------------
 
-                context_score = calculate_context_score(context, signals)
+                context_score = calculate_context_score(
+                    context,
+                    signals
+                )
+
+                validation_score = calculate_act_distance_score(
+                    act_name,
+                    section_number,
+                    context
+                )
+
+                context_score += validation_score
 
                 # -----------------------------------------
                 # 🔥 CONTEXT FILTER
                 # -----------------------------------------
 
-                if context_score < 10:
+                if context_score < 25:
                     continue
 
                 # -----------------------------------------
@@ -268,6 +580,135 @@ def extract_sections(full_text=""):
                 )
 
     # =====================================================
+    # 🔥 GENERIC SECTION ENGINE
+    # =====================================================
+
+    for pattern in GENERIC_SECTION_PATTERNS:
+
+        for match in re.finditer(
+            pattern,
+            text,
+            flags=re.I
+        ):
+
+            raw_sections = match.group(1)
+
+            range_match = re.search(
+                r'(\d+)\s*(?:to|-)\s*(\d+)',
+                raw_sections,
+                flags=re.I
+            )
+
+            if range_match:
+
+                start_sec = int(
+                    range_match.group(1)
+                )
+
+                end_sec = int(
+                    range_match.group(2)
+                )
+
+                section_numbers = [
+                    str(x)
+                    for x in range(
+                        start_sec,
+                        end_sec + 1
+                    )
+                ]
+
+            else:
+
+                section_numbers = re.findall(
+                    r'\d+[A-Z]?(?:\([A-Z0-9]+\))*(?:-[A-Z0-9]+)?',
+                    raw_sections,
+                    flags=re.I
+                )
+
+            for section_number in section_numbers:
+
+                # =====================================================
+                # 🔒 YEAR FILTER
+                # =====================================================
+
+                if re.fullmatch(
+                    r"(18|19|20)\d{2}",
+                    str(section_number)
+                ):
+                    continue
+
+                start = max(
+                    0,
+                    match.start() - WINDOW_SIZE
+                )
+
+                end = min(
+                    len(text),
+                    match.end() + WINDOW_SIZE
+                )
+
+                context = text[start:end]
+
+                IPC_SECTIONS = {
+                      "120B",
+                      "302",
+                      "304",
+                      "307",
+                      "376",
+                      "377",
+                      "406",
+                      "409",
+                      "420",
+                      "467",
+                      "468",
+                      "471",
+                      "494"
+                  }
+
+                if str(section_number).upper() in IPC_SECTIONS:
+
+                      dynamic_act = "Indian Penal Code, 1860"
+
+                else:
+
+                      dynamic_act = detect_act_from_context(
+                          context
+                      )
+
+                if not dynamic_act:
+                    continue
+
+                key = (
+                    "Section",
+                    section_number,
+                    dynamic_act
+                )
+
+                if key in seen:
+                    continue
+
+                seen.add(key)
+
+                extracted.append(
+                    {
+                        "type": "Section",
+                        "section": section_number,
+                        "act": canonicalize_act_name(
+                            dynamic_act
+                        ),
+                        "canonical_act_object":
+                            build_canonical_legal_object(
+                                canonicalize_act_name(
+                                    dynamic_act
+                                ),
+                                "ACT"
+                            ),
+                        "context_score": 60,
+                    }
+                )
+
+
+    # =====================================================
     # 🔒 CONTEXTUAL CRIMINAL LAW ENRICHMENT LOCK
     # =====================================================
 
@@ -281,23 +722,14 @@ def extract_sections(full_text=""):
     if low_confidence_extraction:
 
         # -------------------------------------------------
-        # 🔥 CrPC CONTEXT
+        # 🔥 DYNAMIC ACT LOCK
         # -------------------------------------------------
+        # No automatic CrPC / IPC insertion.
+        # Acts must come from judgment context.
 
-        if any(
-            token in lower_text
-            for token in [
-                "fir",
-                "charge sheet",
-                "criminal appeal",
-                "bail",
-                "trial court",
-                "accused",
-                "investigation",
-                "conviction",
-                "sentence",
-            ]
-        ):
+        pass
+
+        if False:
 
             extracted.append(
                 {
@@ -315,10 +747,13 @@ def extract_sections(full_text=""):
         # 🔥 IPC CONTEXT
         # -------------------------------------------------
 
-        if any(
-            token in lower_text
-            for token in ["murder", "assault", "homicide", "weapon", "offence", "crime"]
-        ):
+        # -------------------------------------------------
+        # 🔥 IPC FALLBACK DISABLED
+        # -------------------------------------------------
+        # Dynamic act detection only.
+        # No automatic IPC insertion.
+
+        if False:
 
             extracted.append(
                 {

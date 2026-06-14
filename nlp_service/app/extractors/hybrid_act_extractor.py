@@ -94,6 +94,9 @@ def extract_hybrid_acts(text, sections_data):
 
         direct = extract_acts(text)
 
+        print("🔥 DIRECT ACT EXTRACTION RESULT 🔥")
+        print(direct)
+
         direct_acts_raw = safe_get(direct, "acts", [])
 
         direct_acts = normalize_act_names(direct_acts_raw)

@@ -22,6 +22,22 @@ MONTHS = {
     "DECEMBER": "12",
 }
 
+
+MONTHS.update({
+    "JAN":"01",
+    "FEB":"02",
+    "MAR":"03",
+    "APR":"04",
+    "JUN":"06",
+    "JUL":"07",
+    "AUG":"08",
+    "SEP":"09",
+    "SEPT":"09",
+    "OCT":"10",
+    "NOV":"11",
+    "DEC":"12",
+})
+
 # =========================================================
 # 🔥 FORMAT DATE
 # =========================================================
@@ -169,13 +185,44 @@ def extract_judgment_date(text):
 
         footer_zone = text[-10000:]
 
+        # =============================================
+        # 🔥 FOOTER DATE CANDIDATE NORMALIZATION
+        # =============================================
+
+        footer_zone = re.sub(
+            r"(NEW\s+DELHI\s+\d{1,2}(?:ST|ND|RD|TH)?\s+[A-Z]+\s*,?\s+\d{4})",
+            r"\n\1\n",
+            footer_zone,
+            flags=re.I
+        )
+
+        footer_zone = re.sub(
+            r"(DATE\s*:\s*\d{4}[.\-/]\d{1,2}[.\-/]\d{1,2})",
+            r"\n\1\n",
+            footer_zone,
+            flags=re.I
+        )
+
         print("📅 FOOTER DATE SCAN ACTIVE")
+        print("🔥 DATE EXTRACTOR VERSION: JUN03_AUDIT_V1")
 
         # =================================================
         # 🔥 FOOTER LINES
         # =================================================
 
         footer_lines = footer_zone.splitlines()
+
+        footer_lines = [
+            x.strip()
+            for x in footer_lines
+            if x.strip()
+        ]
+
+        print(f"📅 FOOTER LINE COUNT: {len(footer_lines)}")
+
+        for x in footer_lines[-20:]:
+            print(f"📅 FOOTER RAW: {repr(x)}")
+
 
         # =================================================
         # 🔥 REVERSE FOOTER SCAN
@@ -186,6 +233,9 @@ def extract_judgment_date(text):
             clean = line.strip()
 
             upper = clean.upper()
+
+            print(f"📅 SCANNING LINE: {repr(upper)}")
+
 
             # =============================================
             # 🔥 REMOVE DATE LABELS
@@ -216,15 +266,50 @@ def extract_judgment_date(text):
 
             has_month = any(month in upper for month in MONTHS)
 
-            if not has_month:
+            has_numeric_date = bool(
+                re.search(
+                    r"\b\d{1,4}[./-]\d{1,2}[./-]\d{1,4}\b",
+                    upper
+                )
+            )
+
+            if not has_month and not has_numeric_date:
 
                 continue
 
             print("📅 Footer Candidate:", upper)
+            print("📅 Footer Candidate Length:", len(upper))
 
             # =============================================
             # 🔥 PURE FOOTER DATE PRIORITY
             # =============================================
+
+            court_style = re.search(
+                r"(?:NEW\s+DELHI\s+)?"
+                r"(\d{1,2})(?:ST|ND|RD|TH)?"
+                r"(?:\s+DAY\s+OF)?"
+                r"[\s,]+"
+                r"(JANUARY|FEBRUARY|MARCH|APRIL|MAY|JUNE|JULY|AUGUST|SEPTEMBER|OCTOBER|NOVEMBER|DECEMBER)"
+                r"[\s,]+"
+                r"(\d{4})",
+                upper,
+                re.I
+            )
+
+            if court_style:
+
+                result = {
+                    "date": format_date(
+                        court_style.group(1),
+                        court_style.group(2),
+                        court_style.group(3)
+                    ),
+                    "confidence": 99
+                }
+
+                print("✅ COURT STYLE DATE:", result)
+
+                return result
 
             pure_match = re.search(
                 r"^(JANUARY|FEBRUARY|MARCH|APRIL|MAY|JUNE|JULY|AUGUST|SEPTEMBER|OCTOBER|NOVEMBER|DECEMBER)[\s\.,;:-]+(\d{1,2})[\s\.,;:-]+(\d{4})",
@@ -245,7 +330,7 @@ def extract_judgment_date(text):
                 # =============================================
 
                 reverse_match = re.search(
-                    r"^(\d{1,2})[\s\.,;:-]+(JANUARY|FEBRUARY|MARCH|APRIL|MAY|JUNE|JULY|AUGUST|SEPTEMBER|OCTOBER|NOVEMBER|DECEMBER)[\s\.,;:-]+(\d{4})",
+                    r"^(\d{1,2})(?:ST|ND|RD|TH)?[\s\.,;:-]+(JANUARY|FEBRUARY|MARCH|APRIL|MAY|JUNE|JULY|AUGUST|SEPTEMBER|OCTOBER|NOVEMBER|DECEMBER)[\s\.,;:-]+(\d{4})",
                     upper,
                     re.I,
                 )
@@ -323,11 +408,45 @@ def extract_judgment_date(text):
 
             return result
 
+
+        # =================================================
+        # 🔥 YEAR-FIRST NUMERIC
+        # =================================================
+
+        year_first = re.findall(
+            r"(19\d{2}|20\d{2})[.\-/](\d{1,2})[.\-/](\d{1,2})",
+            text
+        )
+
+        for item in year_first:
+
+            year, month, day = item
+
+            try:
+
+                dt = datetime.strptime(
+                    f"{year}-{month}-{day}",
+                    "%Y-%m-%d"
+                )
+
+                result = {
+                    "date": dt.strftime("%Y-%m-%d"),
+                    "confidence": 90
+                }
+
+                print("✅ Year First Judgment Date:", result)
+
+                return result
+
+            except Exception:
+
+                continue
+
         # =================================================
         # 🔥 FALLBACK NUMERIC
         # =================================================
 
-        numeric = re.findall(r"(\d{1,2})[\-\/](\d{1,2})[\-\/](\d{4})", text)
+        numeric = re.findall(r"(\d{1,2})[.\-/](\d{1,2})[.\-/](\d{4})", text)
 
         for item in numeric:
 

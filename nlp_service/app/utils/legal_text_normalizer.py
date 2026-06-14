@@ -637,7 +637,7 @@ AUTHORITY_FACTORS = {
         "approved",
         "distinguished",
     ],
-    "doctrinal_influence": [
+    "doctrinnano /var/www/solvelitigation/nlp_service/app/utils/legal_text_normalizer.pyal_influence": [
         "basic structure",
         "constitutional morality",
         "natural justice",
@@ -1393,6 +1393,35 @@ def stitch_broken_tokens(text):
     return repaired.strip()
 
 
+def remove_ocr_character_duplication(text):
+
+    if not text:
+        return ""
+
+    # COURTTTT -> COURT
+    text = re.sub(
+        r"\b([A-Za-z]{3,}?)([A-Za-z])\2+\b",
+        r"\1\2",
+        text
+    )
+
+    # TTHE -> THE
+    text = re.sub(
+        r"\b([A-Za-z])\1([A-Za-z]{2,})\b",
+        r"\1\2",
+        text
+    )
+
+    # AAPPEAL -> APPEAL
+    text = re.sub(
+        r"\b([A-Za-z])\1([A-Za-z]+)\b",
+        r"\1\2",
+        text
+    )
+
+    return text
+
+
 # =========================================================
 # 🔥 MAIN NORMALIZER
 # =========================================================
@@ -1403,15 +1432,15 @@ def stitch_broken_tokens(text):
 # =========================================================
 
 HEADER_NOISE_PATTERNS = [
-    r"http://JUDIS\.NIC\.IN",
-    r"SUPREME COURT OF INDIA",
-    r"HIGH COURT OF [A-Z ]+",
-    r"Page\s+\d+\s+of\s+\d+",
-    r"PETITIONER:",
-    r"RESPONDENT:",
-    r"DATE OF JUDGMENT:.*",
-    r"BENCH:",
-    r"CORAM:",
+   # r"http://JUDIS\.NIC\.IN",
+   # r"SUPREME COURT OF INDIA",
+   # r"HIGH COURT OF [A-Z ]+",
+   # r"Page\s+\d+\s+of\s+\d+",
+   # r"PETITIONER:",
+   # r"RESPONDENT:",
+   # r"DATE OF JUDGMENT:.*",
+   # r"BENCH:",
+   # r"CORAM:",
     r"JUDGMENT:?$",
     r"ORDER:?$",
     r"Downloaded\s+on",
@@ -1476,6 +1505,8 @@ def normalize_legal_text(text):
     # =========================================================
 
     text = remove_header_noise(text)
+
+    text = remove_ocr_character_duplication(text)
 
     print("✅ ENTERPRISE HEADER FIREWALL COMPLETE")
 
@@ -1600,7 +1631,109 @@ def normalize_legal_text(text):
 
         text = re.sub(wrong, correct, text, flags=re.I)
 
+
+    print("\n🔥 BEFORE_STITCH_SAMPLE 🔥", flush=True)
+    print(text[:3000], flush=True)
+
     text = stitch_broken_tokens(text)
+
+    print("\n🔥 AFTER_STITCH_SAMPLE 🔥", flush=True)
+    print(text[:3000], flush=True)
+
+    print(
+        "🔥 AFTER stitch_broken_tokens",
+        flush=True
+    )
+
+    # =========================================================
+    # 🔥 DYNAMIC OCR RECONSTRUCTION ENGINE
+    # =========================================================
+
+    print(
+        "🔥 BEFORE DYNAMIC OCR BLOCK",
+        flush=True
+    )
+
+    try:
+
+        from app.utils.dynamic_ocr_reconstructor import (
+            dynamic_ocr_reconstruct
+        )
+
+        print(
+            "\n🔥 BEFORE_DYNAMIC_OCR_SAMPLE 🔥",
+            flush=True
+        )
+
+        print(
+            text[:3000],
+            flush=True
+        )
+
+        text = dynamic_ocr_reconstruct(text)
+
+        print(
+            "\n🔥 AFTER_DYNAMIC_OCR_SAMPLE 🔥",
+            flush=True
+        )
+
+        print(
+            text[:3000],
+            flush=True
+        )
+
+        print(
+            "\n🔥 OCR SAMPLE START 🔥",
+            flush=True
+        )
+
+        print(
+            text[:3000],
+            flush=True
+        )
+
+        print(
+            "🔥 OCR SAMPLE END 🔥\n",
+            flush=True
+        )
+
+        print(
+            "\n🔥 POST OCR COUNTS 🔥",
+            flush=True
+        )
+
+        for word in [
+            "judgmen",
+            "judgment",
+            "agains",
+            "against",
+            "canno",
+            "cannot",
+            "responden",
+            "respondent"
+        ]:
+
+            print(
+                f"{word} = {text.lower().count(word)}",
+                flush=True
+            )
+
+        print(
+            "🔥 OCR TEXT LENGTH:",
+            len(str(text)),
+            flush=True
+        )
+
+        print(
+            "✅ DYNAMIC OCR RECONSTRUCTION COMPLETE"
+        )
+
+    except Exception as e:
+
+        print(
+            "❌ DYNAMIC OCR RECONSTRUCTION ERROR:",
+            e
+        )
 
     text = normalize_legal_citations(text)
 

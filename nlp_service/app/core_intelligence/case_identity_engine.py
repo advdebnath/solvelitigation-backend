@@ -1,3 +1,4 @@
+import re
 # =========================================================
 # 🔥 SOLVELITIGATION CORE INTELLIGENCE ENGINE
 # =========================================================
@@ -21,10 +22,12 @@
 #
 # =========================================================
 
-import re
 
 from app.extractors.case_number_bridge import \
     extract_case_number_bridge as authoritative_extract_case_number
+
+from app.core_intelligence.supreme_court_identity_engine import \
+    build_supreme_identity
 
 # =========================================================
 # 🔥 CANONICAL CASE PATTERNS
@@ -115,14 +118,108 @@ def extract_case_number(text):
 # =========================================================
 
 
-def build_canonical_case_object(full_text=""):
+
+def build_canonical_case_object(
+    full_text="",
+    authoritative_case_number=None,
+):
+
+    print("\n🔥 CASE IDENTITY INPUT START 🔥")
+    print(str(full_text)[:3000])
+    print("🔥 CASE IDENTITY INPUT END 🔥\n")
+
+    # =====================================================
+    # 🔒 AUTHORITATIVE CASE NUMBER FIREWALL
+    # =====================================================
+
+    if authoritative_case_number:
+
+        print("🔥 AUTHORITATIVE CASE FIREWALL")
+        print(authoritative_case_number)
+
+        return {
+            "canonical_case_id": authoritative_case_number,
+            "case_number": {
+                "case_number": authoritative_case_number,
+                "confidence": 100,
+                "source": "AUTHORITATIVE_FIREWALL",
+            },
+            "confidence": 100,
+            "identity_source": "AUTHORITATIVE_FIREWALL",
+            "validation": {},
+            "contradictions": [],
+        }
 
     case_number = extract_case_number(full_text)
 
+    extracted_case_number = (
+        case_number.get("case_number", "")
+        if isinstance(case_number, dict)
+        else ""
+    )
+
+    identity_source = "CASE_NUMBER"
+
+    canonical_case_id = extracted_case_number
+
+    if (
+        not extracted_case_number
+        or extracted_case_number.upper() in [
+            "UNKNOWN CASE",
+            "UNKNOWN"
+        ]
+    ):
+
+        try:
+
+            sc_identity = build_supreme_identity(
+                case_number=extracted_case_number,
+                full_text=full_text
+            )
+
+            print("🔥 SUPREME IDENTITY RESOLVED 🔥")
+            print(sc_identity)
+
+            resolved_id = sc_identity.get(
+                "canonicalCaseId"
+            )
+
+            if resolved_id:
+
+                canonical_case_id = resolved_id
+
+                identity_source = sc_identity.get(
+                    "identitySource",
+                    "SUPREME_IDENTITY"
+                )
+
+            else:
+
+                canonical_case_id = "UNKNOWN_CASE_ID"
+
+                identity_source = sc_identity.get(
+                    "identitySource",
+                    "UNRESOLVED"
+                )
+
+        except Exception as e:
+
+            print("❌ SUPREME IDENTITY FAILURE:")
+            print(str(e))
+
+            canonical_case_id = "UNKNOWN_CASE_ID"
+            identity_source = "FAILED"
+
+    if not canonical_case_id:
+
+        canonical_case_id = "UNKNOWN_CASE_ID"
+
     return {
-        "canonical_case_id": case_number.get("case_number", "Unknown Case"),
+        "canonical_case_id": canonical_case_id,
         "case_number": case_number,
         "confidence": case_number.get("confidence", 0),
+        "identity_source": identity_source,
         "validation": {},
         "contradictions": [],
     }
+

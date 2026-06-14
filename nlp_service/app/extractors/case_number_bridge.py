@@ -9,6 +9,7 @@ from app.extractors.judicial.judicial_router import extract_case_number_v2
 
 def extract_case_number_bridge(text):
 
+    print("🔥 CASE NUMBER BRIDGE CALLED 🔥", flush=True)
     # =====================================================
     # 🔥 TRY V2 FIRST
     # =====================================================

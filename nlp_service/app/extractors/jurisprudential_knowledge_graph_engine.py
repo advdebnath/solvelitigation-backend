@@ -93,7 +93,11 @@ def build_jurisprudential_knowledge_graph(
                 )
 
                 graph["edges"].append(
-                    {"source": case_id, "target": act, "relation": "INVOLVES_ACT"}
+                    {
+                        "source": case_id,
+                        "target": canonical_act_object.get("id"),
+                        "relation": "INVOLVES_ACT",
+                    }
                 )
 
         # -------------------------------------------------
