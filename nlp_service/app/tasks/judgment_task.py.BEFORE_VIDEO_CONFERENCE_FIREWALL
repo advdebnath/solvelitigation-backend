@@ -1722,45 +1722,11 @@ def process_judgment(ingestion_id):
             )
 
 
-
-        # =====================================================
-        # 🔒 JUDGMENT DOCUMENT OVERRIDE
-        # =====================================================
-
-        is_real_judgment = bool(
-            re.search(
-                r'''
-                REPORTABLE|
-                NON[- ]REPORTABLE|
-                WRIT\s+PETITION|
-                CIVIL\s+APPEAL|
-                CRIMINAL\s+APPEAL|
-                SPECIAL\s+LEAVE\s+PETITION|
-                JUDGMENT|
-                J\s+U\s+D\s+G\s+M\s+E\s+N\s+T
-                ''',
-                detection_window,
-                re.I | re.X
-            )
-        )
-
-        if is_real_judgment:
-
-            notice_document = False
-            detected_non_judgment = False
-
-            document_type = "JUDGMENT"
-
-            print(
-                "🔒 DOCUMENT CLASSIFIER OVERRIDE: JUDGMENT"
-            )
-
         # =====================================================
         # 📂 DOCUMENT TYPE CLASSIFIER
         # =====================================================
 
-        if not is_real_judgment:
-            document_type = "NOTICE"
+        document_type = "NOTICE"
 
         if re.search(
             r"DAILY\s+CAUSE\s+LIST|SUPPLEMENTARY\s+CAUSE\s+LIST|LIST\s+OF\s+MATTERS",

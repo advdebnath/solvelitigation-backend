@@ -824,10 +824,6 @@ def extract_parties(text):
 
             \s*
 
-              (?:\n|\r\n?)
-
-              \s*
-
             [.…⋯•·]*
 
             \s*
@@ -845,8 +841,6 @@ def extract_parties(text):
             ([A-Z][A-Z0-9 .,&'()/\-]{2,250})
 
             \s*
-              (?:\n|\r\n?)
-
 
             [.…⋯•·]*
 

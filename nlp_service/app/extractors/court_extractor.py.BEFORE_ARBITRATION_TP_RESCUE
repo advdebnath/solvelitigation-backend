@@ -225,10 +225,6 @@ CIVIL\s+APPEAL
 |WRIT\s+PETITION
 |W\.?\s*P\.?\s*\(
 |TRANSFER\s+PETITION
-|ARBITRATION\s+PETITION
-|ARB\.?\s*P\.?
-|T\.?\s*P\.?\s*\(
-|CONMT\.?\s*PET\.?
 """,
             header_upper,
             re.I | re.VERBOSE

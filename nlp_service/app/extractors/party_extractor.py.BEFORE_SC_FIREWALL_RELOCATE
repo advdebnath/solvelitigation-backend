@@ -239,10 +239,6 @@ def extract_appellant_respondent(header):
         r"""
         ([A-Z][A-Z0-9 .,&'()/\-]{2,200})
         \s*
-              \s*
-
-              (?:\n|\r\n?)
-
         [.…⋯•·]*\s*
         APPELLANT(?:\(S\))?
         .*?
@@ -813,107 +809,6 @@ def extract_parties(text):
         role_result = extract_role_based(header)
 
         # =====================================================
-        # 🔒 SC WRIT CAPTION RESCUE
-        # =====================================================
-
-        sc_writ_caption = re.search(
-            r"""
-            \n
-
-            ([A-Z][A-Z0-9 .,&'()/\-]{2,250})
-
-            \s*
-
-              (?:\n|\r\n?)
-
-              \s*
-
-            [.…⋯•·]*
-
-            \s*
-
-            PETITIONER
-
-            .*?
-
-            (?:VERSUS|VS\.?|V\.)
-
-            .*?
-
-            \n
-
-            ([A-Z][A-Z0-9 .,&'()/\-]{2,250})
-
-            \s*
-              (?:\n|\r\n?)
-
-
-            [.…⋯•·]*
-
-            \s*
-
-            RESPONDENT
-            """,
-            header_raw,
-            flags=re.I | re.S | re.X
-        )
-
-        if sc_writ_caption:
-
-            role_result["petitioner"] = clean_name(
-                sc_writ_caption.group(1)
-            )
-
-            role_result["respondent"] = clean_name(
-                sc_writ_caption.group(2)
-            )
-
-            role_result["confidence"] = 99
-
-            print("🔥 SC WRIT CAPTION RESCUE")
-            print(role_result)
-
-        # =====================================================
-        # 🔒 SC RESPONDENT RESCUE
-        # =====================================================
-
-        if role_result.get("respondent") == "Unknown":
-
-            rescue = re.search(
-                r"""
-                VERSUS
-
-                \s*
-
-                ([A-Z][A-Z0-9 .,&'()/\-]{2,250})
-
-                \s*
-
-                [.…⋯•·]*
-
-                \s*
-
-                RESPONDENT
-                """,
-                header_raw,
-                flags=re.I | re.S | re.X
-            )
-
-            if rescue:
-
-                role_result["respondent"] = clean_name(
-                    rescue.group(1)
-                )
-
-                role_result["confidence"] = max(
-                    role_result.get("confidence", 0),
-                    95
-                )
-
-                print("🔥 SC RESPONDENT RESCUE")
-                print(role_result)
-
-        # =====================================================
         # 🔥 FALLBACK VERSUS
         # =====================================================
 
@@ -1098,27 +993,24 @@ def extract_parties(text):
 
             print("🚨 UNKNOWN PETITIONER HEADER END")
 
+            # =====================================================
+            # 🔒 SC CAPTION CONTAMINATION FIREWALL
+            # =====================================================
+
+            if re.search(
+                r"(?i)^(writ|civil|criminal|special leave|transfer|review|arbitration)\s+petition",
+                sc_caption_result.get("petitioner", "")
+            ):
+
+                print("🔥 SC CAPTION CONTAMINATION DETECTED")
+
+                sc_caption_result["confidence"] = 0
 
 
         # =====================================================
         # 🔥 PRIORITY ORDER
         # LABEL > APPELLANT > VERSUS > ROLE
         # =====================================================
-
-
-        # =====================================================
-        # 🔒 SC CAPTION CONTAMINATION FIREWALL
-        # =====================================================
-
-        if re.search(
-            r"(?i)^(writ|civil|criminal|special leave|transfer|review|arbitration)\s+petition",
-            sc_caption_result.get("petitioner", "")
-        ):
-
-            print("🔥 SC CAPTION CONTAMINATION DETECTED")
-            print(sc_caption_result)
-
-            sc_caption_result["confidence"] = 0
 
         if sc_caption_result.get("confidence", 0) >= 95:
 
@@ -1128,19 +1020,11 @@ def extract_parties(text):
 
             result = label_result
 
-        elif (
-            appellant_result.get("confidence", 0) >= 85
-            and appellant_result.get("petitioner") != "Unknown"
-            and appellant_result.get("respondent") != "Unknown"
-        ):
+        elif appellant_result.get("confidence", 0) >= 85:
 
             result = appellant_result
 
-        elif (
-            versus_result.get("confidence", 0) >= 70
-            and versus_result.get("petitioner") != "Unknown"
-            and versus_result.get("respondent") != "Unknown"
-        ):
+        elif versus_result.get("confidence", 0) >= 70:
 
             result = versus_result
 

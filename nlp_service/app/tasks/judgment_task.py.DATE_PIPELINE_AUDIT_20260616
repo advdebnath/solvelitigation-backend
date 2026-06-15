@@ -1722,45 +1722,11 @@ def process_judgment(ingestion_id):
             )
 
 
-
-        # =====================================================
-        # 🔒 JUDGMENT DOCUMENT OVERRIDE
-        # =====================================================
-
-        is_real_judgment = bool(
-            re.search(
-                r'''
-                REPORTABLE|
-                NON[- ]REPORTABLE|
-                WRIT\s+PETITION|
-                CIVIL\s+APPEAL|
-                CRIMINAL\s+APPEAL|
-                SPECIAL\s+LEAVE\s+PETITION|
-                JUDGMENT|
-                J\s+U\s+D\s+G\s+M\s+E\s+N\s+T
-                ''',
-                detection_window,
-                re.I | re.X
-            )
-        )
-
-        if is_real_judgment:
-
-            notice_document = False
-            detected_non_judgment = False
-
-            document_type = "JUDGMENT"
-
-            print(
-                "🔒 DOCUMENT CLASSIFIER OVERRIDE: JUDGMENT"
-            )
-
         # =====================================================
         # 📂 DOCUMENT TYPE CLASSIFIER
         # =====================================================
 
-        if not is_real_judgment:
-            document_type = "NOTICE"
+        document_type = "NOTICE"
 
         if re.search(
             r"DAILY\s+CAUSE\s+LIST|SUPPLEMENTARY\s+CAUSE\s+LIST|LIST\s+OF\s+MATTERS",
@@ -4645,13 +4611,6 @@ def process_judgment(ingestion_id):
                 )
             ).strip()
 
-            print("🔥 DATE PIPELINE INPUT")
-            print({
-                "ingestion_id": str(ingestion_id),
-                "judgment_date": judgment_date,
-                "raw_date": raw_date
-            })
-
             if raw_date:
 
                 if re.match(
@@ -4679,9 +4638,6 @@ def process_judgment(ingestion_id):
                 ):
                     parsed_judgment_date = None
 
-                    print("🚫 DATE REJECTED BY YEAR FIREWALL")
-                    print(raw_date)
-
         except Exception as e:
 
             print("❌ DATE NORMALIZATION ERROR:")
@@ -4694,12 +4650,6 @@ def process_judgment(ingestion_id):
 
         print("🔥 PARSED JUDGMENT DATE:")
         print(parsed_judgment_date)
-
-        print("🔥 DATE PIPELINE OUTPUT")
-        print({
-            "raw_date": raw_date,
-            "parsed": str(parsed_judgment_date)
-        })
 
         print("🔥 PARSED JUDGMENT DATE TYPE:")
         print(type(parsed_judgment_date))
@@ -5322,12 +5272,8 @@ def process_judgment(ingestion_id):
         # =====================================================
 
 
-        print("🔥 FINAL SAVE AUDIT")
-        print({
-            "ingestion_id": str(ingestion_id),
-            "case": judgment_doc.get("caseNumber"),
-            "judgmentDate": judgment_doc.get("judgmentDate")
-        })
+        print("🔥 FINAL SAVE DATE:")
+        print(judgment_doc.get("judgmentDate"))
 
         print("🔥 FINAL SAVE CASE:")
         print(judgment_doc.get("caseNumber"))

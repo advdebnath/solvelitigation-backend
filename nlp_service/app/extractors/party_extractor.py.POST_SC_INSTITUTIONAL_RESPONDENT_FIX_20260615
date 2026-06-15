@@ -83,6 +83,16 @@ def clean_name(text):
     if not text:
         return "Unknown"
 
+    # =====================================================
+    # 🔒 INSTITUTIONAL PARTY PRESERVATION FIREWALL
+    # =====================================================
+
+    if re.fullmatch(
+        r"(?i)(HIGH\s+COURT\s+OF\s+[A-Z ]+|SUPREME\s+COURT\s+OF\s+INDIA)",
+        text.strip()
+    ):
+        return text.title()
+
     text = normalize_spaces(text)
     text = remove_noise(text)
 
@@ -889,6 +899,10 @@ def extract_parties(text):
 
                 \s*
 
+                (?:\n|\r\n?)
+
+                \s*
+
                 [.…⋯•·]*
 
                 \s*
@@ -899,11 +913,22 @@ def extract_parties(text):
                 flags=re.I | re.S | re.X
             )
 
+            print("🔥 SC RESPONDENT RESCUE RAW MATCH:")
+            print(rescue)
+
             if rescue:
 
-                role_result["respondent"] = clean_name(
+                print("🔥 SC RESPONDENT CAPTURE:")
+                print(repr(rescue.group(1)))
+
+                cleaned_respondent = clean_name(
                     rescue.group(1)
                 )
+
+                print("🔥 CLEANED RESPONDENT:")
+                print(repr(cleaned_respondent))
+
+                role_result["respondent"] = cleaned_respondent
 
                 role_result["confidence"] = max(
                     role_result.get("confidence", 0),

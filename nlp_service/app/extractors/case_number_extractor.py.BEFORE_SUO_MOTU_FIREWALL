@@ -731,14 +731,7 @@ def extract_case_number(text, fallback="Unknown Case"):
             flags=re.I
         )
 
-        if (
-            in_re_match
-            and not re.search(
-                r"SUO\s+MOTO\s+WRIT.*?NO",
-                header,
-                flags=re.I | re.S
-            )
-        ):
+        if in_re_match:
 
             title = clean_case_number_candidate(
                 in_re_match.group(1)

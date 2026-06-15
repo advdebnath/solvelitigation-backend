@@ -83,6 +83,16 @@ def clean_name(text):
     if not text:
         return "Unknown"
 
+    # =====================================================
+    # 🔒 INSTITUTIONAL PARTY PRESERVATION FIREWALL
+    # =====================================================
+
+    if re.fullmatch(
+        r"(?i)(HIGH\s+COURT\s+OF\s+[A-Z ]+|SUPREME\s+COURT\s+OF\s+INDIA)",
+        text.strip()
+    ):
+        return text.title()
+
     text = normalize_spaces(text)
     text = remove_noise(text)
 
@@ -376,6 +386,12 @@ def extract_sc_caption(header):
 
     if pet_res_lock:
 
+        print("🔥 SC PET_RES RAW GROUPS")
+        print({
+            "pet_raw": repr(pet_res_lock.group(1)),
+            "res_raw": repr(pet_res_lock.group(2))
+        })
+
         petitioner = clean_name(
             pet_res_lock.group(1)
         )
@@ -383,6 +399,24 @@ def extract_sc_caption(header):
         respondent = clean_name(
             pet_res_lock.group(2)
         )
+
+        # =====================================================
+        # 🔒 HON'BLE HIGH COURT RECOVERY FIREWALL
+        # =====================================================
+
+        raw_respondent = pet_res_lock.group(2)
+
+        hc_match = re.search(
+            r"(?i)(?:hon.?ble\s+)?(high\s+court\s+of\s+[a-z ]+)",
+            raw_respondent
+        )
+
+        if hc_match:
+
+            respondent = hc_match.group(1).title()
+
+            print("🔥 HIGH COURT RESPONDENT RECOVERED")
+            print(respondent)
 
         print("🔥 SC PETITIONER CAPTION LOCK")
         print({
@@ -889,6 +923,10 @@ def extract_parties(text):
 
                 \s*
 
+                (?:\n|\r\n?)
+
+                \s*
+
                 [.…⋯•·]*
 
                 \s*
@@ -899,11 +937,22 @@ def extract_parties(text):
                 flags=re.I | re.S | re.X
             )
 
+            print("🔥 SC RESPONDENT RESCUE RAW MATCH:")
+            print(rescue)
+
             if rescue:
 
-                role_result["respondent"] = clean_name(
+                print("🔥 SC RESPONDENT CAPTURE:")
+                print(repr(rescue.group(1)))
+
+                cleaned_respondent = clean_name(
                     rescue.group(1)
                 )
+
+                print("🔥 CLEANED RESPONDENT:")
+                print(repr(cleaned_respondent))
+
+                role_result["respondent"] = cleaned_respondent
 
                 role_result["confidence"] = max(
                     role_result.get("confidence", 0),
