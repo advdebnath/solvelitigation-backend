@@ -5239,11 +5239,18 @@ def process_judgment(ingestion_id):
             judgment_doc.get("caseNumber", "")
         ).strip()
 
+        print("🔥 CASE NUMBER BEFORE FIREWALL")
+        print(repr(case_number_value))
+
         if (
             case_number_value
             and not re.search(r"\d", case_number_value)
             and not re.search(
                 r"(?i)^IN\s+RE\s*:",
+                case_number_value
+            )
+            and not re.search(
+                r"(?i)\bVS\.?\b|\bVERSUS\b",
                 case_number_value
             )
         ):

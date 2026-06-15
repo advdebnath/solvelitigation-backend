@@ -25,6 +25,16 @@ SUPREME_COURT_CASE_PATTERNS = [
     r"(CIVIL\s+APPEAL\s+NO\s*S\.?\s*[\dA-Z\-\/ ,.&()]+(?:\s+OF\s+\d{4})?)",
     r"(CIVIL\s+APPEAL\s+NOS?\.?\s*[\dA-Z\-\/ ,.&()]+(?:\s+OF\s+\d{4})?)",
     r"(CRIMINAL\s+APPEAL\s+NOS?\.?\s*[\dA-Z\-\/ ,.&()]+(?:\s+OF\s+\d{4})?)",
+
+    # -----------------------------------------------------
+    # 🔒 LEGACY JUDIS CAPTIONS
+    # -----------------------------------------------------
+
+    r"(APPEAL\s*\((?:CRL\.?|CRIMINAL)\)\s*[\d\-]+\s+OF\s+\d{4})",
+
+    r"(APPEAL\s*\((?:CIVIL|C)\)\s*[\d\-]+\s+OF\s+\d{4})",
+
+    r"(SPECIAL\s+LEAVE\s+PETITION\s*\((?:CRL\.?|CRIMINAL|CIVIL|C)\)\s*[\d\-]+\s+OF\s+\d{4})",
     # -----------------------------------------------------
     # SLP
     # -----------------------------------------------------
