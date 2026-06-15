@@ -14,7 +14,8 @@ export type DocumentType =
   | "ACT"
   | "RULE"
   | "NOTIFICATION"
-  | "CIRCULAR";
+  | "CIRCULAR"
+  | "ADMINISTRATIVE_CIRCULAR";
 
 export type IngestionStage =
   | "UPLOADED"
@@ -108,6 +109,7 @@ const JudgmentIngestionSchema = new Schema<IJudgmentIngestion>(
         "RULE",
         "NOTIFICATION",
         "CIRCULAR",
+        "ADMINISTRATIVE_CIRCULAR",
       ],
       default: "JUDGMENT",
     },

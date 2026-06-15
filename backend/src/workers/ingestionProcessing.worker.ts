@@ -268,14 +268,20 @@ async function startWorker() {
           // 🔥 SUCCESS
           // =====================================================
 
-          ingestion.nlpQueued = true;
-            ingestion.status = "PROCESSING";
-
-          ingestion.stage = "PROCESSING";
-
-          ingestion.progress = 60;
-
-          await ingestion.save();
+          await JudgmentIngestion.updateOne(
+            {
+              _id: ingestion._id,
+              status: { $ne: "REJECTED" }
+            },
+            {
+              $set: {
+                nlpQueued: true,
+                status: "PROCESSING",
+                stage: "PROCESSING",
+                progress: 60
+              }
+            }
+          );
 
           console.log(
             "🚀 Sent to NLP:",

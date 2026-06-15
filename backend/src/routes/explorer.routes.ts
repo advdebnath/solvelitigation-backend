@@ -51,10 +51,6 @@ const VALID_JUDGMENT_FILTER: any = {
     ]
   },
 
-  headnote: {
-    $exists: true,
-    $nin: ["", null]
-  },
 
   // ============================================
   // 🔥 QUALITY CONTROL
@@ -73,7 +69,7 @@ const VALID_JUDGMENT_FILTER: any = {
     ]
   },
 
-  isPublished: true,
+  isPublished: { $ne: false },
 };
 
 
@@ -246,7 +242,6 @@ router.get(
 
         success: true,
 
-        category,
 
         totalActs:
           data.length,
@@ -758,6 +753,7 @@ router.get(
         act,
         section,
         point,
+          category,
         page = 1
 
       } = req.query;
@@ -772,6 +768,11 @@ router.get(
 
         ...VALID_JUDGMENT_FILTER
       };
+
+        if (category) {
+
+          match.category = category;
+        }
 
       if (act) {
 
@@ -816,6 +817,8 @@ router.get(
         };
       }
 
+        console.log("🔥 EXPLORER MATCH FILTER");
+        console.log(JSON.stringify(match, null, 2));
       const headnotes =
         await Judgment.find(match)
 

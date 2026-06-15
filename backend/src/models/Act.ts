@@ -16,6 +16,28 @@ export interface IAct extends Document {
 
   actYear?: number;
 
+  authority?: string;
+
+  effectiveDate?: Date;
+
+  checksum?: string;
+
+  sourceDocumentId?: mongoose.Types.ObjectId;
+
+  actReferences?: string[];
+
+  ruleReferences?: string[];
+
+  relatedJudgments?: mongoose.Types.ObjectId[];
+
+  relatedActs?: mongoose.Types.ObjectId[];
+
+  relatedRules?: mongoose.Types.ObjectId[];
+
+  relatedNotifications?: mongoose.Types.ObjectId[];
+
+  relatedCirculars?: mongoose.Types.ObjectId[];
+
   createdAt: Date;
   updatedAt: Date;
 }
@@ -48,11 +70,61 @@ const ActSchema = new Schema<IAct>(
     extractedText: String,
 
     actYear: Number,
+
+    authority: String,
+
+    effectiveDate: Date,
+
+    checksum: String,
+
+    sourceDocumentId: {
+      type: Schema.Types.ObjectId,
+      ref: "JudgmentIngestion",
+    },
+
+    actReferences: [String],
+
+    ruleReferences: [String],
+
+    relatedJudgments: [{
+      type: Schema.Types.ObjectId,
+      ref: "Judgment",
+    }],
+
+    relatedActs: [{
+      type: Schema.Types.ObjectId,
+      ref: "Act",
+    }],
+
+    relatedRules: [{
+      type: Schema.Types.ObjectId,
+      ref: "Rule",
+    }],
+
+    relatedNotifications: [{
+      type: Schema.Types.ObjectId,
+      ref: "Notification",
+    }],
+
+    relatedCirculars: [{
+      type: Schema.Types.ObjectId,
+      ref: "Circular",
+    }],
   },
   {
     timestamps: true,
   }
 );
+
+ActSchema.index({ title: 1 });
+
+ActSchema.index({ authority: 1 });
+
+ActSchema.index({ effectiveDate: 1 });
+
+ActSchema.index({ checksum: 1 });
+
+ActSchema.index({ documentType: 1 });
 
 export default mongoose.model<IAct>(
   "Act",

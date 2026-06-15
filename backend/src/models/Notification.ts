@@ -17,6 +17,26 @@ export interface INotification extends Document {
 
   notificationDate?: Date;
 
+  effectiveDate?: Date;
+
+  checksum?: string;
+
+  sourceDocumentId?: mongoose.Types.ObjectId;
+
+  actReferences?: string[];
+
+  ruleReferences?: string[];
+
+  relatedJudgments?: mongoose.Types.ObjectId[];
+
+  relatedActs?: mongoose.Types.ObjectId[];
+
+  relatedRules?: mongoose.Types.ObjectId[];
+
+  relatedNotifications?: mongoose.Types.ObjectId[];
+
+  relatedCirculars?: mongoose.Types.ObjectId[];
+
   createdAt: Date;
   updatedAt: Date;
 }
@@ -47,11 +67,59 @@ const NotificationSchema = new Schema<INotification>(
     extractedText: String,
 
     notificationDate: Date,
+
+    effectiveDate: Date,
+
+    checksum: String,
+
+    sourceDocumentId: {
+      type: Schema.Types.ObjectId,
+      ref: "JudgmentIngestion",
+    },
+
+    actReferences: [String],
+
+    ruleReferences: [String],
+
+    relatedJudgments: [{
+      type: Schema.Types.ObjectId,
+      ref: "Judgment",
+    }],
+
+    relatedActs: [{
+      type: Schema.Types.ObjectId,
+      ref: "Act",
+    }],
+
+    relatedRules: [{
+      type: Schema.Types.ObjectId,
+      ref: "Rule",
+    }],
+
+    relatedNotifications: [{
+      type: Schema.Types.ObjectId,
+      ref: "Notification",
+    }],
+
+    relatedCirculars: [{
+      type: Schema.Types.ObjectId,
+      ref: "Circular",
+    }],
   },
   {
     timestamps: true,
   }
 );
+
+NotificationSchema.index({ title: 1 });
+
+NotificationSchema.index({ authority: 1 });
+
+NotificationSchema.index({ effectiveDate: 1 });
+
+NotificationSchema.index({ checksum: 1 });
+
+NotificationSchema.index({ documentType: 1 });
 
 export default mongoose.model<INotification>(
   "Notification",
