@@ -1,0 +1,1395 @@
+import { Router } from "express";
+import mongoose from "mongoose";
+
+import Judgment from "../models/judgment.model";
+
+import {
+  getExplorerHighlights
+} from "../controllers/explorerHighlights.controller";
+import {
+
+  filterActsByCategory
+
+} from "../services/legalOntology.service";
+
+
+const router = Router();
+
+// =====================================================
+// 🔥 SAFE REGEX
+// =====================================================
+
+const escapeRegex = (
+  text: string = ""
+) =>
+  text.replace(
+    /[.*+?^${}()|[\]\\]/g,
+    "\\$&"
+  );
+
+// =====================================================
+// 🔥 PRODUCTION FILTER
+// =====================================================
+
+const VALID_JUDGMENT_FILTER: any = {
+
+  isDeleted: {
+    $ne: true
+  },
+
+  category: {
+    $exists: true,
+    $nin: ["", null, "Unknown"]
+  },
+
+  caseNumber: {
+    $exists: true,
+    $nin: [
+      "",
+      null,
+      "Unknown Case"
+    ]
+  },
+
+  headnote: {
+    $exists: true,
+    $nin: ["", null]
+  },
+
+  // ============================================
+  // 🔥 QUALITY CONTROL
+  // ============================================
+
+  documentQuality:
+    "HIGH_QUALITY",
+
+  reviewStatus: {
+
+    $in: [
+
+      "PENDING",
+
+      "APPROVED"
+    ]
+  },
+
+  isPublished: true,
+};
+
+
+// =====================================================
+// 🔥 1. CATEGORIES
+// =====================================================
+
+router.get(
+  "/categories",
+
+  async (_req, res) => {
+
+    try {
+
+      const categories =
+        await Judgment.aggregate([
+
+          {
+            $match:
+              VALID_JUDGMENT_FILTER
+          },
+
+          {
+            $group: {
+
+              _id:
+                "$category",
+
+              count: {
+                $sum: 1
+              }
+            }
+          },
+
+          {
+            $project: {
+
+              _id: 0,
+
+              name: "$_id",
+
+              count: 1
+            }
+          },
+
+          {
+            $sort: {
+              count: -1
+            }
+          }
+        ]);
+
+      res.json({
+
+        success: true,
+
+        data: categories
+      });
+
+    } catch (err) {
+
+      console.error(
+        "❌ Categories Error:",
+        err
+      );
+
+      res.status(500).json({
+        success: false
+      });
+    }
+  }
+);
+
+// =====================================================
+// 🔥 CATEGORY → ACTS
+// =====================================================
+
+router.get(
+
+  "/category/:category",
+
+  async (req, res) => {
+
+    try {
+
+      const category =
+        req.params.category;
+
+      const judgments =
+        await Judgment.find({
+
+          ...VALID_JUDGMENT_FILTER,
+
+          category: {
+
+            $regex: escapeRegex(
+              category
+            ),
+
+            $options: "i"
+          }
+        })
+
+        .select("actNames")
+
+        .lean();
+
+      const actCounter:
+      Record<string, number> = {};
+
+      for (const j of judgments) {
+
+        let acts =
+          Array.isArray(j.actNames)
+
+            ? j.actNames
+
+            : [];
+
+        // ===========================================
+        // 🔥 DYNAMIC ONTOLOGY FILTER
+        // ===========================================
+
+        acts =
+          filterActsByCategory(
+
+            acts,
+
+            category
+          );
+
+        for (const rawAct of acts) {
+
+          if (!rawAct) {
+            continue;
+          }
+
+          const act =
+            String(rawAct).trim();
+
+          if (!act) {
+            continue;
+          }
+
+          if (!actCounter[act]) {
+
+            actCounter[act] = 0;
+          }
+
+          actCounter[act]++;
+        }
+      }
+
+      const data =
+        Object.entries(actCounter)
+
+        .map(([act, count]) => ({
+
+          act,
+
+          count
+        }))
+
+        .sort((a, b) =>
+
+          b.count - a.count
+        );
+
+      res.json({
+
+        success: true,
+
+
+        totalActs:
+          data.length,
+
+        data
+      });
+
+    } catch (err) {
+
+      console.error(
+        "❌ Category Error:",
+        err
+      );
+
+      res.status(500).json({
+
+        success: false,
+
+        message:
+          "Failed to fetch category acts"
+      });
+    }
+  }
+);
+
+// =====================================================
+// 🔥 ACT → SECTIONS
+// =====================================================
+
+router.get(
+
+  "/acts/:act",
+
+  async (req, res) => {
+
+    try {
+
+      const act =
+        req.params.act;
+
+      const sections =
+        await Judgment.aggregate([
+
+          {
+            $match: {
+
+              ...VALID_JUDGMENT_FILTER,
+
+              actNames: {
+
+                $regex:
+                  escapeRegex(act),
+
+                $options: "i"
+              }
+            }
+          },
+
+          {
+            $unwind:
+              "$sections"
+          },
+
+          {
+            $match: {
+
+              "sections.section": {
+                $exists: true,
+                $ne: null
+              }
+            }
+          },
+
+          {
+            $group: {
+
+              _id:
+                "$sections.section",
+
+              section: {
+
+                $first:
+                  "$sections"
+              },
+
+              count: {
+                $sum: 1
+              }
+            }
+          },
+
+          {
+            $project: {
+
+              _id: 0,
+
+              section: 1,
+
+              count: 1
+            }
+          },
+
+          {
+            $sort: {
+              count: -1
+            }
+          }
+        ]);
+
+      res.json({
+
+        success: true,
+
+        act,
+
+        totalSections:
+          sections.length,
+
+        data: sections
+      });
+
+    } catch (err) {
+
+      console.error(
+        "❌ Act Route Error:",
+        err
+      );
+
+      res.status(500).json({
+
+        success: false,
+
+        message:
+          "Failed to fetch act sections"
+      });
+    }
+  }
+);
+
+
+// =====================================================
+// 🔥 3. SECTIONS
+// =====================================================
+
+router.get(
+
+  "/sections",
+
+  async (req, res) => {
+
+    try {
+
+      const act =
+        req.query.act as string;
+
+      const sections =
+        await Judgment.aggregate([
+
+          {
+            $match: {
+
+              ...VALID_JUDGMENT_FILTER,
+
+              actNames: {
+
+                $regex:
+                  escapeRegex(act),
+
+                $options: "i"
+              }
+            }
+          },
+
+          {
+            $unwind:
+              "$sections"
+          },
+
+          {
+            $match: {
+
+              "sections.section": {
+                $exists: true
+              }
+            }
+          },
+
+          {
+            $group: {
+
+              _id: {
+
+                $toLower:
+                  "$sections.section"
+              },
+
+              section: {
+
+                $first:
+                  "$sections"
+              }
+            }
+          },
+
+          {
+            $project: {
+
+              _id: 0,
+
+              section: 1
+            }
+          },
+
+          {
+            $sort: {
+              section: 1
+            }
+          }
+        ]);
+
+      res.json({
+
+        success: true,
+
+        data: sections
+      });
+
+    } catch (err) {
+
+      console.error(
+        "❌ Sections Error:",
+        err
+      );
+
+      res.status(500).json({
+        success: false
+      });
+    }
+  }
+);
+
+// =====================================================
+// 🔥 SECTION COMPATIBILITY ROUTE
+// =====================================================
+
+router.get(
+
+  "/sections/:section",
+
+  async (req, res) => {
+
+    try {
+
+      const section =
+        req.params.section;
+
+      const judgments =
+        await Judgment.find({
+
+          ...VALID_JUDGMENT_FILTER,
+
+          "sections.section": {
+
+            $regex:
+              escapeRegex(section),
+
+            $options: "i"
+          }
+        })
+
+        .select(`
+
+          caseNumber
+          category
+          court
+          headnote
+          sections
+
+        `)
+
+        .limit(100)
+
+        .lean();
+
+      res.json({
+
+        success: true,
+
+        section,
+
+        total:
+          judgments.length,
+
+        data: judgments
+      });
+
+    } catch (err) {
+
+      console.error(
+        "❌ Section Route Error:",
+        err
+      );
+
+      res.status(500).json({
+
+        success: false
+      });
+    }
+  }
+);
+
+// =====================================================
+// 🔥 4. POINTS OF LAW
+// =====================================================
+
+router.get(
+
+  "/points",
+
+  async (req, res) => {
+
+    try {
+
+      const {
+        act,
+        section
+      } = req.query;
+
+      const match: any = {
+
+        ...VALID_JUDGMENT_FILTER,
+
+        actNames: {
+
+          $regex:
+            escapeRegex(
+              act as string
+            ),
+
+          $options: "i"
+        }
+      };
+
+      if (section) {
+
+        match[
+          "sections.section"
+        ] = {
+
+          $regex:
+            escapeRegex(
+              section as string
+            ),
+
+          $options: "i"
+        };
+      }
+
+      const results =
+        await Judgment.find(match)
+
+          .select(`
+
+            _id
+            pointsOfLaw
+            headnote
+            citation
+            category
+            caseNumber
+
+          `)
+
+          .limit(100)
+
+          .lean();
+
+      const data =
+        results.map((r: any) => ({
+
+          point:
+
+            typeof r?.pointsOfLaw?.[0]
+            === "string"
+               ? r?.pointsOfLaw?.[0]
+               : r?.pointsOfLaw?.[0]?.point
+                 || "Unknown",
+
+          headnote:
+            r?.headnote || "",
+
+          citation:
+            r?.citation || "",
+
+          category:
+            r?.category || "",
+
+          caseNumber:
+            r?.caseNumber || "",
+
+          judgmentId:
+            r?._id
+        }));
+
+      res.json({
+
+        success: true,
+
+        data
+      });
+
+    } catch (err) {
+
+      console.error(
+        "❌ Points Error:",
+        err
+      );
+
+      res.status(500).json({
+        success: false
+      });
+    }
+  }
+);
+
+// =====================================================
+// 🔥 POINT COMPATIBILITY ROUTE
+// =====================================================
+
+router.get(
+
+  "/point/:point",
+
+  async (req, res) => {
+
+    try {
+
+      const point =
+        req.params.point;
+
+      const judgments =
+        await Judgment.find({
+
+          ...VALID_JUDGMENT_FILTER,
+
+          "pointsOfLaw.point": {
+
+            $regex:
+              escapeRegex(point),
+
+            $options: "i"
+          }
+        })
+
+        .select(`
+
+          caseNumber
+          headnote
+          category
+          court
+          actNames
+
+        `)
+
+        .limit(100)
+
+        .lean();
+
+      res.json({
+
+        success: true,
+
+        point,
+
+        total:
+          judgments.length,
+
+        data: judgments
+      });
+
+    } catch (err) {
+
+      console.error(
+        "❌ Point Route Error:",
+        err
+      );
+
+      res.status(500).json({
+
+        success: false
+      });
+    }
+  }
+);
+
+// =====================================================
+// 🔥 5. HEADNOTES
+// =====================================================
+
+router.get(
+
+  "/headnotes",
+
+  async (req, res) => {
+
+    try {
+
+      const {
+
+        act,
+        section,
+        point,
+          category,
+        page = 1
+
+      } = req.query;
+
+      const limit = 20;
+
+      const skip =
+        (Number(page) - 1)
+        * limit;
+
+      const match: any = {
+
+        ...VALID_JUDGMENT_FILTER
+      };
+
+        if (category) {
+
+          match.category = category;
+        }
+
+      if (act) {
+
+        match.actNames = {
+
+          $regex:
+            escapeRegex(
+              act as string
+            ),
+
+          $options: "i"
+        };
+      }
+
+      if (section) {
+
+        match[
+          "sections.section"
+        ] = {
+
+          $regex:
+            escapeRegex(
+              section as string
+            ),
+
+          $options: "i"
+        };
+      }
+
+      if (point) {
+
+        match[
+          "pointsOfLaw.point"
+        ] = {
+
+          $regex:
+            escapeRegex(
+              point as string
+            ),
+
+          $options: "i"
+        };
+      }
+
+      const headnotes =
+        await Judgment.find(match)
+
+          .select(`
+
+            _id
+            citation
+            headnote
+            category
+            caseNumber
+            judgmentDate
+
+          `)
+
+          .sort({
+            createdAt: -1
+          })
+
+          .skip(skip)
+
+          .limit(limit)
+
+          .lean();
+
+      res.json({
+
+        success: true,
+
+        page:
+          Number(page),
+
+        data: headnotes
+      });
+
+    } catch (err) {
+
+      console.error(
+        "❌ Headnotes Error:",
+        err
+      );
+
+      res.status(500).json({
+        success: false
+      });
+    }
+  }
+);
+
+// =====================================================
+// 🔥 6. FULL JUDGMENT
+// =====================================================
+
+router.get(
+
+  "/judgment/:id",
+
+  async (req, res) => {
+
+    try {
+
+      const id =
+        req.params.id;
+
+      if (
+
+        !mongoose.Types
+          .ObjectId
+          .isValid(id)
+
+      ) {
+
+        return res
+          .status(400)
+          .json({
+            success: false
+          });
+      }
+
+      const judgment =
+        await Judgment.findOne({
+
+          _id: id,
+
+          ...VALID_JUDGMENT_FILTER
+
+        }).lean();
+
+      if (!judgment) {
+
+        return res
+          .status(404)
+          .json({
+            success: false
+          });
+      }
+
+      res.json({
+
+        success: true,
+
+        data: judgment
+      });
+
+    } catch (err) {
+
+      console.error(
+        "❌ Judgment Error:",
+        err
+      );
+
+      res.status(500).json({
+        success: false
+      });
+    }
+  }
+);
+
+// =====================================================
+// 🔥 7. SIMILAR CASES
+// =====================================================
+
+router.get(
+
+  "/similar/:id",
+
+  async (req, res) => {
+
+    try {
+
+      const id =
+        req.params.id;
+
+      const current: any =
+        await Judgment
+          .findById(id)
+          .lean();
+
+      if (
+
+        !current ||
+        !current.embedding
+
+      ) {
+
+        return res.json({
+
+          success: true,
+
+          data: []
+        });
+      }
+
+      const judgments: any[] =
+        await Judgment.find({
+
+          ...VALID_JUDGMENT_FILTER,
+
+          _id: {
+            $ne: id
+          },
+
+          embedding: {
+            $exists: true
+          }
+        })
+
+        .limit(200)
+
+        .lean();
+
+      const cosine = (
+        a: number[],
+        b: number[]
+      ) => {
+
+        let dot = 0;
+
+        let normA = 0;
+
+        let normB = 0;
+
+        for (
+          let i = 0;
+          i < a.length;
+          i++
+        ) {
+
+          dot +=
+            a[i] * b[i];
+
+          normA +=
+            a[i] * a[i];
+
+          normB +=
+            b[i] * b[i];
+        }
+
+        return dot / (
+
+          Math.sqrt(normA)
+          *
+          Math.sqrt(normB)
+
+        );
+      };
+
+      const results =
+        judgments
+
+          .filter(
+            j => j.embedding
+          )
+
+          .map((j: any) => ({
+
+            id: j._id,
+
+            caseNumber:
+              j.caseNumber,
+
+            category:
+              j.category,
+
+            headnote:
+              j.headnote,
+
+            score:
+              cosine(
+
+                current.embedding,
+
+                j.embedding
+              )
+          }))
+
+          .sort(
+            (a, b) =>
+              b.score - a.score
+          )
+
+          .slice(0, 5);
+
+      res.json({
+
+        success: true,
+
+        data: results
+      });
+
+    } catch (err) {
+
+      console.error(
+        "❌ Similar Error:",
+        err
+      );
+
+      res.status(500).json({
+        success: false
+      });
+    }
+  }
+);
+
+// =====================================================
+// 🔥 8. ARGUMENT BUILDER
+// =====================================================
+
+router.post(
+
+  "/argument",
+
+  async (req, res) => {
+
+    try {
+
+      const { query } =
+        req.body;
+
+      if (!query) {
+
+        return res
+          .status(400)
+          .json({
+            success: false
+          });
+      }
+
+      const results =
+        await Judgment.find({
+
+          ...VALID_JUDGMENT_FILTER,
+
+          $or: [
+
+            {
+              headnote: {
+
+                $regex: query,
+
+                $options: "i"
+              }
+            },
+
+            {
+              pointsOfLaw: {
+
+                $regex: query,
+
+                $options: "i"
+              }
+            }
+          ]
+        })
+
+        .select(`
+
+          caseNumber
+          headnote
+          category
+
+        `)
+
+        .limit(5)
+
+        .lean();
+
+      const argument =
+        results.map(
+          (r: any) =>
+
+          `In ${r.caseNumber}, it was held that ${r.headnote}.`
+        );
+
+      res.json({
+
+        success: true,
+
+        argument
+      });
+
+    } catch (err) {
+
+      console.error(
+        "❌ Argument Error:",
+        err
+      );
+
+      res.status(500).json({
+        success: false
+      });
+    }
+  }
+);
+
+// =====================================================
+// 🔥 9. DEBUG FLOW VERIFIER
+// =====================================================
+
+router.get(
+
+  "/debug-flow/:id",
+
+  async (req, res) => {
+
+    try {
+
+      const id =
+        req.params.id;
+
+      if (
+
+        !mongoose.Types
+          .ObjectId
+          .isValid(id)
+
+      ) {
+
+        return res
+          .status(400)
+          .json({
+
+            success: false,
+
+            message:
+              "Invalid judgment id"
+          });
+      }
+
+      const judgment: any =
+        await Judgment.findById(id)
+
+          .select(`
+
+            caseNumber
+            category
+            actNames
+            sections
+            pointsOfLaw
+            headnote
+            judgmentDate
+            judges
+            parties
+            citation
+
+          `)
+
+          .lean();
+
+      if (!judgment) {
+
+        return res
+          .status(404)
+          .json({
+
+            success: false,
+
+            message:
+              "Judgment not found"
+          });
+      }
+
+      const validation = {
+
+        category:
+          !!judgment.category,
+
+        acts:
+
+          Array.isArray(
+            judgment.actNames
+          )
+          &&
+          judgment.actNames.length > 0,
+
+        sections:
+
+          Array.isArray(
+            judgment.sections
+          )
+          &&
+          judgment.sections.length > 0,
+
+        points:
+
+          Array.isArray(
+            judgment.pointsOfLaw
+          )
+          &&
+          judgment.pointsOfLaw.length > 0,
+
+        headnote:
+          !!judgment.headnote,
+
+        caseNumber:
+          !!judgment.caseNumber,
+
+        citation:
+          !!judgment.citation
+      };
+
+      const explorerFlow = {
+
+        categoryUrl:
+
+          `/explorer/category/${encodeURIComponent(
+
+            judgment.category || ""
+
+          )}`,
+
+        acts:
+          (judgment.actNames || [])
+          .map((a: string) => ({
+
+            act: a,
+
+            url:
+             
+              `/explorer/acts/${encodeURIComponent(a)}`
+          })),
+
+        sections:
+          (judgment.sections || [])
+          .map((s: any) => ({
+
+            section:
+              s?.section || "",
+
+            act:
+              s?.act || "",
+
+            type:
+              s?.type || "",
+
+            url:
+              `/explorer/sections/${encodeURIComponent(  
+                s?.section || ""
+              )}`
+          })),
+
+        points:
+          (judgment.pointsOfLaw || [])
+          .map((p: any) => ({
+
+            point:
+
+              typeof p === "string"
+
+                ? p
+
+                : p?.point || "",
+
+            category:
+              p?.category || "",
+
+            url:
+              `/explorer/point/${encodeURIComponent(
+
+                typeof p === "string"
+
+                  ? p
+
+                  : p?.point || ""
+
+              )}`
+          })),
+
+        judgmentUrl:
+          `/explorer/judgment/${id}`
+      };
+
+      res.json({
+
+        success: true,
+
+        validation,
+
+        explorerFlow,
+
+        judgment
+      });
+
+    } catch (err) {
+
+      console.error(
+        "❌ Debug Flow Error:",
+        err
+      );
+
+      res.status(500).json({
+
+        success: false,
+
+        message:
+          "Debug flow failed"
+      });
+    }
+  }
+);
+
+// =====================================================
+// 🔥 HIGHLIGHTS
+// =====================================================
+
+router.get(
+
+  "/highlights/:id",
+
+  getExplorerHighlights
+);
+
+export default router;

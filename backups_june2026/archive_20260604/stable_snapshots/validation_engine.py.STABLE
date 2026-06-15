@@ -1,0 +1,527 @@
+import re
+
+# =========================================================
+# 🔥 VALID COURT TYPES
+# =========================================================
+
+VALID_COURTS = [
+
+    "SUPREME",
+    "HIGH_COURT",
+    "TRIBUNAL"
+]
+
+# =========================================================
+# 🔥 CLEAN STRING
+# =========================================================
+
+def clean_string(value):
+
+    if not value:
+
+        return ""
+
+    value = str(value)
+
+    value = re.sub(
+        r"\s+",
+        " ",
+        value
+    )
+
+    return value.strip()
+
+# =========================================================
+# 🔥 VALIDATE COURT
+# =========================================================
+
+def validate_court(court_data):
+
+    errors = []
+
+    confidence = 0
+
+    if not court_data:
+
+        errors.append("Missing court data")
+
+        return {
+
+            "valid": False,
+
+            "confidence": confidence,
+
+            "errors": errors
+        }
+
+    court_type = clean_string(
+
+        court_data.get("court_type")
+    )
+
+    court_name = clean_string(
+
+        court_data.get("court_name")
+    )
+
+    if court_type not in VALID_COURTS:
+
+        errors.append("Invalid court type")
+
+    else:
+
+        confidence += 35
+
+    if len(court_name) < 5:
+
+        errors.append("Invalid court name")
+
+    else:
+
+        confidence += 25
+
+    return {
+
+        "valid": len(errors) == 0,
+
+        "confidence": confidence,
+
+        "errors": errors
+    }
+
+# =========================================================
+# 🔥 VALIDATE CASE NUMBER
+# =========================================================
+
+def validate_case_number(case_data):
+
+    errors = []
+
+    confidence = 0
+
+    if not case_data:
+
+        errors.append("Missing case number")
+
+        return {
+
+            "valid": False,
+
+            "confidence": confidence,
+
+            "errors": errors
+        }
+
+    case_number = clean_string(
+
+        case_data.get("case_number")
+    )
+
+    if case_number == "Unknown Case":
+
+        errors.append("Unknown case number")
+
+    else:
+
+        confidence += 40
+
+    if not re.search(
+        r"\d",
+        case_number
+    ):
+
+        errors.append("Case number missing digits")
+
+    else:
+
+        confidence += 20
+
+    if len(case_number) < 8:
+
+        errors.append("Case number too short")
+
+    return {
+
+        "valid": len(errors) == 0,
+
+        "confidence": confidence,
+
+        "errors": errors
+    }
+
+# =========================================================
+# 🔥 VALIDATE PARTIES
+# =========================================================
+
+def validate_parties(party_data):
+
+    errors = []
+
+    confidence = 0
+
+    if not party_data:
+
+        errors.append("Missing party data")
+
+        return {
+
+            "valid": False,
+
+            "confidence": confidence,
+
+            "errors": errors
+        }
+
+    petitioner = clean_string(
+
+        party_data.get("petitioner")
+    )
+
+    respondent = clean_string(
+
+        party_data.get("respondent")
+    )
+
+    # =====================================================
+    # 🔥 PETITIONER
+    # =====================================================
+
+    if petitioner == "Unknown":
+
+        errors.append("Unknown petitioner")
+
+    else:
+
+        confidence += 25
+
+    # =====================================================
+    # 🔥 RESPONDENT
+    # =====================================================
+
+    if respondent == "Unknown":
+
+        errors.append("Unknown respondent")
+
+    else:
+
+        confidence += 25
+
+    # =====================================================
+    # 🔥 SAME PARTY CHECK
+    # =====================================================
+
+    if (
+
+        petitioner
+        and
+        respondent
+        and
+        petitioner.lower() == respondent.lower()
+    ):
+
+        errors.append("Petitioner and respondent identical")
+
+        confidence -= 15
+
+    return {
+
+        "valid": len(errors) == 0,
+
+        "confidence": max(0, confidence),
+
+        "errors": errors
+    }
+
+# =========================================================
+# 🔥 VALIDATE JUDGES
+# =========================================================
+
+def validate_judges(judges):
+
+    errors = []
+
+    confidence = 0
+
+    if not judges:
+
+        errors.append("No judges extracted")
+
+        return {
+
+            "valid": False,
+
+            "confidence": confidence,
+
+            "errors": errors
+        }
+
+    if isinstance(judges, list):
+
+        normalized_judges = []
+
+        for j in judges:
+
+            # ============================================
+            # 🔥 STRING SAFETY
+            # ============================================
+
+            if isinstance(j, str):
+
+                j = {
+                    "name": j
+                }
+
+            if not isinstance(j, dict):
+                continue
+
+            judge_name = str(
+                j.get("name", "")
+            ).strip()
+
+            if re.match(
+                r"^[a-z]\\.\\s+(on|to|of|in|at|by|for|with|from)$",
+                judge_name.lower()
+            ):
+                continue
+
+            invalid_judge_terms = [
+                "however",
+                "therefore",
+                "learned counsel",
+                "video piracy",
+                "head constable",
+                "appellant",
+                "respondent"
+            ]
+
+            if any(
+                term in judge_name.lower()
+                for term in invalid_judge_terms
+            ):
+                continue
+
+            normalized_judges.append(j)
+
+        valid_judges = [
+
+            j for j in normalized_judges
+
+            if j.get("name")
+            and j.get("name") != "Unknown"
+        ]
+
+        if len(valid_judges) > 0:
+
+            confidence += 40
+
+        else:
+
+            errors.append("Invalid judge names")
+
+    else:
+
+        errors.append("Judges not list")
+
+    return {
+
+        "valid": len(errors) == 0,
+
+        "confidence": confidence,
+
+        "errors": errors
+    }
+
+# =========================================================
+# 🔥 VALIDATE DATE
+# =========================================================
+
+def validate_date(date_data):
+
+    errors = []
+
+    confidence = 0
+
+    if not date_data:
+
+        errors.append("Missing date")
+
+        return {
+
+            "valid": False,
+
+            "confidence": confidence,
+
+            "errors": errors
+        }
+
+    date_value = clean_string(
+
+        date_data.get("date")
+    )
+
+    if not date_value:
+
+        errors.append("Empty date")
+
+    else:
+
+        confidence += 40
+
+    # =====================================================
+    # 🔥 YYYY-MM-DD
+    # =====================================================
+
+    if not re.match(
+
+        r"^\d{4}-\d{2}-\d{2}$",
+
+        date_value
+    ):
+
+        errors.append("Invalid ISO date")
+
+    else:
+
+        confidence += 30
+
+    return {
+
+        "valid": len(errors) == 0,
+
+        "confidence": confidence,
+
+        "errors": errors
+    }
+
+# =========================================================
+# 🔥 OVERALL VALIDATION
+# =========================================================
+
+def validate_extraction(metadata):
+
+    try:
+
+        validation = {
+
+            "valid": True,
+
+            "overall_confidence": 0,
+
+            "errors": [],
+
+            "components": {}
+        }
+
+        # =====================================================
+        # 🔥 COURT
+        # =====================================================
+
+        court_result = validate_court(
+
+            metadata.get("court")
+        )
+
+        validation["components"]["court"] = court_result
+
+        # =====================================================
+        # 🔥 CASE NUMBER
+        # =====================================================
+
+        case_result = validate_case_number(
+
+            metadata.get("case_number")
+        )
+
+        validation["components"]["case_number"] = case_result
+
+        # =====================================================
+        # 🔥 PARTIES
+        # =====================================================
+
+        party_result = validate_parties(
+
+            metadata.get("parties")
+        )
+
+        validation["components"]["parties"] = party_result
+
+        # =====================================================
+        # 🔥 JUDGES
+        # =====================================================
+
+        judge_result = validate_judges(
+
+            metadata.get("judges")
+        )
+
+        validation["components"]["judges"] = judge_result
+
+        # =====================================================
+        # 🔥 DATE
+        # =====================================================
+
+        date_result = validate_date(
+
+            metadata.get("date")
+        )
+
+        validation["components"]["date"] = date_result
+
+        # =====================================================
+        # 🔥 AGGREGATE
+        # =====================================================
+
+        total_confidence = 0
+
+        total_items = 0
+
+        for component in validation["components"].values():
+
+            total_confidence += component["confidence"]
+
+            total_items += 1
+
+            if not component["valid"]:
+
+                validation["valid"] = False
+
+                validation["errors"].extend(
+
+                    component["errors"]
+                )
+
+        if total_items > 0:
+
+            validation["overall_confidence"] = round(
+
+                total_confidence / total_items,
+
+                2
+            )
+
+        print(
+
+            "✅ Validation Complete:",
+
+            validation["overall_confidence"]
+        )
+
+        return validation
+
+    except Exception as e:
+
+        print(
+            "❌ VALIDATION ENGINE ERROR:",
+            e
+        )
+
+        return {
+
+            "valid": False,
+
+            "overall_confidence": 0,
+
+            "errors": [str(e)],
+
+            "components": {}
+        }

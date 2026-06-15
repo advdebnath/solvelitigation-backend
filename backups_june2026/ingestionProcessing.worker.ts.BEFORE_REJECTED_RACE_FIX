@@ -1,0 +1,400 @@
+import "dotenv/config";
+import mongoose from "mongoose";
+import axios from "axios";
+import path from "path";
+import fs from "fs";
+
+import { connectDB } from "../config/db";
+import { JudgmentIngestion } from "../models";
+
+const POLL_INTERVAL_MS = Number(
+  process.env.INGESTION_POLL_INTERVAL_MS ?? 5000
+);
+
+const NLP_URL =
+  process.env.NLP_BASE_URL ||
+  "http://127.0.0.1:8000";
+
+mongoose.set("bufferCommands", false);
+
+// =====================================================
+// 🔥 SLEEP
+// =====================================================
+
+const sleep = (ms: number) =>
+  new Promise((res) => setTimeout(res, ms));
+
+// =====================================================
+// 🔥 MAIN WORKER
+// =====================================================
+
+async function startWorker() {
+
+  try {
+
+    console.log(
+      "⏳ Connecting to MongoDB (Worker)..."
+    );
+
+    await connectDB();
+
+    console.log(
+      "✅ Worker connected to MongoDB"
+    );
+
+    console.log(
+      "🟢 Ingestion Processing Worker started"
+    );
+
+    while (true) {
+
+      try {
+
+        // =====================================================
+        // 🔥 MONGODB HEALTH CHECK
+        // =====================================================
+
+        if (mongoose.connection.readyState !== 1) {
+
+          console.warn(
+            "⚠️ MongoDB not ready..."
+          );
+
+          await sleep(POLL_INTERVAL_MS);
+
+          continue;
+        }
+
+        // =====================================================
+        // 🔥 FETCH NEXT JOB
+        // =====================================================
+
+        const ingestion =
+          await JudgmentIngestion.findOneAndUpdate(
+
+            {
+              status: {
+                $in: ["UPLOADED", "QUEUED"]
+              },
+
+              $or: [
+
+                {
+                  nlpQueued: false
+                },
+
+                {
+                  nlpQueued: {
+                    $exists: false
+                  }
+                }
+              ],
+
+              retryCount: {
+                $lt: 3
+              },
+
+              $and: [
+
+                {
+
+                  $or: [
+
+                    {
+                      isLocked: false
+                    },
+
+                    {
+                      isLocked: {
+                        $exists: false
+                      }
+                    }
+                  ]
+                }
+              ]
+            },
+
+            {
+              $set: {
+                isLocked: true,
+                status: "PROCESSING",
+                stage: "PROCESSING",
+                progress: 10,
+                processingAt: new Date()
+              }
+            },
+
+            {
+              sort: {
+                createdAt: 1
+              },
+
+              new: true
+            }
+
+          );
+
+        // =====================================================
+        // 🔥 NO JOB
+        // =====================================================
+
+        if (!ingestion) {
+
+          console.log(
+            "⏳ No jobs found..."
+          );
+
+          await sleep(POLL_INTERVAL_MS);
+
+          continue;
+        }
+
+        console.log(
+          "🚀 Processing:",
+          ingestion._id.toString()
+        );
+
+        try {
+
+          // =====================================================
+          // 🔥 FILE PATH
+          // =====================================================
+
+          const relativePath =
+            ingestion.file?.relativePath;
+
+          if (!relativePath) {
+
+            throw new Error(
+              "Missing relativePath"
+            );
+          }
+
+          const filePath = path.join(
+            "/var/www/solvelitigation/backend",
+            relativePath
+          );
+
+          console.log(
+            "📂 File path:",
+            filePath
+          );
+
+          // =====================================================
+          // 🔥 FILE CHECK
+          // =====================================================
+
+          if (!fs.existsSync(filePath)) {
+
+            throw new Error(
+              `File not found: ${filePath}`
+            );
+          }
+
+          // =====================================================
+          // 🔥 FILE TYPE HARDENING
+          // =====================================================
+
+          const ext =
+            path.extname(filePath)
+              .toLowerCase();
+
+          if (
+            [
+              ".zip",
+              ".rar",
+              ".7z",
+              ".tar",
+              ".gz"
+            ].includes(ext)
+          ) {
+
+            throw new Error(
+              "Archive files are not supported"
+            );
+          }
+
+          // =====================================================
+          // 🔥 EMPTY FILE HARDENING
+          // =====================================================
+
+          const stats =
+            fs.statSync(filePath);
+
+          if (
+            stats.size === 0
+          ) {
+
+            throw new Error(
+              "Empty file"
+            );
+          }
+
+          // =====================================================
+          // 🔥 SEND TO NLP
+          // =====================================================
+
+          console.log(
+            "🤖 Sending to NLP..."
+          );
+
+          const response =
+            await axios.post(
+
+              `${NLP_URL}/api/enqueue`,
+
+              {
+                ingestionId:
+                  ingestion._id.toString()
+              },
+
+              {
+                headers: {
+                  "Content-Type":
+                    "application/json"
+                },
+
+                timeout: 600000
+              }
+
+            );
+
+          console.log(
+            "✅ NLP Response:",
+            response.data
+          );
+
+          // =====================================================
+          // 🔥 SUCCESS
+          // =====================================================
+
+          ingestion.nlpQueued = true;
+            ingestion.status = "PROCESSING";
+
+          ingestion.stage = "PROCESSING";
+
+          ingestion.progress = 60;
+
+          await ingestion.save();
+
+          console.log(
+            "🚀 Sent to NLP:",
+            ingestion._id.toString()
+          );
+
+        } catch (err: any) {
+
+          // =====================================================
+          // 🔥 FAILURE
+          // =====================================================
+
+          console.error(
+            "❌ Processing failed:",
+            err.message
+          );
+
+          ingestion.retryCount =
+            (ingestion.retryCount || 0) + 1;
+
+          ingestion.error =
+            err.message;
+
+
+          const permanentErrors = [
+            "Unsupported file type",
+            "Archive files are not supported",
+            "Empty file",
+            "PDF contains zero pages",
+            "Corrupted PDF",
+            "No pages extracted"
+          ];
+
+          const isPermanentFailure = permanentErrors.some(
+            permanentError =>
+              err.message.includes(permanentError)
+          );
+
+          if (isPermanentFailure) {
+
+            ingestion.status = "FAILED";
+
+            ingestion.stage = "FAILED";
+
+            ingestion.isLocked = false;
+
+            console.error(
+              "❌ Permanent extraction failure:",
+              ingestion._id.toString()
+            );
+
+            await ingestion.save();
+
+            continue;
+          }
+
+
+          if (ingestion.retryCount >= 3) {
+
+            ingestion.status = "FAILED";
+
+            ingestion.stage = "FAILED";
+
+            console.error(
+              "❌ Permanent failure:",
+              ingestion._id.toString()
+            );
+
+          } else {
+
+            ingestion.status = "QUEUED";
+
+            ingestion.stage = "QUEUED";
+
+            ingestion.nlpQueued = false;
+
+            console.log(
+              `🔁 Requeued (${ingestion.retryCount}/3):`,
+              ingestion._id.toString()
+            );
+          }
+
+          await ingestion.save();
+
+        } finally {
+
+          // =====================================================
+          // 🔥 RELEASE LOCK
+          // =====================================================
+
+          ingestion.isLocked = false;
+
+          await ingestion.save();
+        }
+
+      } catch (err) {
+
+        console.error(
+          "❌ Worker loop error:",
+          err
+        );
+      }
+
+      await sleep(POLL_INTERVAL_MS);
+    }
+
+  } catch (err) {
+
+    console.error(
+      "❌ Worker startup failed:",
+      err
+    );
+
+    process.exit(1);
+  }
+}
+
+// =====================================================
+// 🔥 START
+// =====================================================
+
+startWorker();

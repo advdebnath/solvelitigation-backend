@@ -1,0 +1,1721 @@
+# =========================================================
+# 🔥 FINAL PRODUCTION JUDGE EXTRACTOR
+# =========================================================
+
+import fitz
+import re
+import pytesseract
+
+from PIL import Image
+
+# =========================================================
+# 🔥 INVALID TERMS
+# =========================================================
+
+INVALID_JUDGE_TERMS = [
+
+    "O R D E R",
+    "ORDER",
+    "JUDGMENT",
+        "J U D G M E N T",
+        "O R D E R",
+    "Facts",
+    "Issue",
+    "Held",
+    "Conclusion",
+    "Background",
+    "Analysis",
+    "Legislative History",
+    "The Challenge",
+    "Be Done To The Complainant",
+]
+
+# =========================================================
+# 🔥 CANONICAL JUDGE HEADER NORMALIZER
+# =========================================================
+
+def canonical_judge_header_normalizer(text):
+
+    if not text:
+        return ""
+
+    text = str(text)
+
+    # =====================================================
+    # 🔥 SHARED OCR LEGAL NORMALIZATION
+    # =====================================================
+
+    text = normalize_ocr_legal_text(
+        text
+    )
+
+    # -----------------------------------------------------
+    # 🔒 COLLAPSE OCR-SPACED LETTERS
+    # -----------------------------------------------------
+
+    replacements = {
+
+        r"J\s*U\s*D\s*G\s*M\s*E\s*N\s*T":
+            "JUDGMENT",
+
+        r"O\s*R\s*D\s*E\s*R":
+            "ORDER",
+
+        r"C\s*O\s*R\s*A\s*M":
+            "CORAM",
+
+        r"H\s*O\s*N\s*'?\s*B\s*L\s*E":
+            "HONBLE",
+
+        r"J\s*U\s*S\s*T\s*I\s*C\s*E":
+            "JUSTICE"
+    }
+
+    for pattern, repl in replacements.items():
+
+        text = re.sub(
+            pattern,
+            repl,
+            text,
+            flags=re.I
+        )
+
+    # -----------------------------------------------------
+    # 🔒 REMOVE SIGNATURE GARBAGE
+    # -----------------------------------------------------
+
+    text = re.sub(
+        r"Digitally signed by.*?Reason:",
+        " ",
+        text,
+        flags=re.I | re.S
+    )
+
+    text = re.sub(
+        r"Signature Not Verified",
+        " ",
+        text,
+        flags=re.I
+    )
+
+    # -----------------------------------------------------
+    # 🔒 NORMALIZE LINE STRUCTURE
+    # -----------------------------------------------------
+
+    text = re.sub(
+        r"\n{3,}",
+        "\n\n",
+        text
+    )
+
+    text = re.sub(
+        r"[ \t]{2,}",
+        " ",
+        text
+    )
+
+    # -----------------------------------------------------
+    # 🔒 FIX JUDGE NAME SPACING
+    # -----------------------------------------------------
+
+    text = re.sub(
+        r"\bD\s*r\b",
+        "Dr",
+        text
+    )
+
+    text = re.sub(
+        r"\bM\s*r\b",
+        "Mr",
+        text
+    )
+
+    text = re.sub(
+        r"\bJ\s*\.\b",
+        "J.",
+        text
+    )
+
+    return text
+
+
+# =========================================================
+# 🔥 CLEAN NAME
+# =========================================================
+
+def clean_name(name):
+
+    # =============================================
+    # 🔒 OCR JUDGE NORMALIZATION LOCK
+    # =============================================
+
+    if isinstance(name, str):
+
+        name = re.sub(
+            r"H\s*O\s*N\s*'?\s*B\s*L\s*E",
+            "HONBLE",
+            name,
+            flags=re.I
+        )
+
+        name = re.sub(
+            r"J\s*U\s*S\s*T\s*I\s*C\s*E",
+            "JUSTICE",
+            name,
+            flags=re.I
+        )
+
+        name = re.sub(
+            r"C\s*O\s*R\s*A\s*M",
+            "CORAM",
+            name,
+            flags=re.I
+        )
+
+        name = re.sub(
+            r"\n+",
+            " ",
+            name
+        )
+
+        name = re.sub(
+            r"\s{2,}",
+            " ",
+            name
+        ).strip()
+
+        # =============================================
+        # 🔒 OCR HEADING STRIPPING LOCK
+        # =============================================
+
+        name = re.sub(
+            r"\bJUDGMENT\b",
+            "",
+            name,
+            flags=re.I
+        )
+
+        name = re.sub(
+            r"\bORDER\b",
+            "",
+            name,
+            flags=re.I
+        )
+
+        name = re.sub(
+            r"Digitally signed by.*",
+            "",
+            name,
+            flags=re.I
+        )
+
+        name = re.sub(
+            r"Date\s*:.*",
+            "",
+            name,
+            flags=re.I
+        )
+
+        name = re.sub(
+            r"Reason\s*:.*",
+            "",
+            name,
+            flags=re.I
+        )
+
+        name = re.sub(
+            r"\bCrl\.?A\.?\b.*",
+            "",
+            name,
+            flags=re.I
+        )
+
+        name = re.sub(
+            r"\bAppellant\b|\bRespondent\b",
+            "",
+            name,
+            flags=re.I
+        )
+
+        name = re.sub(
+            r"\s{2,}",
+            " ",
+            name
+        ).strip()
+
+    if not isinstance(name, str):
+
+        return ""
+
+
+    # =============================================
+    # 🔥 FIX COMPACT JUDGE INITIALS
+    # =============================================
+
+    name = re.sub(
+        r"\b([A-Z])\.([A-Z])\.([A-Z][a-z]+)",
+        r"\1.\2. \3",
+        name
+    )
+
+    name = re.sub(
+        r"\b([A-Z])\.([A-Z][a-z]+)",
+        r"\1. \2",
+        name
+    )
+
+    name = re.sub(
+        r"\s+",
+        " ",
+        name
+    ).strip()
+
+    # =============================================
+    # REMOVE HONORIFICS
+    # =============================================
+
+    name = re.sub(
+        r"HON'?BLE",
+        "",
+        name,
+        flags=re.I
+    )
+
+    name = re.sub(
+        r"\bMR\b\.?|\bMS\b\.?|\bMRS\b\.?",
+        "",
+        name,
+        flags=re.I
+    )
+
+    name = re.sub(
+        r"\bJUSTICE\b",
+        "",
+        name,
+        flags=re.I
+    )
+
+    name = re.sub(
+        r",?\s*J\.?$",
+        "",
+        name,
+        flags=re.I
+    )
+
+    name = re.sub(
+        r"^\W+|\W+$",
+        "",
+        name
+    )
+
+    return name.strip()
+
+# =========================================================
+# 🔥 VALIDATION
+# =========================================================
+
+def valid_name(name):
+
+    if not name:
+
+        return False
+
+    upper = name.upper()
+
+    # =============================================
+    # 🔥 OCR SPACE NORMALIZATION
+    # =============================================
+
+    compact_upper = re.sub(
+        r"\s+",
+        "",
+        upper
+    )
+
+    bad_words = [
+
+        "SUPREME COURT",
+        "HIGH COURT",
+        "APPEAL",
+        "PETITION",
+        "RESPONDENT",
+        "APPELLANT",
+        "ORDER",
+        "JUDGMENT",
+        "J U D G M E N T",
+        "O R D E R",
+        "PAGE",
+        "VERSUS",
+        "CIVIL",
+        "CRIMINAL",
+        "SPECIAL LEAVE",
+        "TRIBUNAL",
+        "SECTION",
+        "ACT",
+        "ARTICLE",
+        "LIMITED",
+        "COMMISSIONER",
+
+        "HONBLE",
+        "HON'BLE",
+        "JUSTICE",
+        "CORAM",
+        "BEFORE",
+        "PRESENT",
+        "ADVOCATE",
+        "ADVOCATES",
+        "SENIOR ADVOCATE",
+        "COUNSEL",
+        "BY ADV",
+        "FOR PETITIONER",
+        "FOR RESPONDENT",
+        "PLAINTIFF",
+        "DEFENDANT",
+        "RESPONDENTS",
+        "PETITIONERS",
+        "APPELLANTS",
+        "JUDGE",
+        "BENCH",
+        "DATED",
+        "REPORTABLE",
+        "NON REPORTABLE",
+        "REPORTABLE/NON-REPORTABLE",
+        "ORDER SHEET",
+        "CAUSE TITLE",
+        "CASE NO",
+        "CASE NUMBER",
+        "DIARY NO",
+        "SLP",
+        "WPC",
+        "CRL",
+        "WP(C)",
+        "WPCRL",
+        "NO.",
+        "NOS.",
+        "PAGE NO",
+        "PAGE NOS",
+        "INDEX",
+        "SYNOPSIS",
+        "HEADNOTE",
+        "TABLE OF CONTENTS",
+        "IN THE MATTER OF",
+        "BETWEEN",
+        "CORRIGENDUM",
+        "ANNEXURE",
+        "ANNEXURES",
+        "JURISDICTION",
+        "ORAL JUDGMENT",
+        "FINAL ORDER",
+        "INTERIM ORDER",
+        "PRONOUNCED ON",
+        "RESERVED ON",
+        "DELIVERED ON",
+
+        "STATE",
+        "UNION OF INDIA",
+        "GOVERNMENT",
+        "PUNJAB",
+        "HARYANA",
+        "DELHI",
+        "GUJARAT",
+        "MAHARASHTRA",
+        "RESPONDENTS",
+        "APPELLANTS"
+    ]
+
+    for word in bad_words:
+
+        normalized_word = re.sub(
+            r"\\s+",
+            "",
+            word.upper()
+        )
+
+        if (
+            upper.strip() == word
+            or normalized_word in compact_upper
+        ):
+            return False
+
+    # =============================================
+    # HUMAN NAME STRUCTURE
+    # =============================================
+
+
+    # =============================================
+    # 🔥 CONTEXTUAL COURT NOISE FIREWALL
+    # =============================================
+
+    invalid_fragments = [
+        "OF HE HIGH",
+        "OF THE HIGH",
+        "HIGH COURT",
+        "SUPREME COURT",
+        "COURT OF",
+        "STATE OF",
+        "UNION OF INDIA",
+        "BENCH OF",
+        "AT BOMBAY",
+        "AT DELHI",
+        "AT CALCUTTA",
+        "AT MADRAS",
+        "AT GUWAHATI"
+    ]
+
+    normalized_name = re.sub(
+        r"\s+",
+        " ",
+        upper
+    ).strip()
+
+    for fragment in invalid_fragments:
+
+        if fragment in normalized_name:
+            return False
+
+    tokens = name.split()
+
+    if len(tokens) < 2:
+
+        compact_judge_pattern = re.fullmatch(
+            r"(?:[A-Z]\.){1,5}[A-Z][a-z]+",
+            tokens[0]
+        ) if tokens else None
+        initials_pattern = re.fullmatch(
+            r"[A-Z]\.",
+            tokens[0]
+        ) if tokens else None
+
+        if not compact_judge_pattern and not initials_pattern:
+
+
+            return False
+
+    if len(tokens) > 8:
+
+        return False
+
+
+    # =============================================
+    # 🔥 SEMANTIC NOISE SUPPRESSION
+    # =============================================
+
+    invalid_semantic_patterns = [
+
+        # =============================================
+        # 🔥 SUPREME COURT SIGNATURE BLOCKS
+        # =============================================
+
+        r"\(\s*([A-Z][A-Z\.\s]{5,120})\s*\)",
+
+        r"\b([A-Z]\.\s*[A-Z][A-Z\s]{2,120})\b",
+
+        r"(?:J\s*U\s*D\s*G\s*M\s*E\s*N\s*T|ORDER)?\s*(?:\n|\r|\s){0,10}(Dr\.?\s+)?([A-Z][A-Za-z\.\s]{3,70}?)\s*,\s*J\.?\b",
+
+        r"\bHON'?BLE\s+MR\.?\s+JUSTICE\s+([A-Za-z\.\s]{3,120})",
+
+        r"\bHON'?BLE\s+MS\.?\s+JUSTICE\s+([A-Za-z\.\s]{3,120})",
+
+
+        "impugned",
+        "judgmen",
+        "judgment",
+        "analysed",
+        "analysis",
+        "high court",
+        "supreme court",
+        "petition",
+        "respondent",
+        "appellant",
+        "prosecution",
+        "constitutional",
+        "conviction",
+        "article",
+        "section",
+        "appeal",
+        "order",
+        "reserved on",
+        "pronounced on"
+    ]
+
+    lower_name = name.lower()
+
+    for pattern in invalid_semantic_patterns:
+
+        if pattern in lower_name:
+
+            return False
+
+    lowercase_tokens = [
+        t for t in tokens
+        if t.islower()
+    ]
+
+    if len(lowercase_tokens) >= 3:
+
+        return False
+
+    if len(name.split()) > 5:
+
+        return False
+
+    # =============================================
+    # NO NUMBERS
+    # =============================================
+
+    if re.search(r"\d", name):
+
+        return False
+
+    # =============================================
+    # ALPHABETIC STRUCTURE
+    # =============================================
+
+    if not re.fullmatch(
+        r"[A-Za-z\.\s\-]+",
+        name
+    ):
+
+        return False
+
+    return True
+
+# =========================================================
+# 🔥 OCR PAGE
+# =========================================================
+
+def ocr_page(page):
+
+    try:
+
+        pix = page.get_pixmap(dpi=300)
+
+        img = Image.frombytes(
+            "RGB",
+            [pix.width, pix.height],
+            pix.samples
+        )
+
+        text = pytesseract.image_to_string(img)
+
+        return text
+
+    except Exception:
+
+        return ""
+
+# =========================================================
+# 🔥 EXTRACT FROM TEXT
+# =========================================================
+
+def extract_names_from_text(full_text):
+
+    judges = set()
+
+    patterns = [
+
+        # =============================================
+        # 🔥 DIRECT SIGNATURE BLOCK EXTRACTION
+        # =============================================
+
+        r"\[\s*([A-Z][A-Za-z\.\s]{5,80})\s*\]",
+
+
+        # =============================================
+        # 🔥 SUPREME COURT SIGNATURE BLOCKS
+        # =============================================
+
+        r"\(\s*([A-Z][A-Z\.\s]{5,120})\s*\)",
+
+        r"\b([A-Z]\.\s*[A-Z][A-Z\s]{2,120})\b",
+
+        r"(?:J\s*U\s*D\s*G\s*M\s*E\s*N\s*T|ORDER)[\s\r\n]{0,20}(?:Dr\.?\s+)?([A-Z][A-Za-z\.\s]{3,70}?)\s*,\s*J\.?\b",
+
+        r"\bHON'?BLE\s+MR\.?\s+JUSTICE\s+([A-Za-z\.\s]{3,120})",
+
+        r"\bHON'?BLE\s+MS\.?\s+JUSTICE\s+([A-Za-z\.\s]{3,120})",
+
+
+        # =============================================
+        # HON'BLE PATTERNS
+        # =============================================
+
+        r"HON'?BLE\s+MR\.?\s+JUSTICE\s+([A-Z][A-Z\.\s]{3,80})",
+
+        r"HON'?BLE\s+MS\.?\s+JUSTICE\s+([A-Z][A-Z\.\s]{3,80})",
+
+        r"HON'?BLE\s+MRS\.?\s+JUSTICE\s+([A-Z][A-Z\.\s]{3,80})",
+
+        # =============================================
+        # JUSTICE PATTERNS
+        # =============================================
+
+        r"JUSTICE\s+([A-Z][A-Z\.\s]{4,50}?)(?:\
+|,|J\\.|JJ\\.|PETITIONER|RESPONDENT|APPELLANT|ORDER|JUDGMENT)",
+
+        # =============================================
+        # R.F. Nariman, J.
+        # =============================================
+
+        r"([A-Z][A-Za-z\.\s]{3,80}),\s*J\.",
+
+        # =============================================
+        # CORAM BLOCK
+        # =============================================
+
+        # =============================================
+        # 🔒 OCR-SAFE MULTILINE CORAM LOCK
+        # =============================================
+
+        r"CORAM\s*[:\-]?\s*((?:HON.?BLE|JUSTICE|J\.)[\s\S]{0,400}?)(?:For Appellant|For Petitioner|For Respondent|Appearance|JUDGMENT|ORDER)",
+
+        r"BEFORE\s*[:\-]?\s*((?:HON.?BLE|JUSTICE|J\.)[\s\S]{0,400}?)(?:For Appellant|For Petitioner|For Respondent|Appearance|JUDGMENT|ORDER)",
+
+        r"CORAM\s*[:\-]?\s*(.+?)(?:For Appellant|For Petitioner|JUDGMENT|ORDER)",
+
+        # =============================================
+        # BENCH BLOCK
+        # =============================================
+
+        r"BENCH\s*[:\-]?\s*(.+?)(?:\
+|For Appellant|For Petitioner|JUDGMENT|ORDER)",
+    ]
+
+    for pattern in patterns:
+
+        matches = re.findall(
+            pattern,
+            full_text,
+            flags=re.I | re.S
+        )
+
+        print(f"🔥 PATTERN: {pattern}")
+        print(f"🔥 MATCHES: {matches}")
+
+
+        for match in matches:
+
+            if isinstance(match, tuple):
+
+                match = " ".join(match)
+
+            parts = re.split(
+                  r"\\n|,|AND|&",
+                str(match)
+            )
+
+            for part in parts:
+
+                name = clean_name(part)
+
+                print("🧪 RAW PART:")
+                print(part)
+
+                print("🧪 CLEANED NAME:")
+                print(name)
+
+
+
+                candidate_clean = name.strip()
+
+                # -----------------------------------------
+                # 🔥 SAFE JUDICIAL INITIAL NORMALIZATION
+                # -----------------------------------------
+
+                candidate_clean = re.sub(
+                    r"\b([A-Z])\.([A-Z])\.([A-Z][a-z]+)",
+                    r"\1.\2. \3",
+                    candidate_clean
+                )
+
+                candidate_clean = re.sub(
+                    r"\b([A-Z])\.([A-Z][a-z]+)",
+                    r"\1. \2",
+                    candidate_clean
+                )
+
+                candidate_clean = re.sub(
+                    r"\b([A-Z])\.([A-Z])\.([A-Z][a-z]+)",
+                    r"\1.\2. \3",
+                    candidate_clean
+                )
+
+                candidate_clean = re.sub(
+                    r"\b([A-Z])\.([A-Z][a-z]+)",
+                    r"\1. \2",
+                    candidate_clean
+                )
+
+                # =====================================
+
+                # =====================================
+                # INVALID TERM FILTER
+                # =====================================
+
+                if candidate_clean.upper() in [
+
+                    item.upper()
+                    for item in INVALID_JUDGE_TERMS
+                ]:
+                    continue
+
+                # =====================================
+                # REJECT FRAGMENTS
+                # =====================================
+
+                fragment_terms = [
+
+                    "DONE TO",
+                    "COMPLAINANT",
+                    "APPELLANT",
+                    "RESPONDENT",
+                    "PETITIONER",
+                    "ORDER",
+                    "JUDGMENT",
+        "J U D G M E N T",
+        "O R D E R",
+                    "VERSUS",
+                ]
+
+                upper_candidate = candidate_clean.upper()
+
+                if any(
+
+                    term in upper_candidate
+
+                    for term in fragment_terms
+                ):
+                    continue
+
+                # =====================================
+                # VALID HUMAN NAME
+                # =====================================
+
+                if valid_name(candidate_clean):
+
+                    invalid_fragments = [
+
+                        "however",
+                        "therefore",
+                        "video piracy",
+                        "head constable",
+                        "learned counsel",
+                        "appellant",
+                        "respondent",
+                        "police",
+                        "state",
+                        "inspector",
+                        "sub inspector",
+                        "advocate",
+                        "counsel",
+
+                    ]
+
+                    candidate_lower = candidate_clean.lower()
+
+                    if any(
+                        fragment in candidate_lower
+                        for fragment in invalid_fragments
+                    ):
+                        continue
+
+                    if len(candidate_clean.split()) < 2:
+                        continue
+
+                    if len(candidate_clean.split()) > 4:
+                        continue
+
+
+
+                    tokens = candidate_clean.split()
+
+                    invalid_second_tokens = {
+                        "On",
+                        "To",
+                        "Of",
+                        "In",
+                        "At",
+                        "By",
+                        "For",
+                        "With",
+                        "From"
+                    }
+
+                    if (
+                        len(tokens) == 2
+                        and re.match(r"^[A-Z]\.$", tokens[0])
+                        and tokens[1] in invalid_second_tokens
+                    ):
+                        continue
+
+
+                    if len(tokens) < 2:
+                        continue
+
+                    if len(tokens) > 4:
+                        continue
+
+                    if re.match(r"^[A-Z]\.$", tokens[-1]):
+                        continue
+
+                    invalid_singletons = {
+                        "On",
+                        "To",
+                        "Of",
+                        "In",
+                        "At",
+                        "By",
+                        "For"
+                    }
+
+                    if any(
+                        token in invalid_singletons
+                        for token in tokens
+                    ):
+                        continue
+
+                    advocate_context = [
+                        "learned counsel",
+                        "appearing on behalf",
+                        "for the appellant",
+                        "for the respondent"
+                    ]
+
+                    nearby_window = full_text.lower()
+
+
+                    reject_candidate = False
+
+                    if candidate_clean.lower() in nearby_window:
+
+                        for ctx in advocate_context:
+
+                            if ctx in nearby_window:
+
+                                if candidate_clean.startswith("V.") or candidate_clean.startswith("M."):
+
+                                    reject_candidate = True
+
+                    if reject_candidate:
+                        continue
+
+
+
+                    if re.match(r"^[A-Z]\.\s+(on|to|of|in|at|by|for|with|from)$", candidate_clean.lower()):
+                        continue
+
+                    judges.add(
+                        candidate_clean.title()
+                    )
+
+
+
+    print("🔥 FINAL EXTRACTED JUDGES:", judges)
+
+    print("🔥 FULL TEXT SAMPLE FOR JUDGE EXTRACTION:")
+
+    print(full_text[:1500])
+
+    return sorted(list(judges))
+
+# =========================================================
+# 🔥 MAIN
+# =========================================================
+
+def extract_judges(pdf_path):
+
+    try:
+
+        fitz.TOOLS.mupdf_display_errors(False)
+
+        if (
+            not isinstance(pdf_path, str)
+            or "\n" in pdf_path
+            or len(pdf_path) > 300
+        ):
+
+            print(
+                "⚠️ INVALID PDF PATH RECEIVED IN JUDGE EXTRACTOR"
+            )
+
+            print(str(pdf_path)[:500])
+
+            return []
+
+        doc = fitz.open(pdf_path)
+
+        collected = []
+
+        early_judge_pool = set()
+
+
+
+        # =====================================================
+        # 🔥 REPEATED HEADER DETECTION ENGINE
+        # =====================================================
+
+        repeated_header_candidates = {}
+
+        repeated_footer_candidates = {}
+
+        # =====================================================
+        # FIRST 5 PAGES
+        # =====================================================
+        max_pages = min(5, len(doc))
+
+        for i in range(max_pages):
+
+            page = doc.load_page(i)
+
+            text = page.get_text()
+
+            # ================================================
+            # 🔥 EARLY JUDGE HEADER EXTRACTION
+            # ================================================
+
+            early_judges = extract_names_from_text(text)
+
+            if early_judges:
+
+                early_judge_pool.update(early_judges)
+
+                print("🔥 EARLY HEADER JUDGES:", early_judges)
+
+
+            page_lines = text.splitlines()
+
+            # ================================================
+            # 🔥 DYNAMIC PAGE-DENSITY ZONING ENGINE
+            # ================================================
+
+            total_lines = len(page_lines)
+
+            dynamic_zone_size = max(
+                4,
+                int(total_lines * 0.10)
+            )
+
+            header_lines = page_lines[:dynamic_zone_size]
+
+            footer_lines = page_lines[-dynamic_zone_size:]
+
+            body_lines = page_lines[
+                dynamic_zone_size:-dynamic_zone_size
+            ]
+
+
+            header_text = "\n".join(header_lines)
+
+            footer_text = "\n".join(footer_lines)
+
+            body_text = "\n".join(body_lines)
+
+            # ================================================
+            # 🔥 HEADER / FOOTER SANITIZATION
+            # ================================================
+
+            body_text = re.sub(
+                r"http[s]?://\\S+",
+                " ",
+                body_text,
+                flags=re.I
+            )
+            body_text = re.sub(
+                r"Page\\s+\\d+\\s+of\\s+\\d+",
+                " ",
+                body_text,
+                flags=re.I
+            )
+
+
+            # ================================================
+            # 🔥 METADATA-ZONE ISOLATION ENGINE
+            # ================================================
+
+            metadata_patterns = [
+
+        # =============================================
+        # 🔥 SUPREME COURT SIGNATURE BLOCKS
+        # =============================================
+
+        r"\(\s*([A-Z][A-Z\.\s]{5,120})\s*\)",
+
+        r"\b([A-Z]\.\s*[A-Z][A-Z\s]{2,120})\b",
+
+        r"\b([A-Z][A-Z\s]{3,120})\s*,\s*J\.?\b",
+
+        r"\bHON'?BLE\s+MR\.?\s+JUSTICE\s+([A-Za-z\.\s]{3,120})",
+
+        r"\bHON'?BLE\s+MS\.?\s+JUSTICE\s+([A-Za-z\.\s]{3,120})",
+
+
+                r"For\\s+Petitioner(?:\\(s\\))?.*?(?=For\\s+Respondent|JUDGMENT|ORDER)",
+
+                r"For\\s+Respondent(?:\\(s\\))?.*?(?=JUDGMENT|ORDER)",
+
+                r"Appearance\\s*:.*?(?=JUDGMENT|ORDER)",
+
+                r"Advocate\\s*:.*?(?=JUDGMENT|ORDER)",
+
+                r"Counsel\\s*:.*?(?=JUDGMENT|ORDER)",
+
+                r"Present\\s*:.*?(?=JUDGMENT|ORDER)"
+            ]
+
+            metadata_zone = {
+                "advocates": [],
+                "appearance": [],
+                "bench": [],
+                "parties": [],
+                "procedural": []
+            }
+
+            isolated_metadata_blocks = []
+
+            for meta_pattern in metadata_patterns:
+
+                matches = re.findall(
+                    meta_pattern,
+                    body_text,
+                    flags=re.I | re.S
+                )
+
+                if matches:
+
+                    if "petitioner" in meta_pattern.lower() or "respondent" in meta_pattern.lower():
+                        metadata_zone["appearance"].extend(matches)
+
+                    elif "appearance" in meta_pattern.lower():
+                        metadata_zone["appearance"].extend(matches)
+
+                    elif "advocate" in meta_pattern.lower() or "counsel" in meta_pattern.lower():
+                        metadata_zone["advocates"].extend(matches)
+
+                    elif "present" in meta_pattern.lower():
+                        metadata_zone["procedural"].extend(matches)
+
+                    isolated_metadata_blocks.extend(matches)
+
+                body_text = re.sub(
+                    meta_pattern,
+                    " ",
+                    body_text,
+                    flags=re.I | re.S
+                )
+
+
+            # ================================================
+            # 🔥 OPERATIVE-ZONE INTELLIGENCE ENGINE
+            # ================================================
+
+            operative_patterns = [
+
+        # =============================================
+        # 🔥 SUPREME COURT SIGNATURE BLOCKS
+        # =============================================
+
+        r"\(\s*([A-Z][A-Z\.\s]{5,120})\s*\)",
+
+        r"\b([A-Z]\.\s*[A-Z][A-Z\s]{2,120})\b",
+
+        r"\b([A-Z][A-Z\s]{3,120})\s*,\s*J\.?\b",
+
+        r"\bHON'?BLE\s+MR\.?\s+JUSTICE\s+([A-Za-z\.\s]{3,120})",
+
+        r"\bHON'?BLE\s+MS\.?\s+JUSTICE\s+([A-Za-z\.\s]{3,120})",
+
+
+                r"appeal[s]?\\s+(?:is\\s+)?allowed",
+
+                r"appeal[s]?\\s+(?:is\\s+)?dismissed",
+
+                r"petition[s]?\\s+(?:is\\s+)?allowed",
+
+                r"petition[s]?\\s+(?:is\\s+)?dismissed",
+
+                r"matter\\s+(?:is\\s+)?remanded",
+
+                r"conviction\\s+(?:is\\s+)?set\\s+aside",
+
+                r"sentence\\s+(?:is\\s+)?modified",
+
+                r"bail\\s+(?:is\\s+)?granted",
+
+                r"disposed\\s+of",
+
+                r"SLP\\s+(?:is\\s+)?dismissed"
+            ]
+
+            operative_zone = []
+
+            operative_weight_map = {
+                "allowed": 95,
+                "dismissed": 95,
+                "set aside": 100,
+                "modified": 90,
+                "remanded": 80,
+                "granted": 85,
+                "disposed": 60,
+                "notice": 20,
+                "list after": 5
+            }
+
+            operative_rankings = []
+            for operative_pattern in operative_patterns:
+
+                operative_matches = re.findall(
+                    operative_pattern,
+                    body_text,
+                    flags=re.I
+                )
+
+                if operative_matches:
+
+                    operative_zone.extend(operative_matches)
+
+                    for match in operative_matches:
+
+                        lower_match = match.lower()
+
+                        score = 50
+
+                        operative_type = "procedural"
+
+                        for keyword, weight in operative_weight_map.items():
+
+                            if keyword in lower_match:
+
+                                score = weight
+
+                                break
+
+
+                        if "allowed" in lower_match or "dismissed" in lower_match:
+                            operative_type = "final_disposition"
+
+                        elif "set aside" in lower_match:
+                            operative_type = "conviction_relief"
+
+                        elif "modified" in lower_match:
+                            operative_type = "sentence_modification"
+
+                        operative_ontology = "PROCEDURAL"
+
+                        if "appeal" in lower_match and "allowed" in lower_match:
+                            operative_ontology = "SUCCESS_APPELLANT"
+
+                        elif "appeal" in lower_match and "dismissed" in lower_match:
+                            operative_ontology = "FAILURE_APPELLANT"
+
+                        elif "petition" in lower_match and "dismissed" in lower_match:
+                            operative_ontology = "RELIEF_DENIED"
+
+                        elif "set aside" in lower_match:
+                            operative_ontology = "ACQUITTAL"
+
+                        elif "modified" in lower_match:
+                            operative_ontology = "SENTENCE_MODIFICATION"
+
+                        elif "remanded" in lower_match:
+                            operative_ontology = "REMAND"
+
+                        elif "granted" in lower_match:
+                            operative_ontology = "LIBERTY_GRANTED"
+
+                        relief_class = "GENERAL_PROCEDURAL_RELIEF"
+
+                        if operative_ontology == "ACQUITTAL":
+                            relief_class = "CRIMINAL_LIBERTY_RELIEF"
+
+                        elif operative_ontology == "LIBERTY_GRANTED":
+                            relief_class = "INTERIM_LIBERTY_RELIEF"
+
+                        elif operative_ontology == "SENTENCE_MODIFICATION":
+                            relief_class = "SENTENCE_RELIEF"
+
+                        elif operative_ontology == "REMAND":
+                            relief_class = "PROCEDURAL_RELIEF"
+
+                        elif operative_ontology == "RELIEF_DENIED":
+                            relief_class = "RELIEF_DENIED"
+
+                        elif operative_ontology == "SUCCESS_APPELLANT":
+                            relief_class = "APPELLATE_SUCCESS_RELIEF"
+
+                        elif operative_ontology == "FAILURE_APPELLANT":
+                            relief_class = "APPELLATE_FAILURE"
+
+                        elif operative_ontology == "SLP_REJECTED":
+                            relief_class = "SPECIAL_LEAVE_DENIED"
+
+
+                        outcome_signature = (
+                            operative_ontology + "|" +
+                            relief_class + "|" +
+                            operative_type
+                        )
+
+                        outcome_graph_memory = {
+                            "ontology": operative_ontology,
+                            "relief_class": relief_class,
+                            "operative_type": operative_type,
+                            "outcome_signature": outcome_signature
+                        }
+
+                        operative_rankings.append({
+                            "text": match,
+                            "score": score,
+                            "ontology": operative_ontology,
+                            "relief_class": relief_class,
+                            "graph_memory": outcome_graph_memory
+                        })
+
+
+
+
+                if operative_matches:
+
+                    operative_zone.extend(operative_matches)
+
+            body_text = re.sub(
+                r"[ \\t]+",
+                " ",
+                body_text
+
+            )
+
+            body_text = re.sub(
+                r"SUPREME COURT OF INDIA",
+                " ",
+                body_text,
+                flags=re.I
+            )
+
+            body_text = re.sub(
+                r"HIGH COURT OF[^\\n]*",
+                " ",
+                body_text,
+                flags=re.I
+            )
+
+            text = body_text
+
+
+            if i == 0:
+
+                ocr_text = ocr_page(page)
+
+                if ocr_text and len(ocr_text) > len(text):
+
+                    text = ocr_text
+
+            elif not text or len(text.strip()) < 50:
+
+                text = ocr_page(page)
+
+            if text:
+
+                collected.append(text)
+
+        # =====================================================
+        # LAST 2 PAGES
+        # =====================================================
+
+        start = max(0, len(doc) - 2)
+
+        for i in range(start, len(doc)):
+
+            page = doc.load_page(i)
+
+            text = page.get_text()
+
+            # ================================================
+            # 🔥 EARLY JUDGE HEADER EXTRACTION
+            # ================================================
+
+            early_judges = extract_names_from_text(text)
+
+            if early_judges:
+
+                early_judge_pool.update(early_judges)
+
+                print("🔥 EARLY HEADER JUDGES:", early_judges)
+
+
+            ocr_text = ocr_page(page)
+
+            if ocr_text and len(ocr_text) > len(text):
+
+                text = ocr_text
+
+            if text:
+
+                collected.append(text)
+
+        full_text = "\\n".join(collected)
+
+        print("🔥 JUDGE EXTRACTION TEXT SAMPLE:")
+        print(full_text[:8000])
+
+        judges = extract_names_from_text(full_text)
+
+        
+
+        # =====================================================
+        # 🔥 LAST-STAGE GLOBAL JUDGE CANONICALIZATION
+        # =====================================================
+
+        canonical_final = set()
+
+        for j in judges:
+
+            if not isinstance(j, str):
+                continue
+
+            j = re.sub(
+                r'^(Dr|Hon.?ble|Mr|Mrs|Ms|Justice)\.?\s+',
+                '',
+                j,
+                flags=re.I
+            ).strip()
+
+            j = re.sub(r'\s+', ' ', j).strip()
+
+            canonical_final.add(j)
+
+        judges = sorted(list(canonical_final))
+
+        print("✅ Extracted Judges:")
+        print(judges)
+
+        # return judges
+
+        
+        # =====================================================
+        # 🔥 GLOBAL REPEATED HEADER / FOOTER SUPPRESSION
+        # =====================================================
+
+        repeated_structural_lines = set()
+
+        for line, count in repeated_header_candidates.items():
+
+            if count >= 2:
+
+                repeated_structural_lines.add(line)
+
+        for line, count in repeated_footer_candidates.items():
+
+            if count >= 2:
+
+                repeated_structural_lines.add(line)
+
+        cleaned_collected = []
+
+
+
+        for text_block in collected:
+
+            cleaned_lines = []
+
+            for line in text_block.splitlines():
+
+                normalized_line = re.sub(
+                    r"[ \\t]+",
+                    " ",
+                    line
+                ).strip()
+
+                if normalized_line in repeated_structural_lines:
+                    continue
+
+                cleaned_lines.append(line)
+
+            cleaned_collected.append("\n".join(cleaned_lines))
+
+        collected = cleaned_collected
+
+        # =====================================================
+        # 🔥 FINAL CONSOLIDATED JUDGE EXTRACTION
+        # =====================================================
+
+        final_text = "\\n".join(collected)
+
+        print("🔥 FINAL CLEANED JUDGE TEXT SAMPLE:")
+        print(final_text[:4000])
+
+        # ================================================
+        # 🔥 CANONICAL JUDGE HEADER NORMALIZATION
+        # ================================================
+
+        final_text = canonical_judge_header_normalizer(
+            final_text
+        )
+
+        print("🔥 CANONICALIZED JUDGE TEXT:")
+        print(final_text[:4000])
+
+        judges = extract_names_from_text(final_text)
+
+
+        judges.extend(list(early_judge_pool))
+
+        # =====================================================
+        # 🔒 FINAL JUDGE VALIDATION LOCK
+        # =====================================================
+
+        validated_judges = []
+
+        for judge in judges:
+
+            if not isinstance(judge, str):
+                continue
+
+            candidate = judge.strip()
+
+            # -------------------------------------------------
+            # 🔥 LENGTH FILTER
+            # -------------------------------------------------
+
+            if len(candidate) < 5:
+                continue
+
+            if len(candidate) > 120:
+                continue
+
+            # -------------------------------------------------
+            # 🔥 BODY TEXT REJECTION
+            # -------------------------------------------------
+
+            lower_candidate = candidate.lower()
+
+            # -------------------------------------------------
+            # 🔥 BENCH FAST-PATH PRESERVATION ENGINE
+            # -------------------------------------------------
+
+            if re.fullmatch(
+                r"[A-Za-z\.\s]+",
+                candidate
+            ) and (
+                "." in candidate
+                or len(candidate.split()) >= 2
+            ):
+
+                validated_judges.append(candidate.strip())
+                continue
+
+            rejection_terms = [
+
+                "offence",
+                "evidence",
+                "trial court",
+                "high court",
+                "bail",
+                "accused",
+                "appellant",
+                "respondent",
+                "petition",
+                "conviction",
+                "sentence",
+                "prima facie",
+                "criminal appeal",
+                "order dated"
+            ]
+
+            if any(
+                term in lower_candidate
+                for term in rejection_terms
+            ):
+                continue
+
+            # -------------------------------------------------
+            # -------------------------------------------------
+            # 🔥 VALID NAME STRUCTURE
+            # -------------------------------------------------
+
+            # -------------------------------------------------
+            # 🔥 OCR NOISE STRIPPING BEFORE VALIDATION
+            # -------------------------------------------------
+
+            candidate = re.sub(
+                r"\.{2,}",
+                " ",
+                candidate
+            )
+
+            candidate = re.sub(
+                r"[,;:]+",
+                " ",
+                candidate
+            )
+
+            candidate = re.sub(
+                r"\b[lLiIjJnN]{1,4}\b",
+                " ",
+                candidate
+            )
+
+            candidate = re.sub(
+                r"[^A-Za-z\.\s]",
+                " ",
+                candidate
+            )
+
+            candidate = re.sub(
+                r"\b([a-z])\.([a-z])\.([a-z]+)",
+                lambda m: f"{m.group(1).upper()}.{m.group(2).upper()}. {m.group(3).title()}",
+                candidate,
+                flags=re.I
+            )
+
+            candidate = re.sub(
+                r"\s+",
+                " ",
+                candidate
+            ).strip()
+
+            print("🔥 CANONICALIZED JUDGE TEXT:", candidate)
+
+            if not re.search(
+                r"(justice|judge|chief justice|cj|dr\.?|mr\.?|ms\.?|mrs\.?)",
+                candidate,
+                flags=re.I
+            ):
+
+                capital_words = re.findall(
+                    r"\b[A-Za-z][A-Za-z\.]+\b",
+                    candidate
+                )
+
+                if len(capital_words) < 2:
+                    print("❌ REJECTED JUDGE STRUCTURE:", candidate)
+                    continue
+                    continue
+
+            
+            # -------------------------------------------------
+            # 🔥 HONORIFIC CANONICALIZATION
+            # -------------------------------------------------
+
+            candidate = re.sub(
+                r'^(Dr|Hon.?ble|Mr|Mrs|Ms|Justice)\.?\s+',
+                '',
+                candidate,
+                flags=re.I
+            ).strip()
+
+            candidate = re.sub(
+                r'\s+',
+                ' ',
+                candidate
+            ).strip()
+
+
+            validated_judges.append(candidate)
+
+        judges = validated_judges
+
+        
+        # =====================================================
+        # 🔥 FINAL GLOBAL JUDGE CANONICALIZATION
+        # =====================================================
+
+        canonical_judges = set()
+
+        for j in judges:
+
+            if not isinstance(j, str):
+                continue
+
+            j = re.sub(
+                r'^(Dr|Hon.?ble|Mr|Mrs|Ms|Justice)\.?\s+',
+                '',
+                j,
+                flags=re.I
+            ).strip()
+
+            j = re.sub(r'\s+', ' ', j).strip()
+
+            # =====================================================
+            # 🔥 HARD INVALID JUDGE FILTER
+            # =====================================================
+
+            invalid_fragments = [
+
+                "his cour",
+                "high cour",
+                "court",
+                "bench",
+                "coram",
+                "present",
+                "judgment",
+                "order",
+                "reportable",
+                "non reportable",
+                "appellant",
+                "respondent",
+                "petitioner",
+                "versus",
+                "vs",
+                "honble",
+                "hon ble",
+                "justice of",
+                "for appellant",
+                "for respondent",
+
+                # =====================================
+                # 🔥 JUDGE POLLUTION BLOCKLIST
+                # =====================================
+
+                "since deceased",
+                "through lrs",
+                "through legal representatives",
+                "legal representative",
+                "deceased",
+                "dead through",
+                "lr of",
+                "heirs of",
+                "represented by",
+                "through guardian",
+                "minor through",
+                "next friend",
+                "applicant",
+                "complainant"
+            ]
+
+            lower_j = j.lower()
+
+            if any(
+                re.search(r"\\b" + re.escape(bad) + r"\\b", lower_j)
+                for bad in invalid_fragments
+            ):
+                continue
+
+            if len(j.split()) < 2:
+                continue
+
+            if len(j) < 6:
+                continue
+
+            if re.fullmatch(r"[A-Z\s\.]+", j) and len(j.split()) <= 1:
+                continue
+
+            canonical_judges.add(j)
+
+        judges = list(canonical_judges)
+
+
+        judges = sorted(list(set(judges)))
+
+        print("✅ FINAL NORMALIZED JUDGES:")
+        print(judges)
+
+        return judges
+
+
+
+    except Exception as e:
+
+        print("❌ Judge Extraction Error:")
+        print(e)
+
+        return []
