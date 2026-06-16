@@ -4523,6 +4523,54 @@ def process_judgment(ingestion_id):
                 "PRIMARY_CATEGORY_FIREWALL"
             )
 
+        # =====================================================
+        # 🔥 CONSTITUTIONAL OVERLAY GOVERNANCE ENGINE
+        # =====================================================
+
+        constitutional_overlay = (
+            detect_constitutional_overlay(
+                raw_full_text
+            )
+        )
+
+        constitutional_articles = (
+            constitutional_overlay.get(
+                "constitutional_articles",
+                []
+            )
+        )
+
+        if (
+            "Constitutional"
+            in constitutional_overlay.get(
+                "secondary_categories",
+                []
+            )
+        ):
+
+            if primary_category != "Constitutional":
+
+                secondary_category = (
+                    "Constitutional"
+                )
+
+                print(
+                    "🔥 CONSTITUTIONAL OVERLAY ACTIVATED"
+                )
+
+                print(
+                    constitutional_articles
+                )
+
+            else:
+
+                secondary_category = None
+
+        else:
+
+            constitutional_articles = []
+
+
         print("🔥 PRIMARY CATEGORY:")
         print(primary_category)
 

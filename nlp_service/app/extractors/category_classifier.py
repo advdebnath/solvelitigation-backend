@@ -222,6 +222,77 @@ def detect_jurisdiction_category(text: str):
 
 
 # =====================================================
+# 🔥 DYNAMIC CONSTITUTIONAL OVERLAY ENGINE
+# =====================================================
+
+def detect_constitutional_overlay(text):
+
+    if not text:
+        return {
+            "secondary_categories": [],
+            "constitutional_articles": []
+        }
+
+    upper_text = text.upper()
+
+    constitutional_articles = sorted(
+        list(
+            set(
+                re.findall(
+                    r"ARTICLE\s+(\d+[A-Z]?)",
+                    upper_text
+                )
+            )
+        )
+    )
+
+    constitutional_articles = [
+        f"Article {article}"
+        for article in constitutional_articles
+    ]
+
+    constitutional_score = 0
+
+    constitutional_score += len(
+        constitutional_articles
+    ) * 5
+
+    constitutional_terms = [
+        "CONSTITUTION OF INDIA",
+        "FUNDAMENTAL RIGHTS",
+        "BASIC STRUCTURE",
+        "JUDICIAL REVIEW",
+        "CONSTITUTIONAL VALIDITY",
+        "EQUALITY BEFORE LAW",
+        "RULE OF LAW",
+        "WRIT JURISDICTION",
+        "HABEAS CORPUS",
+        "MANDAMUS",
+        "CERTIORARI",
+        "QUO WARRANTO",
+        "PROHIBITION",
+    ]
+
+    for term in constitutional_terms:
+
+        if term in upper_text:
+
+            constitutional_score += 10
+
+    overlays = []
+
+    if constitutional_score >= 10:
+
+        overlays.append("Constitutional")
+
+    return {
+        "secondary_categories": overlays,
+        "constitutional_articles":
+            constitutional_articles
+    }
+
+
+# =====================================================
 # 🔥 CLASSIFY CATEGORY
 # =====================================================
 
