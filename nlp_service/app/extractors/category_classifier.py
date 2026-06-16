@@ -146,6 +146,45 @@ ACT_CATEGORY_MAP = {
 }
 
 
+
+# =====================================================
+# 🔥 CAPTION CATEGORY SIGNALS (CATEGORY ENGINE V3)
+# =====================================================
+
+CAPTION_CATEGORY_SIGNALS = {
+
+    "COMMISSIONER OF INCOME-TAX":
+        "Taxation & Corporate",
+
+    "COMMISSIONER OF INCOME TAX":
+        "Taxation & Corporate",
+
+    "INCOME-TAX OFFICER":
+        "Taxation & Corporate",
+
+    "RAILWAY MANAGER":
+        "Service Law",
+
+    "BOARD OF EDUCATION":
+        "Service Law",
+
+    "ADMINISTRATIVE SERVICE":
+        "Service Law",
+
+    "CENTRAL ADMINISTRATIVE TRIBUNAL":
+        "Service Law",
+
+    "CENTRAL BUREAU OF INVESTIGATION":
+        "Criminal",
+
+    "CBI":
+        "Criminal",
+
+    "STATE OF":
+        "Criminal",
+}
+
+
 # =====================================================
 # 🔥 NORMALIZE
 # =====================================================
@@ -354,6 +393,54 @@ def classify_category(text: str):
                 scores[category] = (
                     scores.get(category, 0) + 20
                 )
+
+        # ==========================================
+        # 🔥 CAPTION SIGNAL BOOST
+        # ==========================================
+
+        for signal, category in (
+            CAPTION_CATEGORY_SIGNALS.items()
+        ):
+
+            if signal in upper_text:
+
+                scores[category] = (
+                    scores.get(category, 0) + 25
+                )
+
+        # ==========================================
+        # 🔥 CASE TYPE BOOST
+        # ==========================================
+
+        if "CIVIL APPEAL" in upper_text:
+
+            scores["Civil"] = (
+                scores.get("Civil", 0) + 30
+            )
+
+        if "CRIMINAL APPEAL" in upper_text:
+
+            scores["Criminal"] = (
+                scores.get("Criminal", 0) + 30
+            )
+
+        if "WRIT PETITION" in upper_text:
+
+            scores["Constitutional"] = (
+                scores.get("Constitutional", 0) + 30
+            )
+
+        if "TRANSFER PETITION" in upper_text:
+
+            scores["Civil"] = (
+                scores.get("Civil", 0) + 15
+            )
+
+        if "REVIEW PETITION" in upper_text:
+
+            scores["Civil"] = (
+                scores.get("Civil", 0) + 10
+            )
 
         # ==========================================
         # 🔥 BEST CATEGORY
