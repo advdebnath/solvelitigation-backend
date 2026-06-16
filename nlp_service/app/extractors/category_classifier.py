@@ -94,6 +94,57 @@ CATEGORY_RULES = {
         "certiorari",
     ],
 }
+# =====================================================
+# 🔥 ACT → CATEGORY MAP (CATEGORY ENGINE V2)
+# =====================================================
+
+ACT_CATEGORY_MAP = {
+
+    # -----------------------------------------
+    # CRIMINAL
+    # -----------------------------------------
+
+    "INDIAN PENAL CODE": "Criminal",
+    "IPC": "Criminal",
+    "CODE OF CRIMINAL PROCEDURE": "Criminal",
+    "CRIMINAL PROCEDURE CODE": "Criminal",
+    "CRPC": "Criminal",
+    "NDPS ACT": "Criminal",
+    "PREVENTION OF CORRUPTION ACT": "Criminal",
+
+    # -----------------------------------------
+    # CIVIL
+    # -----------------------------------------
+
+    "CODE OF CIVIL PROCEDURE": "Civil",
+    "CPC": "Civil",
+    "SPECIFIC RELIEF ACT": "Civil",
+    "TRANSFER OF PROPERTY ACT": "Civil",
+    "HINDU MARRIAGE ACT": "Civil",
+    "ARBITRATION AND CONCILIATION ACT": "Civil",
+
+    # -----------------------------------------
+    # CONSTITUTIONAL
+    # -----------------------------------------
+
+    "CONSTITUTION OF INDIA": "Constitutional",
+
+    # -----------------------------------------
+    # TAXATION
+    # -----------------------------------------
+
+    "INCOME TAX ACT": "Taxation & Corporate",
+    "GST ACT": "Taxation & Corporate",
+    "CGST ACT": "Taxation & Corporate",
+    "CUSTOMS ACT": "Taxation & Corporate",
+
+    # -----------------------------------------
+    # SERVICE
+    # -----------------------------------------
+
+    "ADMINISTRATIVE TRIBUNALS ACT": "Service Law",
+}
+
 
 # =====================================================
 # 🔥 NORMALIZE
@@ -220,6 +271,20 @@ def classify_category(text: str):
             scores[category] = score
 
         # ==========================================
+        # 🔥 ACT → CATEGORY BOOST
+        # ==========================================
+
+        upper_text = text.upper()
+
+        for act_name, category in ACT_CATEGORY_MAP.items():
+
+            if act_name in upper_text:
+
+                scores[category] = (
+                    scores.get(category, 0) + 20
+                )
+
+        # ==========================================
         # 🔥 BEST CATEGORY
         # ==========================================
 
@@ -233,7 +298,30 @@ def classify_category(text: str):
 
         if best_score == 0:
 
+            # ==========================================
+            # 🔥 LEGACY CAPTION RESCUE
+            # ==========================================
+
+            if "COMMISSIONER OF INCOME-TAX" in upper_text:
+                return "Taxation & Corporate"
+
+            if "COMMISSIONER OF INCOME TAX" in upper_text:
+                return "Taxation & Corporate"
+
+            if "CENTRAL BUREAU OF INVESTIGATION" in upper_text:
+                return "Criminal"
+
+            if "APPEAL (CRL" in upper_text:
+                return "Criminal"
+
+            if "BOARD OF EDUCATION" in upper_text:
+                return "Service Law"
+
+            if "RAILWAY MANAGER" in upper_text:
+                return "Service Law"
+
             return "Unknown"
+
 
         print("✅ Keyword category:", best_category, scores)
 
