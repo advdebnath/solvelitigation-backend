@@ -5200,9 +5200,7 @@ def process_judgment(ingestion_id):
             "respondent": parties.get("respondent", "Unknown"),
             "judges": judges.get("judges", []),
             "judgmentDate": parsed_judgment_date,
-            "category": (
-                "Service Law" if final_category == "Service" else final_category
-            ),
+            "category": primary_category,
 
             # =====================================================
             # 🔥 CATEGORY GOVERNANCE
