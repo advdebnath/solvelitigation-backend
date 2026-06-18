@@ -74,10 +74,11 @@ def remove_noise(text):
 
     text = re.sub(r"FOR THE APPELLANT.*", " ", text, flags=re.I)
     text = re.sub(r"FOR THE RESPONDENT.*", " ", text, flags=re.I)
+    text = sanitize_party_name(
+        text
+    )
 
     return text
-
-
 def clean_name(text):
 
     if not text:
@@ -99,6 +100,18 @@ def clean_name(text):
     # =====================================================
     # 🔒 REPORTABILITY BANNER FIREWALL
     # =====================================================
+
+    text = re.sub(
+        r"(?is)^\s*\d+\s+NON[- ]?REPORTABLE\s+",
+        "",
+        text
+    )
+
+    text = re.sub(
+        r"(?is)^\s*\d+\s+REPORTABLE\s+",
+        "",
+        text
+    )
 
     text = re.sub(
         r"(?i)^\s*non[- ]?reportable\s+",
@@ -153,6 +166,24 @@ def clean_name(text):
         flags=re.I
     ).strip()
 
+    text = sanitize_party_name(
+        text
+    )
+
+    text = re.sub(
+        r"(?i)^\s*\d+\s*NON[- ]+\s*",
+        "",
+        text
+    )
+
+    text = re.sub(
+        r"(?i)^\s*NON[- ]+\s*",
+        "",
+        text
+    )
+
+    text = normalize_spaces(text)
+
     return text.title()
 
 
@@ -163,6 +194,119 @@ def clean_name(text):
 
 
 
+
+
+# =========================================================
+# 🔒 PARTY PROCEDURAL NOISE SANITIZER
+# =========================================================
+
+def strip_procedural_noise(value):
+
+    if not value:
+        return value
+
+    patterns = [
+
+        r"(?is)^NON-?\s*REPORTABLE\s*",
+        r"(?is)^NON-?\s*",
+
+        r"(?is)^M\.?\s*A\.?\s*NO\.?.{0,120}?\bIN\b\s*",
+
+        r"(?is)^I\.?\s*A\.?\s*NO\.?.{0,120}?\bIN\b\s*",
+
+        r"(?is)^INTERLOCUTORY\s+APPLICATION.{0,150}?\bIN\b\s*",
+
+        r"(?is)^TRANSFERRED\s+CASE.{0,120}?\bIN\b\s*",
+
+        r"(?is)^CIVIL\s+ORIGINAL\s+JURISDICTION\s*",
+
+        r"(?is)^CRIMINAL\s+ORIGINAL\s+JURISDICTION\s*",
+
+        r"(?is)^IN\s+THE\s+SUPREME\s+COURT\s+OF\s+INDIA\s*",
+    ]
+
+    for pattern in patterns:
+
+        value = re.sub(
+            pattern,
+            "",
+            value
+        )
+
+    return value.strip()
+
+
+
+# =========================================================
+# 🔒 PARTY CAPTION SANITIZER
+# =========================================================
+
+def sanitize_party_name(name):
+
+    if not name:
+        return "Unknown"
+
+    name = normalize_spaces(name)
+
+    FIREWALL_PATTERNS = [
+
+        r"(?is)^.*?\bNON[- ]?REPORTABLE\b\s*",
+        r"(?is)^.*?\bREPORTABLE\b\s*",
+
+        r"(?im)^page\s+\d+\s+of\s+\d+\s*$",
+
+        r"(?im)^supreme\s+court\s+of\s+india\s*$",
+
+        r"(?im)^criminal\s+appellate\s+jurisdiction\s*$",
+
+        r"(?im)^civil\s+appellate\s+jurisdiction\s*$",
+
+        r"(?im)^original\s+jurisdiction\s*$",
+
+        r"(?im)^in\s+the\s+supreme\s+court.*$",
+
+        r"(?im)^court\s+no.*$",
+
+        r"(?im)^item\s+no.*$",
+
+        r"(?im)^with\s*$",
+
+        r"(?im)^and\s*$",
+    ]
+
+    for pattern in FIREWALL_PATTERNS:
+
+        name = re.sub(
+            pattern,
+            "",
+            name
+        )
+
+    name = re.sub(
+        r"^(NON-|NON\s+)",
+        "",
+        name,
+        flags=re.I
+    )
+
+    name = normalize_spaces(name)
+
+    # =====================================================
+    # 🔒 FINAL NON REPORTABLE FIREWALL
+    # =====================================================
+
+    name = re.sub(
+        r"(?i)^\s*\d*\s*NON(?:[- ]REPORTABLE)?[:\s-]*",
+        "",
+        name
+    )
+
+    name = normalize_spaces(name)
+
+    print("🔥 SANITIZER FINAL")
+    print(repr(name))
+
+    return name.strip() or "Unknown"
 
 
 # =========================================================
@@ -192,7 +336,20 @@ def extract_role_based(header):
 
     if pet_match:
 
+        print("🔥 ROLE RAW PETITIONER")
+        print(repr(pet_match.group(1)))
+
         petitioner = clean_name(pet_match.group(1))
+
+        print("🔥 ROLE AFTER CLEAN_NAME")
+        print(repr(petitioner))
+
+        petitioner = strip_procedural_noise(
+            petitioner
+        )
+
+        print("🔥 ROLE AFTER NOISE STRIP")
+        print(repr(petitioner))
 
         petitioner = re.sub(
             r"(?i)^.*?(?:SLP\s*\(C\).*?\)\s*)?([A-Z][A-Z\s.&\'\-]{5,})$",
@@ -218,6 +375,10 @@ def extract_role_based(header):
     if res_match:
 
         respondent = clean_name(res_match.group(2))
+
+        respondent = strip_procedural_noise(
+            respondent
+        )
 
         confidence += 45
 
@@ -288,8 +449,56 @@ def extract_appellant_respondent(header):
         pet_raw = m.group(1).strip()
         res_raw = m.group(2).strip()
 
+        # =====================================================
+        # 🔒 SC CAPTION BANNER FIREWALL
+        # =====================================================
+
+        pet_raw = re.sub(
+            r"(?is)^.*?\bNON[- ]?REPORTABLE\b\s*",
+            "",
+            pet_raw
+        ).strip()
+
+        pet_raw = re.sub(
+            r"(?is)^.*?\bREPORTABLE\b\s*",
+            "",
+            pet_raw
+        ).strip()
+
+        pet_raw = re.sub(
+            r"(?im)^page\s+\d+\s+of\s+\d+\s*$",
+            "",
+            pet_raw
+        ).strip()
+
+        pet_raw = re.sub(
+            r"(?im)^supreme\s+court\s+of\s+india\s*$",
+            "",
+            pet_raw
+        ).strip()
+
+        print("🔥 SC LOCK RAW PETITIONER")
+        print(repr(pet_raw))
+
+        print("🔥 SC LOCK RAW RESPONDENT")
+        print(repr(res_raw))
+
         petitioner = clean_name(pet_raw)
         respondent = clean_name(res_raw)
+
+        petitioner = strip_procedural_noise(
+            petitioner
+        )
+
+        respondent = strip_procedural_noise(
+            respondent
+        )
+
+        print("🔥 SC LOCK CLEAN PETITIONER")
+        print(repr(petitioner))
+
+        print("🔥 SC LOCK CLEAN RESPONDENT")
+        print(repr(respondent))
 
         print("🔥 SC CAPTION LOCK V4")
         print({
@@ -352,7 +561,7 @@ def extract_sc_caption(header):
         r"""
         ([A-Z][A-Z0-9.,&'()/\-\s]{2,250})
         \s*
-        [.…·]{2,}
+        (?:\.|…|·|•){2,}
         \s*
         APPELLANT(?:\(S\))?
 
@@ -364,13 +573,33 @@ def extract_sc_caption(header):
 
         ([A-Z][A-Z0-9.,&'()/\-\s]{2,250})
         \s*
-        [.…·]{2,}
+        (?:\.|…|·|•){2,}
         \s*
         RESPONDENT(?:\(S\))?
         """,
         header,
                       flags=re.I | re.S
                   )
+
+    print("🔥 CAPTION LOCK MATCHED:")
+    print(bool(caption_lock))
+
+    if caption_lock:
+
+        try:
+
+            print("🔥 CAPTION LOCK RAW GROUPS")
+
+            print({
+                "pet_raw": repr(caption_lock.group(1)),
+                "res_raw": repr(caption_lock.group(2))
+            })
+
+        except Exception as e:
+
+            print("❌ CAPTION LOCK GROUP ERROR")
+            print(str(e))
+
 
     # =====================================================
     # 🔒 SC PETITIONER / RESPONDENT CAPTION LOCK
@@ -686,6 +915,12 @@ def extract_versus_based(header):
 
         confidence = 80
 
+
+
+
+
+
+
     return {
         "petitioner": petitioner,
         "respondent": respondent,
@@ -831,6 +1066,52 @@ def extract_parties(text):
         header = re.sub(r"\s+", " ", header).strip()
 
         # =====================================================
+
+        # =====================================================
+        # 🔒 STRICT JUDIS HEADER LOCK
+        # =====================================================
+
+        strict_judis = re.search(
+            r"""
+            PETITIONER\s*:\s*
+            ([^\n]{3,300})
+
+            \s*
+            VS\.?
+
+            \s*
+            RESPONDENT\s*:\s*
+            ([^\n]{3,300})
+
+            \s*
+            DATE\s+OF\s+JUDGMENT
+            """,
+            header_raw,
+            flags=re.I | re.S | re.X
+        )
+
+        if strict_judis:
+
+            petitioner = clean_name(
+                strict_judis.group(1)
+            )
+
+            respondent = clean_name(
+                strict_judis.group(2)
+            )
+
+            print("🔒 STRICT JUDIS LOCK")
+            print({
+                "petitioner": petitioner,
+                "respondent": respondent
+            })
+
+            return {
+                "petitioner": petitioner,
+                "respondent": respondent,
+                "confidence": 100
+            }
+
         # 🔒 JUDIS PETITIONER/RESPONDENT LOCK
         # =====================================================
 
@@ -947,13 +1228,49 @@ def extract_parties(text):
 
         if sc_pet_res:
 
+            pet_raw = sc_pet_res.group(1)
+
+            res_raw = sc_pet_res.group(2)
+
+            print("🔥 SC LOCK RAW PET")
+            print(repr(pet_raw))
+
+            print("🔥 SC LOCK RAW RES")
+            print(repr(res_raw))
+
+            pet_raw = re.sub(
+                r"(?is)^.*?\bNON[- ]?REPORTABLE\b\s*",
+                "",
+                pet_raw
+            ).strip()
+
+            pet_raw = re.sub(
+                r"(?is)^.*?\bREPORTABLE\b\s*",
+                "",
+                pet_raw
+            ).strip()
+
             petitioner = clean_name(
-                sc_pet_res.group(1)
+                pet_raw
             )
 
             respondent = clean_name(
-                sc_pet_res.group(2)
+                res_raw
             )
+
+            petitioner = strip_procedural_noise(
+                petitioner
+            )
+
+            respondent = strip_procedural_noise(
+                respondent
+            )
+
+            print("🔥 SC LOCK CLEAN PET")
+            print(repr(petitioner))
+
+            print("🔥 SC LOCK CLEAN RES")
+            print(repr(respondent))
 
             if respondent in ["", "Unknown"]:
 
@@ -1133,6 +1450,27 @@ def extract_parties(text):
         print("APPELLANT RESULT:", appellant_result)
         print("VERSUS RESULT:", versus_result)
         print("SC CAPTION RESULT:", sc_caption_result)
+
+        # =====================================================
+        # 🔒 ROLE LOCK FIREWALL
+        # =====================================================
+
+        if (
+            role_result.get("petitioner") != "Unknown"
+            and role_result.get("respondent") != "Unknown"
+            and len(role_result.get("petitioner", "")) > 3
+            and len(role_result.get("respondent", "")) > 3
+        ):
+
+            print("🔒 ROLE LOCK ACTIVATED")
+
+            result = role_result
+
+            print("🔥 FINAL PARTY RESULT:")
+            print(result)
+
+            return result
+
 
         # =====================================================
         # 🔒 SC CAPTION HEADER CONTAMINATION CLEANER
@@ -1422,24 +1760,65 @@ def extract_parties(text):
 
                 result[side] = result[side].strip()
 
+        
+        # =====================================================
+        # 🔒 PARTY PROCEDURAL NOISE FIREWALL
+        # =====================================================
+
+        PARTY_JUNK_PATTERNS = [
+            r"^NON-?\s*",
+            r"^NON\s+REPORTABLE\s*",
+            r"^I\.?\s*A\.?\s*NO\.?.{0,120}?\bIN\b\s*",
+            r"^M\.?\s*A\.?\s*NO\.?.{0,120}?\bIN\b\s*",
+            r"^INTERLOCUTORY\s+APPLICATION.{0,150}?\bIN\b\s*",
+            r"^TRANSFERRED\s+CASE.{0,120}?\bIN\b\s*",
+        ]
+
+        for side in ["petitioner", "respondent"]:
+
+            if not result.get(side):
+                continue
+
+            for pattern in PARTY_JUNK_PATTERNS:
+
+                result[side] = re.sub(
+                    pattern,
+                    "",
+                    result[side],
+                    flags=re.I
+                ).strip()
+
+        INVALID_PARTY_VALUES = {
+              "I.A. NO",
+              "M.A. NO",
+              "INTERLOCUTORY APPLICATION",
+              "NON",
+              "NON-"
+          }
+
+        if result["petitioner"].upper() in INVALID_PARTY_VALUES:
+              result["petitioner"] = "Unknown"
+
+        if result["respondent"].upper() in INVALID_PARTY_VALUES:
+              result["respondent"] = "Unknown"
+
         for pattern in INVALID_PARTY_PATTERNS:
 
-            if re.search(pattern, result["petitioner"]):
+                if re.search(pattern, result["petitioner"]):
 
-                print("❌ INVALID PETITIONER BLOCKED:")
-                print(result["petitioner"])
+                    print("❌ INVALID PETITIONER BLOCKED:")
+                    print(result["petitioner"])
 
-                result["petitioner"] = "Unknown"
-                result["confidence"] -= 25
+                    result["petitioner"] = "Unknown"
+                    result["confidence"] -= 25
 
+                if re.search(pattern, result["respondent"]):
 
-            if re.search(pattern, result["respondent"]):
+                    print("❌ INVALID RESPONDENT BLOCKED:")
+                    print(result["respondent"])
 
-                print("❌ INVALID RESPONDENT BLOCKED:")
-                print(result["respondent"])
-
-                result["respondent"] = "Unknown"
-                result["confidence"] -= 25
+                    result["respondent"] = "Unknown"
+                    result["confidence"] -= 25
         if result["petitioner"] == result["respondent"]:
 
             result["confidence"] -= 20
