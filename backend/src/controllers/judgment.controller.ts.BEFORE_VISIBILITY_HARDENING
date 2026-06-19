@@ -20,7 +20,9 @@ export const getAllJudgments = async (req: any, res: any) => {
         $ne: "NON_JUDGMENT"
       };
 
-      filter.isExplorerVisible = true;
+      filter.isExplorerVisible = {
+        $ne: false
+      };
     }
     const total = await Judgment.countDocuments(filter);
 

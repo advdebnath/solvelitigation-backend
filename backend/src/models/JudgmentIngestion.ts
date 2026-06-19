@@ -6,7 +6,8 @@ export type IngestionStatus =
   | "PROCESSING"
   | "COMPLETED"
   | "FAILED"
-  | "PERMANENT_FAILURE";
+  | "PERMANENT_FAILURE"
+  | "REJECTED";
 
 export type DocumentType =
   | "JUDGMENT"
@@ -24,7 +25,9 @@ export type IngestionStage =
   | "NLP"
   | "FINALIZING"
   | "COMPLETED"
-  | "FAILED";
+  | "FAILED"
+  | "REJECTED_NON_JUDGMENT"
+  | "NON_JUDGMENT_ARCHIVED";
 
 export interface IJudgmentIngestion extends Document {
   source: string;
@@ -146,6 +149,8 @@ const JudgmentIngestionSchema = new Schema<IJudgmentIngestion>(
         "FINALIZING",
         "COMPLETED",
         "FAILED",
+        "REJECTED_NON_JUDGMENT",
+        "NON_JUDGMENT_ARCHIVED",
       ],
       default: "UPLOADED",
     },
@@ -173,6 +178,7 @@ const JudgmentIngestionSchema = new Schema<IJudgmentIngestion>(
         "COMPLETED",
         "FAILED",
         "PERMANENT_FAILURE",
+        "REJECTED",
       ],
       default: "UPLOADED",
     },

@@ -25,7 +25,9 @@ const applyRBAC = (
 
       ...baseFilter,
 
-      status: "APPROVED"
+      status: "APPROVED",
+
+        isExplorerVisible: true
     };
   }
 
@@ -416,9 +418,21 @@ export const getJudgmentById =
       const id =
         req.params.id;
 
-      const judgment =
-        await Judgment.findById(id)
-          .lean();
+      const filter: any = {
+  _id: id
+};
+
+if (
+  !["superadmin", "editor"]
+    .includes((req as any).user?.role)
+) {
+
+  filter.isExplorerVisible = true;
+}
+
+const judgment =
+  await Judgment.findOne(filter)
+    .lean();
 
       if (!judgment) {
 

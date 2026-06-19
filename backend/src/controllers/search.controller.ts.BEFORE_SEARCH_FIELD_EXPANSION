@@ -62,11 +62,7 @@ export const searchJudgments = async (req: Request, res: Response) => {
       filter.$or = [
         { caseNumber: { $regex: safeQ, $options: "i" } },
         { headnote: { $regex: safeQ, $options: "i" } },
-        { pointsOfLaw: { $regex: safeQ, $options: "i" } },
-        { court: { $regex: safeQ, $options: "i" } },
-        { category: { $regex: safeQ, $options: "i" } },
-        { judges: { $regex: safeQ, $options: "i" } },
-        { actNames: { $regex: safeQ, $options: "i" } }
+        { pointsOfLaw: { $regex: safeQ, $options: "i" } }
       ];
     }
 

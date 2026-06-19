@@ -37,17 +37,7 @@ async function sanitizeInvalidStages() {
   try {
     console.log("🧹 Sanitizing invalid ingestion stages...");
 
-    const validStages = [
-  "UPLOADED",
-  "QUEUED",
-  "PROCESSING",
-  "NLP",
-  "FINALIZING",
-  "COMPLETED",
-  "FAILED",
-  "REJECTED_NON_JUDGMENT",
-  "NON_JUDGMENT_ARCHIVED"
-];
+    const validStages = ["UPLOADED","QUEUED","PROCESSING","COMPLETED","FAILED"];
 
     const result = await JudgmentIngestion.updateMany(
       { stage: { $nin: validStages } },

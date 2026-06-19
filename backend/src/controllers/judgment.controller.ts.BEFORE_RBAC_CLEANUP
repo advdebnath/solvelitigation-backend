@@ -20,8 +20,15 @@ export const getAllJudgments = async (req: any, res: any) => {
         $ne: "NON_JUDGMENT"
       };
 
-      filter.isExplorerVisible = true;
+      filter.isExplorerVisible = {
+        $ne: false
+      };
     }
+
+    if (!["superadmin", "editor"].includes(req.user?.role)) {
+      filter.status = "APPROVED"; // only approved for normal users
+    }
+
     const total = await Judgment.countDocuments(filter);
 
     const query = Judgment.find(filter)
