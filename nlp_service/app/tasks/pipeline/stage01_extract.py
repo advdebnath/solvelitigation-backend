@@ -26,11 +26,32 @@ Does NOT own:
 """
 
 
+import subprocess
+
+
 def convert_pdf_to_html(pdf_path):
-    """
-    Future home of judgment_task.convert_pdf_to_html()
-    """
-    pass
+
+    try:
+
+        subprocess.run(
+            ["pdftohtml", "-noframes", "-stdout", pdf_path],
+            capture_output=True,
+            text=True,
+            check=True,
+        )
+
+        result = subprocess.check_output(
+            ["pdftohtml", "-noframes", "-stdout", pdf_path],
+            text=True
+        )
+
+        return result
+
+    except Exception as e:
+
+        print("❌ HTML CONVERSION ERROR:", e)
+
+        return ""
 
 
 def extract_pages(pdf_path):
