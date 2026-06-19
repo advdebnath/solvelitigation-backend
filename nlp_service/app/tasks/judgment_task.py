@@ -1062,6 +1062,8 @@ def process_judgment(ingestion_id):
 
         judgment_date = extract_judgment_date(raw_full_text)
 
+        print("🔥🔥🔥 STAGE02 SHADOW BLOCK ENTERED 🔥🔥🔥")
+
         # =====================================================
         # 🔥 STAGE02 SHADOW EXECUTION
         # =====================================================
@@ -1109,6 +1111,46 @@ def process_judgment(ingestion_id):
 
         print("PRODUCTION_JUDGMENT_DATE")
         print(judgment_date)
+
+        # =====================================================
+        # STAGE02 COMPARISON
+        # =====================================================
+
+        print("STAGE02_COMPARE_CASE_NUMBER")
+        print(
+            shadow_context.get("case_number")
+            == case_number
+        )
+
+        print("STAGE02_COMPARE_COURT")
+        print(
+            shadow_context.get("court_data")
+            == court_data
+        )
+
+        print("STAGE02_COMPARE_CASE_TYPE")
+        print(
+            shadow_context.get("case_type_data")
+            == case_type_data
+        )
+
+        print("STAGE02_COMPARE_PARTIES")
+        print(
+            shadow_context.get("parties")
+            == parties
+        )
+
+        print("STAGE02_COMPARE_JUDGES")
+        print(
+            shadow_context.get("judges")
+            == judges
+        )
+
+        print("STAGE02_COMPARE_DATE")
+        print(
+            shadow_context.get("judgment_date")
+            == judgment_date
+        )
 
 
         print("RAW_FULL_TEXT_LENGTH")
