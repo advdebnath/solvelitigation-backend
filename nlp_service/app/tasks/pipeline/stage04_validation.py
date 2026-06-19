@@ -1,7 +1,7 @@
 """
 Stage 04 Validation & Governance Layer
 
-Owns:
+Orchestrates:
 
 - non-judgment firewall
 - semantic consistency firewall
@@ -10,20 +10,33 @@ Owns:
 - quality scoring
 - review routing
 
-Produces:
+This stage does NOT implement validation logic.
 
-- validation
-- quality_score
-- document_quality
-- review_status
-
-Does NOT own:
-
-- extraction
-- metadata extraction
-- legal intelligence
-- database persistence
+It coordinates governance and validation services.
 """
 
+
 def run_stage04_validation(context):
+    """
+    Validation orchestration stage.
+
+    Future responsibilities:
+
+    - non-judgment rejection
+    - ontology eligibility
+    - quality scoring
+    - review routing
+    - semantic consistency checks
+
+    No production logic migrated yet.
+    """
+
+    validation = context.get("validation", {})
+    quality_score = context.get("quality_score", 0)
+    review_status = context.get("review_status")
+
+    context["validation"] = validation
+    context["quality_score"] = quality_score
+    context["review_status"] = review_status
+
     return context
