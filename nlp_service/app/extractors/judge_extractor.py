@@ -28,6 +28,7 @@ INVALID_JUDGE_TERMS = [
     "Legislative History",
     "The Challenge",
     "Be Done To The Complainant",
+    "RELATING TO",
 
 
 ]
@@ -570,6 +571,16 @@ def extract_names_from_text(full_text):
                     continue
 
                 # =====================================
+                # RELATING TO FIREWALL
+                # =====================================
+
+                if re.match(
+                    r"(?i)^RELATING\s+TO\b",
+                    candidate_clean
+                ):
+                    continue
+
+                # =====================================
                 # VALID HUMAN NAME
                 # =====================================
 
@@ -589,6 +600,9 @@ def extract_names_from_text(full_text):
                         "sub inspector",
                         "advocate",
                         "counsel",
+                        "relating to",
+                        "interlocutory application",
+                        "special leave petition",
                     ]
 
                     candidate_lower = candidate_clean.lower()
@@ -1355,6 +1369,8 @@ def extract_judges(pdf_path):
                 "order",
                 "reportable",
                 "non reportable",
+                "relating to",
+                "interlocutory application",
                 "appellant",
                 "respondent",
                 "petitioner",

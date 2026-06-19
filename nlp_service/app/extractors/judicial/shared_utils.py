@@ -89,11 +89,16 @@ def clean_case_number(value):
 
     value = str(value)
 
+    value = value.replace("\\N", " ")
+
     value = re.sub(r"\s+", " ", value)
 
     value = re.sub(r"\s*/\s*", "/", value)
 
     value = value.strip(" .,:;-")
+
+    print("🔥 CLEAN_CASE_NUMBER_FINAL:")
+    print(repr(value))
 
     return value.strip()
 

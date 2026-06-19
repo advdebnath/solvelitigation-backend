@@ -48,7 +48,7 @@ SUPREME_COURT_CASE_TYPES = {
         "family": "PETITION",
         "category": "CIVIL",
         "patterns": [
-            r"\bSPECIAL\s+LEAVE\s+PETITION\s*\(?\s*C",
+            r"\bSPECIAL\s+LEAVE\s+PETITION\s*\(\s*C(?:IVIL)?\s*\)",
             r"\bSLP\s*\(C\)",
             r"\bS\.?\s*L\.?\s*P\.?\s*\(C\)",
         ],
@@ -58,7 +58,7 @@ SUPREME_COURT_CASE_TYPES = {
         "family": "PETITION",
         "category": "CRIMINAL",
         "patterns": [
-            r"\bSPECIAL\s+LEAVE\s+PETITION\s*\(?\s*CRL",
+            r"\bSPECIAL\s+LEAVE\s+PETITION\s*\(\s*(?:CRL|CRIMINAL)",
             r"\bSLP\s*\(CRL",
             r"\bS\.?\s*L\.?\s*P\.?\s*\(CRL",
         ],
@@ -154,6 +154,78 @@ def detect_supreme_court_case_type(text):
         return {}
 
     normalized_text = re.sub(r"\s+", " ", str(text)).upper()
+
+    # =====================================================
+    # 🔒 AUTHORITATIVE CAPTION LOCKS
+    # =====================================================
+
+    caption_window = normalized_text[:1500]
+
+    if re.search(
+        r"SPECIAL\s+LEAVE\s+PETITION\s*\(\s*(CRL|CRIMINAL)",
+        caption_window
+    ) or re.search(
+        r"S\.?L\.?P\.?\s*\(\s*CRL",
+        caption_window
+    ):
+        return {
+            "canonical": "SPECIAL_LEAVE_PETITION_CRIMINAL",
+            "display": "Special Leave Petition (Criminal)",
+            "family": "PETITION",
+            "category": "CRIMINAL",
+            "confidence": 100,
+            "matched_pattern": "CAPTION_LOCK_SLP_CRIMINAL"
+        }
+
+    if "SPECIAL LEAVE PETITION" in caption_window or re.search(r"S\.?L\.?P\.?", caption_window):
+        return {
+            "canonical": "SPECIAL_LEAVE_PETITION_CIVIL",
+            "display": "Special Leave Petition (Civil)",
+            "family": "PETITION",
+            "category": "CIVIL",
+            "confidence": 100,
+            "matched_pattern": "CAPTION_LOCK_SLP_CIVIL"
+        }
+
+    if "REVIEW PETITION" in caption_window:
+        return {
+            "canonical": "REVIEW_PETITION",
+            "display": "Review Petition",
+            "family": "PETITION",
+            "category": "CIVIL",
+            "confidence": 100,
+            "matched_pattern": "CAPTION_LOCK_REVIEW"
+        }
+
+    if "WRIT PETITION" in caption_window:
+        return {
+            "canonical": "WRIT_PETITION_CIVIL",
+            "display": "Writ Petition (Civil)",
+            "family": "PETITION",
+            "category": "CIVIL",
+            "confidence": 100,
+            "matched_pattern": "CAPTION_LOCK_WRIT"
+        }
+
+    if "TRANSFER PETITION" in caption_window:
+        return {
+            "canonical": "TRANSFER_PETITION_CIVIL",
+            "display": "Transfer Petition (Civil)",
+            "family": "TRANSFER",
+            "category": "CIVIL",
+            "confidence": 100,
+            "matched_pattern": "CAPTION_LOCK_TRANSFER"
+        }
+
+    if "DIARY NO" in caption_window:
+        return {
+            "canonical": "DIARY_MATTER",
+            "display": "Diary Matter",
+            "family": "DIARY",
+            "category": "UNCLASSIFIED",
+            "confidence": 100,
+            "matched_pattern": "CAPTION_LOCK_DIARY"
+        }
 
     best_match = None
     best_score = 0

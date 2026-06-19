@@ -49,8 +49,16 @@ SC_PATTERNS = [
         r"(SPECIAL\s+LEAVE\s+PETITION\s*\(?[A-Z]*\)?\s*NO\.?\(?S\)?\.?\s*[\d\-\/]+\s*(?:OF\s+\d{4})?)",
         "SPECIAL_LEAVE"
     ),
+
+    (
+        r"(PETITION\s+FOR\s+SPECIAL\s+LEAVE\s+TO\s+APPEAL\s*"
+        r"\([A-Z\.]+\)\s*"
+        r"NO\.?\s*[\d\-\/]+\s*"
+        r"(?:OF\s*\n*\s*\d{4})?)",
+        "SPECIAL_LEAVE"
+    ),
     (r"(WRIT\s+PETITION.*?NO\.?\s*\d+\s+OF\s+\d{4})", "WRIT"),
-    (r"(REVIEW\s+PETITION.*?NO\.?\s*\d+\s+OF\s+\d{4})", "REVIEW"),
+    (r"(REVIEW\s+PETITION\s*\((?:CRL\.?|C|CIVIL|CRIMINAL)\)\s*NO\.?\s*\d+(?:[-/,]\d+)*\s+OF\s+\d{4})", "REVIEW"),
 ]
 
 
@@ -59,6 +67,14 @@ def extract_sc_case_number(text):
     text = normalize_ocr(text)
 
     upper = text.upper()
+
+    upper = upper.replace("\\N", " ")
+
+    upper = re.sub(
+        r"\s+",
+        " ",
+        upper
+    )
 
     print("🔥 SC HEADER START 🔥")
     print(upper[:4000])
@@ -162,9 +178,17 @@ def extract_sc_case_number(text):
     print(search_window)
 
     party_match = re.search(
-        r"([A-Z][A-Z\s\.\&\,\-]{2,}?)\s+VS\.?\s+([A-Z][A-Z\s\.\&\,\-]{2,}?)\s+DATE\s+OF",
+        r"""
+        ([A-Z][A-Z0-9\s\.\,&'()/\-]{3,300}?)
+        \s+
+        (?:VS\.?|VERSUS|V\.)
+        \s+
+        ([A-Z][A-Z0-9\s\.\,&'()/\-]{3,300}?)
+        \s+
+        DATE\s+OF
+        """,
         search_window,
-        re.I
+        re.I | re.S | re.X
     )
 
     print("🔥 PARTY_MATCH:")
@@ -224,6 +248,7 @@ def extract_sc_case_number(text):
         numbered_case = re.search(
             r"(WRIT\s+PETITION.*?NO\.?\s*[\d/\-]+|"
             r"SPECIAL\s+LEAVE\s+PETITION.*?NO\.?\s*[\d/\-]+|"
+            r"PETITION\s+FOR\s+SPECIAL\s+LEAVE\s+TO\s+APPEAL.*?NO\.?\s*[\d/\-]+(?:\s*OF\s+\d{4})?|"
             r"TRANSFER\s+PETITION.*?NO\.?\s*[\d/\-]+)",
             header_for_party,
             re.I | re.S
@@ -259,14 +284,6 @@ def extract_sc_case_number(text):
         print("🔥 PETITION TITLE FALLBACK:")
         print(petitioner)
 
-        return build_case_object(
-            case_number="Unknown Case",
-            court_type="SUPREME COURT",
-            case_type="PETITION",
-            confidence=20,
-            source="SC_PETITION_TITLE_FALLBACK"
-        )
-
     # =====================================================
     # 🔥 WRIT PETITION NAME FALLBACK
     # =====================================================
@@ -297,6 +314,97 @@ def extract_sc_case_number(text):
             case_type="WRIT PETITION",
             confidence=80,
             source="SC_WRIT_FALLBACK"
+        )
+
+
+    # =====================================================
+    # 🔥 DERIVED CASE RECOVERY ENGINE
+    # =====================================================
+
+    derived_match = re.search(
+        r"(S\.?L\.?P\.?\s*\([A-Z]+\)\s*NO\.?\s*\d+\s*OF\s*\d{4})",
+        header_for_party,
+        re.I
+    )
+
+    if derived_match:
+
+        recovered = re.sub(
+            r"\s+",
+            " ",
+            derived_match.group(1)
+        ).strip().upper()
+
+        print("🔥 DERIVED SLP RECOVERY 🔥")
+        print(recovered)
+
+        return build_case_object(
+            case_number=recovered,
+            court_type="SUPREME COURT",
+            case_type="SPECIAL_LEAVE",
+            confidence=95,
+            source="SC_DERIVED_CASE_RECOVERY"
+        )
+
+    derived_match = re.search(
+        r"(SPECIAL\s+LEAVE\s+PETITION\s*\([A-Z\.]+\)\s*NO\.?\s*\d+\s*OF\s*\d{4})",
+        header_for_party,
+        re.I
+    )
+
+    if derived_match:
+
+        recovered = re.sub(
+            r"\s+",
+            " ",
+            derived_match.group(1)
+        ).strip().upper()
+
+        print("🔥 DERIVED SPECIAL LEAVE RECOVERY 🔥")
+        print(recovered)
+
+        return build_case_object(
+            case_number=recovered,
+            court_type="SUPREME COURT",
+            case_type="SPECIAL_LEAVE",
+            confidence=95,
+            source="SC_DERIVED_CASE_RECOVERY"
+        )
+
+    derived_match = re.search(
+        r"(DIARY\s+NO\.?\s*\d+\s*(?:OF|\/)\s*\d{4})",
+        header_for_party,
+        re.I
+    )
+
+    if derived_match:
+
+        recovered = re.sub(
+            r"\s+",
+            " ",
+            derived_match.group(1)
+        ).strip().upper()
+
+        print("🔥 DERIVED DIARY RECOVERY 🔥")
+        print(recovered)
+
+        return build_case_object(
+            case_number=recovered,
+            court_type="SUPREME COURT",
+            case_type="DIARY",
+            confidence=95,
+            source="SC_DERIVED_CASE_RECOVERY"
+        )
+
+
+    if title_match:
+
+        return build_case_object(
+            case_number="Unknown Case",
+            court_type="SUPREME COURT",
+            case_type="PETITION",
+            confidence=20,
+            source="SC_PETITION_TITLE_FALLBACK"
         )
 
 

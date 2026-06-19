@@ -20,6 +20,9 @@ def extract_case_number_bridge(text):
 
         if result and result.get("validation_passed"):
 
+            print("🔥 BRIDGE OUTPUT OBJECT 🔥")
+            print(result)
+
             print("🔥 V2 EXTRACTION SUCCESS 🔥")
 
             return result

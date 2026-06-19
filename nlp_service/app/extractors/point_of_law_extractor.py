@@ -544,6 +544,15 @@ def extract_points_of_law(full_text="", acts=None, clustered_issues=None):
     print("🔥 RAW ISSUE SCORES:")
     print(detected)
 
+    print("🔥 RAW ISSUE COUNT:")
+    print(len(detected))
+
+    print("🔥 CLUSTERED ISSUES INPUT:")
+    print(clustered_issues)
+
+    print("🔥 ACTS INPUT:")
+    print(acts)
+
     final_points = sorted(detected.items(), key=lambda x: x[1], reverse=True)
 
     cleaned = []
@@ -551,6 +560,8 @@ def extract_points_of_law(full_text="", acts=None, clustered_issues=None):
     seen = set()
 
     for point, score in final_points:
+
+        print(f"🔥 POINT CANDIDATE: {point} | SCORE={score}")
 
         if score < 10:
             continue
@@ -582,6 +593,7 @@ def extract_points_of_law(full_text="", acts=None, clustered_issues=None):
 
         if suppress:
 
+            print(f"🚫 SUPPRESSED POINT: {normalized}")
             continue
 
         if normalized in seen:
@@ -619,6 +631,8 @@ def extract_points_of_law(full_text="", acts=None, clustered_issues=None):
             )
 
             if not criminal_context:
+
+                print(f"🚫 CRIMINAL FILTER REJECTED: {normalized}")
                 continue
 
         # -----------------------------------------------------

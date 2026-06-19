@@ -50,7 +50,7 @@ SUPREME_COURT_CASE_PATTERNS = [
     # -----------------------------------------------------
     # REVIEW / CURATIVE / TRANSFER
     # -----------------------------------------------------
-    r"(REVIEW\s+PETITION\s*\((?:CRL\.?|CIVIL|CRIMINAL|C)\)\s*NO(?:S|\.\(S\)|\(S\)|S\.)?\.?\s*(?:[\dA-Z\-\/ ,.&()]+)?\s*OF\s+\d{4})",
+    r"(REVIEW\s+PETITION\s*\((?:CRL\.?|CIVIL|CRIMINAL|C)\)\s*NO(?:S|\.\(S\)|\(S\)|S\.)?\.?\s*[\dA-Z\-\/ ,.&()]+\s*OF\s+\d{4})",
     r"(REVIEW\s+PETITION.*?DIARY\s+NO\.?\s*\d+\s*OF\s*\d{4})",
     r"(CURATIVE\s+PETITION\s*\((?:CRL\.?|CIVIL|CRIMINAL|C)\)\s*NOS?\.?\s*[\dA-Z\-\/ ,.&()]+(?:\s+OF\s+\d{4})?)",
     r"(TRANSFER\s+PETITION\s*\((?:CRL\.?|CIVIL|CRIMINAL|C)\)\s*NOS?\.?\s*[\dA-Z\-\/ ,.&()]+(?:\s+OF\s+\d{4})?)",
@@ -726,9 +726,9 @@ def extract_case_number(text, fallback="Unknown Case"):
         # =====================================================
 
         in_re_match = re.search(
-            r"IN\s+RE\s*:?\s*([^\n]{5,300})",
+            r"^\s*IN\s+RE\s*:?\s*([^\n]{5,120})\s*$",
             header,
-            flags=re.I
+            flags=re.I | re.M
         )
 
         if (
@@ -768,6 +768,64 @@ def extract_case_number(text, fallback="Unknown Case"):
                 title
             ).strip()
 
+            # ==========================================
+            # 🔒 IN RE BODY LEAK FIREWALL
+            # ==========================================
+
+            title = re.split(
+                r"(?i)\b("
+                r"this\s+court|"
+                r"the\s+court|"
+                r"learned\s+counsel|"
+                r"facts?\s+of\s+the\s+case|"
+                r"the\s+parties|"
+                r"it\s+was\s+contended|"
+                r"held\s+that|"
+                r"judgment|"
+                r"order"
+                r")\b",
+                title,
+                maxsplit=1
+            )[0].strip()
+
+
+            # ==========================================
+            # 🔒 TRUE IN RE MATTER FIREWALL
+            # ==========================================
+
+            if re.search(
+                r"\b(VERSUS|VS\.?|V\.?)\b",
+                title,
+                flags=re.I
+            ):
+
+                print("🚫 FALSE IN RE CAPTION - ADVERSARIAL CASE")
+                print(title)
+
+                return None
+
+            if re.search(
+                r"\b(APPLICANT|PETITIONER|RESPONDENT)\b",
+                header,
+                flags=re.I
+            ):
+
+                print("🚫 FALSE IN RE CAPTION - PARTY LABELS FOUND")
+
+                return None
+
+            # ==========================================
+            # 🔒 MAX CAPTION LENGTH FIREWALL
+            # ==========================================
+
+            if len(title) > 120:
+
+                print("🚫 IN RE CAPTION TOO LONG")
+                print(title)
+
+                return None
+
+
             print("🔥 IN RE CASE LOCK:")
             print(title)
 
@@ -792,6 +850,42 @@ def extract_case_number(text, fallback="Unknown Case"):
                 "confidence": 99,
                 "source": "SUO_MOTU_ENGINE"
             }
+
+        # =====================================================
+        # 🔥 M.A. + TRANSFERRED CASE ENGINE
+        # =====================================================
+
+        ma_tc_match = re.search(
+            r"M\.?\s*A\.?\s*No\.?\s*(\d+)"
+            r"(?:\s*/\s*|\s+of\s+)(\d{4})"
+            r".{0,300}?"
+            r"(?:Transferred\s+Case\s*\(Civil\)|T\.?\s*C\.?\s*\(\s*C\s*\))"
+            r"\s*No\.?\s*(\d+)"
+            r"(?:\s*/\s*|\s+of\s+)(\d{4})",
+            header,
+            flags=re.I | re.S
+        )
+
+        if ma_tc_match:
+
+            case_caption = (
+                f"M.A. No.{ma_tc_match.group(1)} "
+                f"of {ma_tc_match.group(2)} IN "
+                f"Transferred Case (Civil) No."
+                f"{ma_tc_match.group(3)} "
+                f"of {ma_tc_match.group(4)}"
+            )
+
+            print("🔥 MA TRANSFERRED CASE LOCK:")
+            print(case_caption)
+
+            return {
+                "case_number": case_caption,
+                "confidence": 98,
+                "source": "MA_TRANSFERRED_CASE_ENGINE",
+                "court_type": "SUPREME_COURT"
+            }
+
 
         # =====================================================
         # 🔥 ENTERPRISE DIRECT HEADER MATCH ENGINE
@@ -863,6 +957,16 @@ def extract_case_number(text, fallback="Unknown Case"):
                             print("🚫 INCOMPLETE CASE NUMBER REJECTED")
                             print(extracted_case)
                             continue
+
+                    if re.search(
+                        r"(?:CIVIL|CRIMINAL)\s+APPEAL\s+NO(?:S)?\.?\s*OF\s+\d{4}",
+                        extracted_case,
+                        flags=re.I,
+                    ):
+                        print("🚫 EMPTY APPEAL NUMBER")
+                        print(extracted_case)
+                        continue
+
 
                     print("🔥 DIRECT HEADER SOURCE")
                     print(extracted_case)

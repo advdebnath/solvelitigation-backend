@@ -114,6 +114,12 @@ from app.services.legal_object_normalizer import normalize_legal_objects
 from app.services.legal_ontology_service import (
     infer_category_from_act, infer_category_from_case_number,
     infer_category_from_sections, is_ontology_eligible)
+
+from app.extractors.category_classifier import (
+    classify_category,
+    detect_constitutional_overlay
+)
+
 from app.services.precedent_engine import find_similar_cases
 from app.services.semantic_consistency_validator import (validate_acts,
                                                          validate_issue,
@@ -1125,6 +1131,8 @@ def process_judgment(ingestion_id):
         print("🔥 MERGED ACTS 🔥")
         print(acts["acts"])
 
+        print("CHECKPOINT_ACTS_DONE")
+
         # =====================================================
         # 🔥 CANONICAL ACT NORMALIZATION
         # =====================================================
@@ -1169,6 +1177,8 @@ def process_judgment(ingestion_id):
         print("✅ Section → Act Mapping:")
 
         print(section_act_mapping)
+
+        print("CHECKPOINT_SECTION_MAPPING_DONE")
 
         points_of_law = extract_points_of_law(body_text)
 
@@ -1218,6 +1228,18 @@ def process_judgment(ingestion_id):
         # =====================================================
 
         print("CHECKPOINT_04_BEFORE_HEADNOTE")
+
+        print("🔥 HEADNOTE INPUT ISSUE DATA:")
+        print(issue_data)
+
+        print("🔥 HEADNOTE INPUT POINTS DATA:")
+        print(points_of_law)
+
+        print("🔥 HEADNOTE INPUT SECTIONS DATA:")
+        print(sections)
+
+        print("🔥 HEADNOTE INPUT OPERATIVE DATA:")
+        print(operative_data)
         headnote_data = generate_headnote(
             full_text,
             issue_data=issue_data,
@@ -1797,7 +1819,110 @@ def process_judgment(ingestion_id):
                 },
             )
 
-            print(f"🚫 NOTICE DOCUMENT REJECTED: {ingestion_id}")
+            # =====================================================
+            # 🔥 NOTICE ARCHIVE GOVERNANCE
+            # =====================================================
+
+            try:
+
+                db.judgments.update_one(
+                    {
+                        "ingestionId": str(ingestion_id)
+                    },
+                    {
+                        "$set": {
+
+                            "ingestionId": str(ingestion_id),
+
+                            "title": (
+                                raw_header_text.split("\n")[0][:500]
+                                if raw_header_text
+                                else document_type
+                            ),
+
+                            "caseNumber": (
+                                raw_header_text.split("\n")[0][:250]
+                                if raw_header_text
+                                else document_type
+                            ),
+
+                            "documentClassification":
+                                "NON_JUDGMENT",
+
+                            "documentType":
+                                document_type,
+
+                            "isPublished": False,
+
+                            "isSearchable": False,
+
+                            "isExplorerVisible": False,
+
+                            "isAdminVisible": True,
+
+                            "reviewStatus":
+                                "NON_JUDGMENT_ARCHIVED",
+
+                            "archiveReason":
+                                document_type,
+
+                            "archiveTimestamp":
+                                datetime.utcnow(),
+
+                            "isSearchVisible":
+                                False,
+
+                            "updatedAt":
+                                datetime.utcnow()
+                        }
+                    },
+                    upsert=True
+                )
+
+                db.judgmentingestions.update_one(
+                    {"_id": ObjectId(ingestion_id)},
+                    {
+                        "$set": {
+                            "status": "COMPLETED",
+                            "stage": "NON_JUDGMENT_ARCHIVED",
+                            "reviewStatus":
+                                "NON_JUDGMENT_ARCHIVED",
+                            "documentClassification":
+                                "NON_JUDGMENT",
+                            "nlpQueued": False,
+                            "nlpProcessed": False,
+                            "isLocked": False,
+                            "documentType": document_type,
+
+                            "archiveReason":
+                                document_type,
+
+                            "archiveTimestamp":
+                                datetime.utcnow(),
+
+                            "updatedAt": datetime.utcnow(),
+                        }
+                    },
+                )
+
+
+                print(
+                    f"📦 NON-JUDGMENT ARCHIVED: {ingestion_id}"
+                )
+
+                print(
+                    "📂 NON_JUDGMENT_TYPE:",
+                    document_type
+                )
+
+            except Exception as archive_error:
+
+                print(
+                    "❌ NON_JUDGMENT_ARCHIVE_ERROR:",
+                    archive_error
+                )
+
+            print(f"📂 NON_JUDGMENT_DOCUMENT_ARCHIVED: {ingestion_id}")
 
             return
 
@@ -1845,23 +1970,117 @@ def process_judgment(ingestion_id):
             ):
                 document_type = "NOTICE"
 
+            # =====================================================
+            # 🔥 NON-JUDGMENT ARCHIVE GOVERNANCE
+            # =====================================================
+
+            try:
+
+                db.judgments.update_one(
+                    {
+                        "ingestionId": str(ingestion_id)
+                    },
+                    {
+                        "$set": {
+
+                            "ingestionId": str(ingestion_id),
+
+                            "title": (
+                                raw_header_text.split("\n")[0][:500]
+                                if raw_header_text
+                                else document_type
+                            ),
+
+                            "caseNumber": (
+                                raw_header_text.split("\n")[0][:250]
+                                if raw_header_text
+                                else document_type
+                            ),
+
+                            "documentClassification":
+                                "NON_JUDGMENT",
+
+                            "documentType":
+                                document_type,
+
+                            "isPublished": False,
+
+                            "isSearchable": False,
+
+                            "isExplorerVisible": False,
+
+                            "isAdminVisible": True,
+
+                            "reviewStatus":
+                                "NON_JUDGMENT_ARCHIVED",
+
+                            "archiveReason":
+                                document_type,
+
+                            "archiveTimestamp":
+                                datetime.utcnow(),
+
+                            "isSearchVisible":
+                                False,
+
+                            "updatedAt":
+                                datetime.utcnow()
+                        }
+                    },
+                    upsert=True
+                )
+
+            except Exception as archive_error:
+
+                print(
+                    "❌ NON_JUDGMENT_ARCHIVE_ERROR:",
+                    archive_error
+                )
+
             db.judgmentingestions.update_one(
                 {"_id": ObjectId(ingestion_id)},
                 {
                     "$set": {
-                        "status": "REJECTED",
-                        "stage": "REJECTED_NON_JUDGMENT",
+                        "status": "COMPLETED",
+                        "stage": "NON_JUDGMENT_ARCHIVED",
+                        "reviewStatus":
+                            "NON_JUDGMENT_ARCHIVED",
+                        "documentClassification":
+                            "NON_JUDGMENT",
                         "nlpQueued": False,
                         "nlpProcessed": False,
                         "isLocked": False,
                         "documentType": document_type,
-                        "rejectionReason": "Non-judgment court listing document",
+
+                        "archiveReason":
+                            document_type,
+
+                        "archiveTimestamp":
+                            datetime.utcnow(),
+
                         "updatedAt": datetime.utcnow(),
                     }
                 },
             )
 
-            print(f"🚫 INGESTION REJECTED — NON-JUDGMENT: {ingestion_id}")
+            print(
+                f"📦 NON-JUDGMENT ARCHIVED: {ingestion_id}"
+            )
+
+
+            print(
+                "📂 NON_JUDGMENT_TYPE:",
+                document_type
+            )
+
+            print(
+                "📂 NON_JUDGMENT_TITLE:",
+                (
+                    raw_header_text.split("\n")[0][:250]
+                    if raw_header_text
+                    else ""
+                )
+            )
 
             return
 
@@ -4319,6 +4538,88 @@ def process_judgment(ingestion_id):
         final_category = "Unclassified"
 
         full_text_upper = full_text.upper()
+
+        # -----------------------------------------------------
+        # 🔥 CATEGORY ENGINE V3
+        # -----------------------------------------------------
+
+        try:
+
+            category_engine_result = (
+                classify_category(
+                    (
+                        raw_header_text
+                        + "\n\n"
+                        + raw_full_text
+                    )[:60000]
+                )
+            )
+
+
+            print(
+                "🔥 CATEGORY ENGINE RESULT:"
+            )
+
+            print(
+                category_engine_result
+            )
+
+            print(
+                "🔥 CATEGORY HEADER SAMPLE:"
+            )
+
+            print(
+                raw_header_text[:500]
+            )
+
+
+            print(
+                "🔥 CATEGORY ENGINE RESULT:"
+            )
+
+            print(
+                category_engine_result
+            )
+
+            print(
+                "🔥 CATEGORY ENGINE HEADER SAMPLE:"
+            )
+
+            print(
+                raw_full_text[:1000]
+            )
+
+            if (
+                category_engine_result
+                and category_engine_result not in [
+                    "Unknown",
+                    "Unclassified",
+                ]
+            ):
+
+                boost(
+                    category_engine_result,
+                    50,
+                    signal=(
+                        "CATEGORY_ENGINE_V3"
+                    )
+                )
+
+                print(
+                    "🔥 CATEGORY ENGINE V3:"
+                )
+
+                print(
+                    category_engine_result
+                )
+
+        except Exception as e:
+
+            print(
+                "❌ CATEGORY ENGINE V3 ERROR:",
+                e
+            )
+
 
         # -----------------------------------------------------
         # 🔥 JURISDICTION PRIORITY
