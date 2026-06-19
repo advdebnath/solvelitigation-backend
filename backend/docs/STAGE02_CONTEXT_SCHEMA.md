@@ -1,6 +1,6 @@
 Stage02 Metadata Context
 
-Required Inputs:
+Inputs:
 - raw_header_text
 - raw_full_text
 - file_path
