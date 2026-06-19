@@ -129,6 +129,7 @@ from app.utils.dynamic_ocr_reconstructor import dynamic_ocr_reconstruct
 from app.utils.case_number_normalizer import normalize_case_number_object
 from app.utils.legal_text_normalizer import normalize_legal_text
 from app.utils.semantic_text_builder import build_semantic_reasoning_text
+from app.tasks.pipeline.stage02_metadata import run_stage02_metadata
 from bson import ObjectId
 from pymongo import MongoClient
 
@@ -1060,6 +1061,55 @@ def process_judgment(ingestion_id):
         # =============================================
 
         judgment_date = extract_judgment_date(raw_full_text)
+
+        # =====================================================
+        # 🔥 STAGE02 SHADOW EXECUTION
+        # =====================================================
+
+        shadow_context = run_stage02_metadata(
+            {
+                "raw_header_text": raw_header_text,
+                "raw_full_text": raw_full_text,
+                "file_path": file_path,
+            }
+        )
+
+        print("SHADOW_CASE_NUMBER")
+        print(shadow_context.get("case_number"))
+
+        print("PRODUCTION_CASE_NUMBER")
+        print(case_number)
+
+        print("SHADOW_COURT_DATA")
+        print(shadow_context.get("court_data"))
+
+        print("PRODUCTION_COURT_DATA")
+        print(court_data)
+
+        print("SHADOW_CASE_TYPE_DATA")
+        print(shadow_context.get("case_type_data"))
+
+        print("PRODUCTION_CASE_TYPE_DATA")
+        print(case_type_data)
+
+        print("SHADOW_PARTIES")
+        print(shadow_context.get("parties"))
+
+        print("PRODUCTION_PARTIES")
+        print(parties)
+
+        print("SHADOW_JUDGES")
+        print(shadow_context.get("judges"))
+
+        print("PRODUCTION_JUDGES")
+        print(judges)
+
+        print("SHADOW_JUDGMENT_DATE")
+        print(shadow_context.get("judgment_date"))
+
+        print("PRODUCTION_JUDGMENT_DATE")
+        print(judgment_date)
+
 
         print("RAW_FULL_TEXT_LENGTH")
         print(len(raw_full_text) if raw_full_text else 0)
