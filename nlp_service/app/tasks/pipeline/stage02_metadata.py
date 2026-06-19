@@ -1,48 +1,44 @@
 """
 Stage 02 Metadata Layer
 
-Owns:
+Orchestrates:
 
 - extract_case_number_bridge()
 - extract_parties()
 - extract_judges()
 - extract_judgment_date()
 
-Responsibilities:
+This stage DOES NOT implement extraction logic.
 
-- Case identity extraction
-- Party extraction
-- Judge extraction
-- Judgment date extraction
-
-Produces:
-
-- case_number
-- petitioner
-- respondent
-- judges
-- judgment_date
-
-Does NOT own:
-
-- category classification
-- acts extraction
-- section extraction
-- points of law
-- summaries
-- ratio
-- operative orders
+It delegates to dedicated extractor modules.
 """
+
+from app.extractors.case_number_bridge import extract_case_number_bridge
+from app.extractors.party_extractor import extract_parties
+from app.extractors.judge_extractor import extract_judges
+from app.extractors.date_extractor import extract_judgment_date
 
 
 def run_stage02_metadata(context):
-    """
-    Future metadata extraction stage.
 
-    Input:
-        Stage01 context
+    raw_header_text = context.get("raw_header_text", "")
+    raw_full_text = context.get("raw_full_text", "")
+    file_path = context.get("file_path")
 
-    Output:
-        Metadata-enriched context
-    """
+    context["case_number"] = extract_case_number_bridge(
+        raw_header_text
+    )
+
+    context["parties"] = extract_parties(
+        raw_header_text
+    )
+
+    context["judges"] = extract_judges(
+        file_path
+    )
+
+    context["judgment_date"] = extract_judgment_date(
+        raw_full_text
+    )
+
     return context
