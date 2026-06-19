@@ -8,7 +8,7 @@ Orchestrates:
 - extract_judges()
 - extract_judgment_date()
 
-This stage DOES NOT implement extraction logic.
+This stage does NOT implement extraction logic.
 
 It delegates to dedicated extractor modules.
 """
