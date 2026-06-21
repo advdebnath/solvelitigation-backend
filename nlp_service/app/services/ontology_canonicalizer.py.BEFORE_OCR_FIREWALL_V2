@@ -1,0 +1,110 @@
+import re
+
+
+
+ACT_PREFIX_BLACKLIST = {
+
+    "as amended by",
+    "by virtue of",
+    "issued under",
+    "application of",
+    "inserted in",
+    "company incorporated under",
+    "similar provision contained in",
+    "reference interest under",
+    "framed under",
+    "in terms of",
+    "under the",
+    "under this",
+    "on for the offences under",
+    "or the",
+    "and not",
+    "not the",
+    "scheme of",
+    "part ii of",
+    "chapter ii",
+    "vide",
+    "along with"
+}
+
+
+ACT_NOISE_TERMS = {
+    "therefore",
+    "evident",
+    "observed",
+    "held",
+    "judgment",
+    "court",
+    "committee",
+    "arrangement",
+    "registered",
+    "constituted",
+    "undertaking",
+    "introduced",
+    "provided",
+    "notwithstanding",
+    "aggrieved",
+    "decision",
+    "order",
+    "versus",
+    "respondent",
+    "petitioner",
+    "appellant",
+    "same under",
+    "position under",
+    "under this act"
+}
+
+
+def normalize_text(value):
+    value = value.strip().lower()
+    value = re.sub(r"\s+", " ", value)
+    return value
+
+
+def canonicalize_point(point):
+    if not point:
+        return None
+
+    point = normalize_text(point)
+
+    return point.title()
+
+
+def canonicalize_act(act_name):
+    if not act_name:
+        return None
+
+    act_name = normalize_text(act_name)
+
+    for prefix in ACT_PREFIX_BLACKLIST:
+        if act_name.startswith(prefix):
+            return None
+
+    if re.match(r"^[a-z]{1,3}\s", act_name):
+        return None
+
+    if len(act_name.split()) > 8:
+        return None
+
+    for term in ACT_NOISE_TERMS:
+        if term in act_name:
+            return None
+
+    patterns = [
+        r"(constitution of india)",
+        r"([a-z][a-z &()\-]{0,80}? act, \d{4})",
+        r"([a-z][a-z &()\-]{0,80}? rules, \d{4})"
+    ]
+
+    matches = []
+
+    for pattern in patterns:
+        matches.extend(
+            re.findall(pattern, act_name, flags=re.I)
+        )
+
+    if matches:
+        return matches[-1].title()
+
+    return None

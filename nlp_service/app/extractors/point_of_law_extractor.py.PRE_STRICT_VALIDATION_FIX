@@ -20,7 +20,7 @@ STRICT_POINT_VALIDATION = {
     "Joint Hindu Family": ["karta", "coparcener"],
     "Tenancy Surrender": ["surrender", "tenancy"],
     "Wakf Property Dispute": ["wakf", "tribunal"],
-    "Constitutional Jurisdiction": ["article 226", "article 227"],
+    "Constitutional Jurisdiction": ["article 226", "writ"],
     "Murder": ["section 302", "homicide"],
 }
 

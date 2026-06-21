@@ -90,32 +90,32 @@ def sanitize_legal_text(text=""):
     # 🔥 REMOVE DIGITAL SIGNATURE POLLUTION
     # -----------------------------------------------------
 
-#     digital_signature_patterns = [
-#         r"Digitally\s+signed\s+by.*?(\n|$)",
-#         r"Digitally\s+signed\s+on.*?(\n|$)",
-#         r"Signed\s+by.*?(\n|$)",
-#         r"Signature\s+Not\s+Verified.*?(\n|$)",
-#         r"Downloaded\s+on.*?(\n|$)",
-#         r"Signing\s+Date.*?(\n|$)",
-#         r"Certificate\s+Serial\s+Number.*?(\n|$)",
-#         r"Certificate\s+Fingerprint.*?(\n|$)",
-#         r"Verified\s+by.*?(\n|$)",
-#         r"Page\s+\d+\s+of\s+\d+.*?Digitally.*?(\n|$)",
-#     ]
-# 
-#     for pattern in digital_signature_patterns:
-# 
-#         before = len(cleaned)
-# 
-#         cleaned = re.sub(pattern, " ", cleaned, flags=re.I)
-# 
-#         after = len(cleaned)
-# 
-#         if before != after:
-#             print("DIGITAL_PATTERN_HIT")
-#             print(pattern)
-#             print(before)
-#             print(after)
+    digital_signature_patterns = [
+        r"Digitally\s+signed\s+by.*?(\n|$)",
+        r"Digitally\s+signed\s+on.*?(\n|$)",
+        r"Signed\s+by.*?(\n|$)",
+        r"Signature\s+Not\s+Verified.*?(\n|$)",
+        r"Downloaded\s+on.*?(\n|$)",
+        r"Signing\s+Date.*?(\n|$)",
+        r"Certificate\s+Serial\s+Number.*?(\n|$)",
+        r"Certificate\s+Fingerprint.*?(\n|$)",
+        r"Verified\s+by.*?(\n|$)",
+        r"Page\s+\d+\s+of\s+\d+.*?Digitally.*?(\n|$)",
+    ]
+
+    for pattern in digital_signature_patterns:
+
+        before = len(cleaned)
+
+        cleaned = re.sub(pattern, " ", cleaned, flags=re.I)
+
+        after = len(cleaned)
+
+        if before != after:
+            print("DIGITAL_PATTERN_HIT")
+            print(pattern)
+            print(before)
+            print(after)
 
     # -----------------------------------------------------
     # REMOVE MULTIPLE SPACES

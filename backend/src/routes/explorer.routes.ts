@@ -6,6 +6,12 @@ import Judgment from "../models/judgment.model";
 import {
   getExplorerHighlights
 } from "../controllers/explorerHighlights.controller";
+
+import {
+  getOntologyActs,
+  getOntologyPoints
+} from "../services/ontologyExplorer.service";
+
 import {
 
   filterActsByCategory
@@ -158,7 +164,7 @@ router.get(
       const category =
         req.params.category;
 
-      const judgments =
+      const judgments: any[] =
         await Judgment.find({
 
           ...VALID_JUDGMENT_FILTER,
@@ -173,7 +179,7 @@ router.get(
           }
         })
 
-        .select("actNames")
+        .select("acts")
 
         .lean();
 
@@ -183,9 +189,9 @@ router.get(
       for (const j of judgments) {
 
         let acts =
-          Array.isArray(j.actNames)
+          Array.isArray(j.acts)
 
-            ? j.actNames
+            ? j.acts
 
             : [];
 
@@ -1389,5 +1395,38 @@ router.get(
 
   getExplorerHighlights
 );
+
+
+
+router.get(
+  "/ontology/acts",
+  async (_req, res) => {
+
+    const data =
+      await getOntologyActs();
+
+    res.json({
+      success: true,
+      total: data.length,
+      data
+    });
+  }
+);
+
+router.get(
+  "/ontology/points",
+  async (_req, res) => {
+
+    const data =
+      await getOntologyPoints();
+
+    res.json({
+      success: true,
+      total: data.length,
+      data
+    });
+  }
+);
+
 
 export default router;

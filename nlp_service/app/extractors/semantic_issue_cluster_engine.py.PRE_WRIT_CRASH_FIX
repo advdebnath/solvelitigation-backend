@@ -398,7 +398,6 @@ def cluster_semantic_issues(
     ):
 
         boost_issue(
-            "Maintainability Of Writ Petition",
             25
         )
 
@@ -406,8 +405,8 @@ def cluster_semantic_issues(
         "227" in section_values
         and "writ petition" in text
     ):
+
         boost_issue(
-            "Supervisory Jurisdiction Under Article 227",
             25
         )
 

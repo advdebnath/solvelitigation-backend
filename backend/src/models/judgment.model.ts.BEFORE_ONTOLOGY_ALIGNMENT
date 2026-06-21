@@ -27,16 +27,6 @@ export interface IJudgment {
 
   pointOfLaw?: string[];
 
-    pointsOfLaw?: {
-      point?: string;
-      category?: string;
-      confidence?: number;
-      sources?: string[];
-      supporting_section?: string;
-      supporting_act?: string;
-      lineage?: string;
-    }[];
-
   // 🔥 NEW STRUCTURED HEADNOTES
   headnotes?: {
     topic: string;
@@ -135,20 +125,6 @@ export interface IJudgment {
   nlpStatus?: string;
 
   createdBy?: Types.ObjectId;
-
-  status?: string;
-
-  approvedBy?: Types.ObjectId;
-
-  approvedAt?: Date;
-
-  retryCount?: number;
-
-  gridfsFileId?: string;
-
-  citation?: string;
-
-  actReferences?: string[];
 
   createdAt: Date;
   updatedAt: Date;

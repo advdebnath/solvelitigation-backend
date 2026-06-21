@@ -20,7 +20,7 @@ STRICT_POINT_VALIDATION = {
     "Joint Hindu Family": ["karta", "coparcener"],
     "Tenancy Surrender": ["surrender", "tenancy"],
     "Wakf Property Dispute": ["wakf", "tribunal"],
-    "Constitutional Jurisdiction": ["article 226", "article 227"],
+    "Constitutional Jurisdiction": ["article 226", "writ"],
     "Murder": ["section 302", "homicide"],
 }
 
@@ -87,7 +87,9 @@ LEGAL_POINT_PATTERNS = {
         "patterns": [
             "article 226",
             "article 227",
+            "writ petition",
             "constitutional remedy",
+            "judicial review",
         ],
         "category": "Constitutional",
     },
@@ -197,6 +199,7 @@ LEGAL_POINT_PATTERNS = {
     },
     "Judicial Review": {
         "patterns": [
+            "judicial review",
             "constitutional validity",
             "ultra vires",
             "arbitrary state action",
@@ -385,6 +388,7 @@ def detect_point_category(point_name, full_text="", acts=None):
         "article 226",
         "article 227",
         "fundamental rights",
+        "judicial review",
     ]
 
     for word in civil_words:

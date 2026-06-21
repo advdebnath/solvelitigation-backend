@@ -99,13 +99,9 @@ LegalOntologySchema.index(
 );
 
 const LegalOntology =
-
-  mongoose.models.LegalOntology ||
-
-  mongoose.model<ILegalOntology>(
-
+  (mongoose.models.LegalOntology as mongoose.Model<any>) ||
+  mongoose.model(
     "LegalOntology",
-
     LegalOntologySchema
   );
 

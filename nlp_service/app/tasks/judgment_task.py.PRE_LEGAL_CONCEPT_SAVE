@@ -5856,8 +5856,6 @@ def process_judgment(ingestion_id):
               ),
             "sections": sections.get("sections", []),
             "pointsOfLaw": authoritative_points_of_law,
-              "legalConcepts": legal_concepts,
-
             "issueClusters": issue_data.get("issues", []),
             "dominantIssue": issue_data.get("dominant_issue"),
             "operativeOrder": operative_data.get("operative_order", []),

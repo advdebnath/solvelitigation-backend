@@ -197,6 +197,32 @@ def detect_supreme_court_case_type(text):
             "matched_pattern": "CAPTION_LOCK_REVIEW"
         }
 
+    if re.search(
+        r"CIVIL\s+APPEAL\s+NO",
+        caption_window
+    ):
+        return {
+            "canonical": "CIVIL_APPEAL",
+            "display": "Civil Appeal",
+            "family": "APPEAL",
+            "category": "CIVIL",
+            "confidence": 100,
+            "matched_pattern": "CAPTION_LOCK_CIVIL_APPEAL"
+        }
+
+    if re.search(
+        r"CRIMINAL\s+APPEAL\s+NO",
+        caption_window
+    ):
+        return {
+            "canonical": "CRIMINAL_APPEAL",
+            "display": "Criminal Appeal",
+            "family": "APPEAL",
+            "category": "CRIMINAL",
+            "confidence": 100,
+            "matched_pattern": "CAPTION_LOCK_CRIMINAL_APPEAL"
+        }
+
     if "WRIT PETITION" in caption_window:
         return {
             "canonical": "WRIT_PETITION_CIVIL",

@@ -1,8 +1,3 @@
-
-from app.extractors.dynamic_legal_entity_engine import (
-    discover_legal_entities,
-)
-
 import fitz
 
 fitz.TOOLS.mupdf_display_errors(False)
@@ -86,9 +81,6 @@ from app.extractors.multi_case_reasoning_engine import \
 from app.extractors.operative_order_engine import extract_operative_order
 from app.extractors.party_extractor import extract_parties
 from app.extractors.point_of_law_extractor import extract_points_of_law
-from app.extractors.legal_concept_engine import discover_legal_concepts
-from app.extractors.legal_ontology_engine import classify_concepts
-
 from app.extractors.precedent_extractor import extract_precedents
 from app.extractors.procedural_history_detector import \
     detect_procedural_history
@@ -138,8 +130,6 @@ from app.utils.case_number_normalizer import normalize_case_number_object
 from app.utils.legal_text_normalizer import normalize_legal_text
 from app.utils.semantic_text_builder import build_semantic_reasoning_text
 from app.tasks.pipeline.stage02_metadata import run_stage02_metadata
-from app.legal_ontology.supreme_court_case_types import \
-    detect_supreme_court_case_type
 from bson import ObjectId
 from pymongo import MongoClient
 
@@ -284,9 +274,7 @@ def normalize_text(text):
 
     text = text.replace("\t", " ")
 
-    text = re.sub(r"[ \t]+", " ", text)
-
-    text = re.sub(r"\n{3,}", "\n\n", text)
+    text = re.sub(r"\s+", " ", text)
 
     try:
 
@@ -724,10 +712,6 @@ def process_judgment(ingestion_id):
             print("\n🔥 BEFORE_RECONSTRUCT_LEGAL_TEXT 🔥")
             print(str(raw_full_text)[:2000])
 
-
-
-
-
             reconstructed_text = reconstruct_legal_text(
                 pages=pages,
                 semantic_paragraphs=semantic_paragraphs,
@@ -742,14 +726,9 @@ def process_judgment(ingestion_id):
 
 
 
-
-
                 raw_full_text = reconstructed_value
 
-                semantic_text = {
-                    "text": reconstructed_value
-                }
-
+                semantic_text = {"text": reconstructed_value}
 
                 print("✅ LEGAL TEXT RECONSTRUCTED")
                 print("SEMANTIC_TEXT_LENGTH")
@@ -771,20 +750,7 @@ def process_judgment(ingestion_id):
         # 🔥 NORMALIZED SEARCH TEXT
         # =====================================================
 
-        print("🔥 SEMANTIC_TEXT_TYPE_BEFORE_NORMALIZE")
-        print(type(semantic_text))
-
-        print("🔥 SEMANTIC_TEXT_PREVIEW")
-        print(str(semantic_text)[:500])
-
         full_text = normalize_text(semantic_text.get("text", ""))
-
-        print("AUDIT_01_AFTER_NORMALIZE", flush=True)
-        print(len(full_text) if full_text else 0, flush=True)
-
-
-        print("AUDIT_01_AFTER_NORMALIZE")
-        print(len(full_text) if full_text else 0)
 
         # =====================================================
         # 🔥 EARLY LEGAL TEXT SANITIZATION
@@ -798,13 +764,6 @@ def process_judgment(ingestion_id):
 
             full_text = sanitize_legal_text(full_text)
 
-            print("AUDIT_02_AFTER_SANITIZE", flush=True)
-            print(len(full_text) if full_text else 0, flush=True)
-
-
-            print("AUDIT_02_AFTER_SANITIZE")
-            print(len(full_text) if full_text else 0)
-
             # =====================================================
             # 🔥 LEGAL OCR RECONSTRUCTION ENGINE
             # =====================================================
@@ -814,29 +773,12 @@ def process_judgment(ingestion_id):
 
             full_text = reconstruct_legal_ocr_text(full_text)
 
-            print("AUDIT_03_AFTER_OCR_RECON", flush=True)
-            print(len(full_text) if full_text else 0, flush=True)
-
-
-            print("AUDIT_03_AFTER_OCR_RECON")
-            print(len(full_text) if full_text else 0)
-
             print("\n=== AFTER_OCR_RECON ===")
             print(full_text[:2000])
 
             print("✅ LEGAL OCR RECONSTRUCTION APPLIED")
 
             print("✅ EARLY SANITIZATION COMPLETE")
-
-            print("PRE_HEADER_LEN")
-            print(len(full_text) if full_text else 0)
-
-            print("PRE_HEADER_SPLITLINES")
-            print(len(full_text.splitlines()) if isinstance(full_text, str) else "NOT_STRING")
-
-            print("PRE_HEADER_TYPE")
-            print(type(full_text))
-
 
             # =====================================================
             # 🔥 PAGE HEADER / FOOTER STRIPPING ENGINE
@@ -872,43 +814,15 @@ def process_judgment(ingestion_id):
 
                     cleaned_lines.append(line)
 
-            # =====================================================
-            # 🔥 HEADER WIPEOUT FIREWALL
-            # =====================================================
+            full_text = "\\n".join(cleaned_lines)
 
-            if not cleaned_lines:
-
-                print("🚨 HEADER ENGINE WIPED DOCUMENT", flush=True)
-                print("🚨 RESTORING ORIGINAL TEXT", flush=True)
-
-                cleaned_lines = [full_text]
-
-
-            print("AUDIT_04_CLEANED_LINES")
-            print(len(cleaned_lines))
-
-            full_text = "\n".join(cleaned_lines)
-
-            print("POST_HEADER_LEN", flush=True)
-            print(len(full_text) if full_text else 0, flush=True)
-
-            print("POST_HEADER_SPLITLINES", flush=True)
-            print(len(full_text.splitlines()), flush=True)
-
-            print("POST_HEADER_PREVIEW", flush=True)
-            print(full_text[:1000], flush=True)
-            print("AUDIT_05_HEADER_CLEAN")
-            print(len(full_text) if full_text else 0)
-
-            full_text = re.sub(r"\n{2,}", "\n\n", full_text).strip()
-
-            canonical_text = full_text
+            full_text = re.sub(r"\\n{2,}", "\\n\\n", full_text).strip()
 
             # =====================================================
             # 🔥 EARLY SEMANTIC AUTHORITY INITIALIZATION
             # =====================================================
 
-            normalized_semantic_text = canonical_text
+            normalized_semantic_text = full_text
 
             print("✅ EARLY SEMANTIC AUTHORITY INITIALIZED")
 
@@ -1099,42 +1013,9 @@ def process_judgment(ingestion_id):
         # 🔥 SUPREME COURT CASE TYPE EXTRACTION
         # =====================================================
 
-        print("CASE_TYPE_INPUT_COURT")
-        print(court_data)
-
-        print("CASE_TYPE_INPUT_HEADER_SAMPLE")
-        print(raw_header_text[:1000])
-
-        print("CASE_TYPE_HEADER_LENGTH")
-
-        print(
-            len(case_header_text)
-            if case_header_text
-            else 0
-        )
-
-        print("CASE_TYPE_HEADER_SAMPLE")
-
-        print(
-            case_header_text[:1500]
-            if case_header_text
-            else ""
-        )
-
-        debug_case_type = detect_supreme_court_case_type(
-            case_header_text
-        )
-
-        print("DIRECT_SC_CASE_TYPE_RESULT")
-
-        print(debug_case_type)
-
         case_type_data = extract_case_type(
             case_header_text, court=court_data.get("court_name", "")
         )
-
-        print("PRODUCTION_CASE_TYPE_INITIAL")
-        print(case_type_data)
 
         print("✅ CASE TYPE DATA:", case_type_data)
 
@@ -1231,88 +1112,12 @@ def process_judgment(ingestion_id):
         print("PRODUCTION_JUDGMENT_DATE")
         print(judgment_date)
 
-        # =====================================================
-        # STAGE02 COMPARISON
-        # =====================================================
-
-        print("STAGE02_COMPARE_CASE_NUMBER")
-        print(
-            shadow_context.get("case_number")
-            == case_number
-        )
-
-        print("STAGE02_COMPARE_COURT")
-        print(
-            shadow_context.get("court_data")
-            == court_data
-        )
-
-        print("STAGE02_COMPARE_CASE_TYPE")
-        print(
-            shadow_context.get("case_type_data")
-            == case_type_data
-        )
-
-        print("SHADOW_CASE_TYPE_OBJECT")
-        print(
-            repr(
-                shadow_context.get("case_type_data")
-            )
-        )
-
-        print("PRODUCTION_CASE_TYPE_OBJECT")
-        print(
-            repr(
-                case_type_data
-            )
-        )
-
-        print("SHADOW_CASE_TYPE_TYPE")
-        print(
-            type(
-                shadow_context.get("case_type_data")
-            )
-        )
-
-        print("PRODUCTION_CASE_TYPE_TYPE")
-        print(
-            type(
-                case_type_data
-            )
-        )
-
-        print("STAGE02_COMPARE_PARTIES")
-        print(
-            shadow_context.get("parties")
-            == parties
-        )
-
-        print("STAGE02_COMPARE_JUDGES")
-        print(
-            shadow_context.get("judges")
-            == judges
-        )
-
-        print("STAGE02_COMPARE_DATE")
-        print(
-            shadow_context.get("judgment_date")
-            == judgment_date
-        )
-
 
         print("RAW_FULL_TEXT_LENGTH")
         print(len(raw_full_text) if raw_full_text else 0)
         
         print("FULL_TEXT_LENGTH")
         print(len(full_text) if full_text else 0)
-
-        print("🔥 FORENSIC_FULLTEXT_AUDIT")
-        print("TYPE")
-        print(type(full_text))
-        print("LEN")
-        print(len(full_text) if hasattr(full_text, "__len__") else "NO_LEN")
-        print("REPR")
-        print(repr(str(full_text)[:300]))
         
         print("BODY_TEXT_LENGTH")
         print(len(body_text) if body_text else 0)
@@ -1429,18 +1234,6 @@ def process_judgment(ingestion_id):
 
         points_of_law = extract_points_of_law(body_text)
 
-        legal_concepts = discover_legal_concepts(
-            body_text
-        )
-
-        legal_concepts = classify_concepts(
-            legal_concepts
-        )
-
-        print("🔥 LEGAL CONCEPTS:")
-        print(legal_concepts)
-
-
         print("🔥 POINTS OF LAW FINAL:")
         print(points_of_law)
 
@@ -1465,28 +1258,8 @@ def process_judgment(ingestion_id):
 
         print(semantic_issues)
 
-        
         issue_data = semantic_issues
-        
-        # =====================================================
-        # 🔥 DYNAMIC LEGAL ENTITY DISCOVERY
-        # =====================================================
-        
-        dynamic_legal_entities = discover_legal_entities(
-            full_text
-        )
-        
-        print("🔥 DYNAMIC LEGAL ENTITIES")
-        print(dynamic_legal_entities)
-        
-        print("🔥 DOMINANT LEGAL ENTITY")
-        print(
-            dynamic_legal_entities.get(
-                "dominant_entity"
-            )
-        )
-        
-        
+
         print("🔥 ISSUE DATA FINAL:")
         print(issue_data)
 
@@ -1507,15 +1280,6 @@ def process_judgment(ingestion_id):
         # =====================================================
 
         print("CHECKPOINT_04_BEFORE_HEADNOTE")
-
-        print("🔥 HEADNOTE FULL_TEXT LENGTH:")
-        print(len(full_text) if full_text else 0)
-
-        print("🔥 HEADNOTE BODY_TEXT LENGTH:")
-        print(len(body_text) if body_text else 0)
-
-        print("🔥 HEADNOTE FULL_TEXT SAMPLE:")
-        print(str(full_text)[:1000])
 
         print("🔥 HEADNOTE INPUT ISSUE DATA:")
         print(issue_data)
@@ -1669,16 +1433,6 @@ def process_judgment(ingestion_id):
 
         cleaned_header_text = header_data.get("clean_text", "")
 
-        print("🔥 HEADER_CLEAN_AUDIT")
-        print("ORIGINAL_FULL_TEXT_LENGTH")
-        print(len(full_text) if full_text else 0)
-        
-        print("CLEANED_HEADER_LENGTH")
-        print(len(cleaned_header_text) if cleaned_header_text else 0)
-        
-        print("HEADER_DATA_KEYS")
-        print(list(header_data.keys()))
-
         if cleaned_header_text and len(cleaned_header_text) > 500:
 
             full_text = cleaned_header_text
@@ -1707,9 +1461,7 @@ def process_judgment(ingestion_id):
         # 🔥 PRE-CANONICAL HEADER PRESERVATION ENGINE
         # =====================================================
 
-        canonical_header_text = canonical_text[:25000]
-
-        full_text = canonical_text
+        canonical_header_text = full_text[:25000]
 
         print("🔥 CANONICAL HEADER LENGTH:")
         print(len(str(canonical_header_text)))
@@ -1767,10 +1519,7 @@ def process_judgment(ingestion_id):
         print("\n🔥 NORMALIZED_LAYOUT_TEXT_SAMPLE 🔥")
         print(layout_text[:1000])
 
-        print(
-              "✅ CANONICAL TEXT PRESERVED — LAYOUT STORED SEPARATELY",
-              flush=True
-          )
+        full_text = layout_text
 
         # =====================================================
         # 🔥 HISTORICAL CITATION ENGINE
@@ -2450,11 +2199,6 @@ def process_judgment(ingestion_id):
             r"^\\s*NON-REPORTABLE\\s*$",
         ]
 
-        print("PRE_STRUCTURAL_LEN", flush=True)
-        print(len(full_text) if full_text else 0, flush=True)
-        print("PRE_STRUCTURAL_PREVIEW", flush=True)
-        print(full_text[:1000], flush=True)
-
         for pattern in STRUCTURAL_NOISE_PATTERNS:
 
             full_text = re.sub(pattern, " ", full_text, flags=re.I | re.M)
@@ -2503,18 +2247,59 @@ def process_judgment(ingestion_id):
 
             # =====================================================
             # 🔥 HARD HEADER AMPUTATION ENGINE
-            
-            # =====================================================
-            # 🔒 HEADER ERADICATION DISABLED
             # =====================================================
 
-            print("🔒 HEADER ERADICATION DISABLED")
-            print("TEXT_LENGTH_BEFORE_BODY_CAPTURE")
-            print(len(semantic_body_text))
+            semantic_body_text = re.sub(
+                r"^.*?(?=JUDGMENT\s*:|ORDER\s*:|[A-Z][A-Za-z\.\s]+,\s*J\.)",
+                "",
+                semantic_body_text,
+                flags=re.I | re.S,
+            )
+
+            semantic_body_text = re.sub(
+                r"http://JUDIS\.NIC\.IN", " ", semantic_body_text, flags=re.I
+            )
+
+            semantic_body_text = re.sub(
+                r"SUPREME COURT OF INDIA", " ", semantic_body_text, flags=re.I
+            )
+
+            semantic_body_text = re.sub(
+                r"PETITIONER\s*:.*?RESPONDENT\s*:",
+                " ",
+                semantic_body_text,
+                flags=re.I | re.S,
+            )
+
+            semantic_body_text = re.sub(
+                r"DATE OF JUDGMENT\s*:.*?BENCH\s*:",
+                " ",
+                semantic_body_text,
+                flags=re.I | re.S,
+            )
+
+            print("✅ HARD HEADER AMPUTATION COMPLETE")
+
+            semantic_body_text = re.sub(
+                r"http://JUDIS\\.NIC\\.IN.*?(?=JUDGMENT|ORDER|[A-Z][A-Za-z\\.\\s]+,\\s*J\\.)",
+                " ",
+                semantic_body_text,
+                flags=re.I | re.S,
+            )
+
+            semantic_body_text = re.sub(
+                r"SUPREME COURT OF INDIA.*?(?=JUDGMENT|ORDER|[A-Z][A-Za-z\\.\\s]+,\\s*J\\.)",
+                " ",
+                semantic_body_text,
+                flags=re.I | re.S,
+            )
+
+            semantic_body_text = re.sub(
+                r"PETITIONER.*?RESPONDENT", " ", semantic_body_text, flags=re.I | re.S
+            )
+            semantic_body_text = re.sub(r"[ \t]+", " ", semantic_body_text).strip()
 
             print("✅ AGGRESSIVE MULTILINE HEADER ERADICATION COMPLETE")
-
-
 
             # 🔥 POSITIVE JUDICIAL BODY EXTRACTION
             # =====================================================
@@ -2543,32 +2328,12 @@ def process_judgment(ingestion_id):
                 print("\n🔥 CAPTURED_BODY_SAMPLE 🔥")
                 print(captured_body[:1500])
 
-                print("🔥 BODY_CAPTURE_DETECTED_BUT_NOT_APPLIED")
-                print(len(captured_body))
-
-                # semantic_body_text = captured_body
-                # DISABLED: caused truncation of valid judgments
+                semantic_body_text = captured_body
 
                 print("\n🔥 POST_CAPTURE_BODY_SAMPLE 🔥")
                 print(semantic_body_text[:1500])
 
-
-            print("PRE_CROP_LEN", flush=True)
-            print(len(semantic_body_text) if semantic_body_text else 0, flush=True)
-
-            print("PRE_CROP_SPLITLINES", flush=True)
-            print(len(semantic_body_text.splitlines()) if semantic_body_text else 0, flush=True)
-
-            print("PRE_CROP_PREVIEW", flush=True)
-            print(semantic_body_text[:1000] if semantic_body_text else "", flush=True)
-
             print("✅ POSITIVE JUDICIAL BODY EXTRACTION COMPLETE")
-            print("LEN_AFTER_BODY_CAPTURE")
-            print(len(semantic_body_text))
-
-            print("AUDIT_AFTER_BODY_CAPTURE")
-            print(len(semantic_body_text))
-            print(repr(semantic_body_text[:300]))
 
             # =====================================================
             # 🔥 HARD JUDICIAL ENTRY CROPPING
@@ -2604,8 +2369,6 @@ def process_judgment(ingestion_id):
                 print(semantic_body_text[:1500])
 
             print("✅ HARD JUDICIAL ENTRY CROPPING COMPLETE")
-            print("LEN_AFTER_CROPPING")
-            print(len(semantic_body_text))
 
             reasoning_patterns = [
                 (r"\b[A-Z][A-Za-z\.\s]+,\s*J\.", 100),
@@ -2645,8 +2408,6 @@ def process_judgment(ingestion_id):
                 print(semantic_body_text[:1500])
 
             print("✅ SEMANTIC REASONING ENTRY DETECTED")
-            print("LEN_AFTER_REASONING")
-            print(len(semantic_body_text))
 
             # =====================================================
             # 🔥 PRE-SEMANTIC BODY ISOLATION
@@ -2693,8 +2454,6 @@ def process_judgment(ingestion_id):
             semantic_body_text = re.sub(r"[ \t]+", " ", semantic_body_text).strip()
 
             print("✅ PRE-SEMANTIC BODY ISOLATION COMPLETE")
-            print("LEN_AFTER_ISOLATION")
-            print(len(semantic_body_text))
 
             # =====================================================
             # 🔥 LEGAL OCR SANITIZATION ENGINE
@@ -4938,16 +4697,7 @@ def process_judgment(ingestion_id):
         # 🔥 DOMINANT ISSUE
         # -----------------------------------------------------
 
-        print("🔥 ISSUE_DATA_BEFORE_CATEGORY_BOOST")
-        print(issue_data)
-
-        print("🔥 ISSUE_DOMINANT_CATEGORY")
-        print(issue_data.get("dominant_category"))
-
-        print("🔥 ISSUE_DOMINANT_ISSUE")
-        print(issue_data.get("dominant_issue"))
-
-        boost(issue_data.get("dominant_category"), 20)
+        boost(issue_data.get("dominant_category"), 60)
 
         # -----------------------------------------------------
         # 🔥 POINTS OF LAW
@@ -5087,38 +4837,9 @@ def process_judgment(ingestion_id):
 
         secondary_category = None
 
-        category_source = "CATEGORY_ENGINE"
-
-        if category_signals:
-
-            winning_signals = [
-                signal
-                for signal in category_signals
-                if signal.get("category") == final_category
-            ]
-
-            if winning_signals:
-
-                winning_signals.sort(
-                    key=lambda x: x.get("score", 0),
-                    reverse=True
-                )
-
-                category_source = winning_signals[0].get(
-                    "signal",
-                    "CATEGORY_ENGINE"
-                )
+        category_source = "CATEGORY_ARBITRATION"
 
         category_confidence = final_category_confidence
-
-        print("🔥 CATEGORY SOURCE RESOLVED")
-        print(category_source)
-
-        print("🔥 WINNING CATEGORY")
-        print(final_category)
-
-        print("🔥 CATEGORY SIGNALS")
-        print(category_signals)
 
         if primary_category in [
             None,
@@ -5856,8 +5577,6 @@ def process_judgment(ingestion_id):
               ),
             "sections": sections.get("sections", []),
             "pointsOfLaw": authoritative_points_of_law,
-              "legalConcepts": legal_concepts,
-
             "issueClusters": issue_data.get("issues", []),
             "dominantIssue": issue_data.get("dominant_issue"),
             "operativeOrder": operative_data.get("operative_order", []),

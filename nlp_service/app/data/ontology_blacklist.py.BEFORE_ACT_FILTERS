@@ -1,0 +1,23 @@
+BLACKLIST = {
+
+    "relief granted",
+    "relief denied",
+
+    "criminal appeal allowed",
+
+    "appellate interference",
+
+    "tribunal adjudication",
+
+    "election commission compliance",
+
+    "electoral transparency"
+}
+
+
+def is_blacklisted(value):
+
+    if not value:
+        return False
+
+    return value.strip().lower() in BLACKLIST

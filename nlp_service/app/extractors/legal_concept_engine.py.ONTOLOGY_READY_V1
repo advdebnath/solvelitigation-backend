@@ -1,0 +1,215 @@
+import re
+from collections import Counter
+
+
+STOP_WORDS = {
+    "court",
+    "appeal",
+    "judgment",
+    "respondent",
+    "petitioner",
+    "appellant",
+    "learned",
+    "therefore",
+    "however",
+}
+
+MIN_CONCEPT_FREQUENCY = 5
+MAX_WORDS_PER_CONCEPT = 6
+
+LEGAL_STOP_TERMS = {
+    "high court",
+    "supreme court",
+    "learned counsel",
+    "present appeal",
+    "civil appeal",
+    "criminal appeal",
+    "respondent",
+    "petitioner",
+    "appellant",
+    "judgment",
+    "order",
+    "court held",
+    "held that"
+}
+
+
+PHRASE_START_STOPWORDS = {
+    "of",
+    "the",
+    "and",
+    "or",
+    "in",
+    "on",
+    "at",
+    "by",
+    "for",
+    "with",
+    "from",
+    "to",
+    "into",
+    "upon",
+    "under"
+}
+
+PHRASE_END_STOPWORDS = {
+    "of",
+    "the",
+    "and",
+    "or",
+    "in",
+    "on",
+    "at",
+    "by",
+    "for",
+    "with",
+    "from",
+    "to",
+    "were",
+    "was",
+    "is",
+    "are",
+    "be",
+    "been"
+}
+
+
+
+
+def is_legal_concept(phrase):
+
+    legal_signals = [
+        "act",
+        "code",
+        "section",
+        "article",
+        "rule",
+        "regulation",
+        "tribunal",
+        "commission",
+        "board",
+        "authority",
+        "wage",
+        "service",
+        "tenancy",
+        "contract",
+        "bail",
+        "conviction",
+        "arbitration",
+        "compensation",
+        "acquisition",
+        "employment",
+        "industrial",
+        "labour",
+        "disciplinary",
+        "pension",
+        "promotion"
+    ]
+
+    phrase_lower = phrase.lower()
+
+    return any(
+        signal in phrase_lower
+        for signal in legal_signals
+    )
+
+
+def discover_legal_concepts(text=""):
+
+    if not text:
+        return []
+
+    text = text.lower()
+
+    text = text.replace("\n", " ")
+
+    text = re.sub(r"\s+", " ", text)
+
+
+
+
+    freq = Counter()
+
+    words = text.split()
+
+    for size in range(2, 6):
+
+        for i in range(len(words) - size + 1):
+
+            phrase = " ".join(
+                words[i:i + size]
+            )
+
+            if any(
+                stop in phrase
+                for stop in LEGAL_STOP_TERMS
+            ):
+                continue
+
+            freq[phrase] += 1
+
+
+
+    concepts = []
+
+    for phrase, count in freq.most_common(200):
+
+        if count < MIN_CONCEPT_FREQUENCY:
+            continue
+
+        if len(phrase.split()) > MAX_WORDS_PER_CONCEPT:
+            continue
+
+        if any(term in phrase for term in LEGAL_STOP_TERMS):
+            continue
+
+        if not is_legal_concept(phrase):
+            continue
+
+        tokens = phrase.split()
+
+        if not tokens:
+            continue
+
+        if tokens[0] in PHRASE_START_STOPWORDS:
+            continue
+
+        if tokens[-1] in PHRASE_END_STOPWORDS:
+            continue
+
+        if len(tokens) < 2:
+            continue
+
+        if phrase.endswith(","):
+            continue
+
+        if phrase.endswith("("):
+            continue
+
+        if phrase.endswith(")"):
+            continue
+
+        if phrase.count("(") != phrase.count(")"):
+            continue
+
+        BAD_ENDINGS = {
+            "irrespective",
+            "thereof",
+            "therein",
+            "whereof",
+            "wherein"
+        }
+
+        if tokens[-1] in BAD_ENDINGS:
+            continue
+
+
+
+        concepts.append({
+            "concept": phrase.title(),
+            "frequency": count,
+            "confidence": min(95, 40 + (count * 3))
+        })
+
+
+    return concepts

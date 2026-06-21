@@ -1,0 +1,35 @@
+import re
+
+
+def normalize_text(value):
+    value = value.strip().lower()
+    value = re.sub(r"\s+", " ", value)
+    return value
+
+
+def canonicalize_point(point):
+    if not point:
+        return None
+
+    point = normalize_text(point)
+    return point.title()
+
+
+def canonicalize_act(act_name):
+    if not act_name:
+        return None
+
+    act_name = normalize_text(act_name)
+
+    patterns = [
+        r"(constitution of india)",
+        r"([a-z ,()-]+act, \d{4})",
+        r"([a-z ,()-]+rules, \d{4})"
+    ]
+
+    for pattern in patterns:
+        m = re.search(pattern, act_name, flags=re.I)
+        if m:
+            return m.group(1).title()
+
+    return act_name.title()

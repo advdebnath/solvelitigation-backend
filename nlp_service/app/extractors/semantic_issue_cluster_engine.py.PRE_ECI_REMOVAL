@@ -45,7 +45,8 @@ LEGAL_ISSUE_ONTOLOGY = {
     ],
     "Maintainability Of Writ Petition": [
         "maintainability of writ petition",
-        "maintainability of the writ petition",
+        "maintainability",
+        "writ petition",
     ],
     "Jurisdictional Error": [
         "without jurisdiction",
@@ -78,6 +79,7 @@ LEGAL_ISSUE_ONTOLOGY = {
     ],
     "Election Commission Compliance": [
         "election commission of india",
+        "eci",
         "compliance with directions",
         "election commission",
         "directions issued",
@@ -153,6 +155,8 @@ SEMANTIC_ISSUE_PATTERNS = {
         "civil court jurisdiction",
     ],
     "Maintainability Of Writ Petition": [
+        "writ petition",
+        "maintainability",
         "maintainability of writ petition",
     ],
     "Jurisdictional Error": [
@@ -186,6 +190,7 @@ SEMANTIC_ISSUE_PATTERNS = {
     ],
     "Election Commission Compliance": [
         "election commission",
+        "eci",
         "compliance report",
     ],
     "Free And Fair Election": ["free and fair election", "purity of elections"],
@@ -375,6 +380,15 @@ def cluster_semantic_issues(
 
         boost_issue("Bar Of Civil Court Jurisdiction", 80)
 
+    if (
+        "constitution" in acts_text
+        and "writ petition" in text
+    ):
+
+        boost_issue(
+            "Maintainability Of Writ Petition",
+            25
+        )
 
     # =====================================================
     # 🔥 SECTION BOOSTING
@@ -406,8 +420,9 @@ def cluster_semantic_issues(
         "227" in section_values
         and "writ petition" in text
     ):
+
         boost_issue(
-            "Supervisory Jurisdiction Under Article 227",
+            "Maintainability Of Writ Petition",
             25
         )
 

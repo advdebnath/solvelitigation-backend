@@ -1,8 +1,3 @@
-
-from app.extractors.dynamic_legal_entity_engine import (
-    discover_legal_entities,
-)
-
 import fitz
 
 fitz.TOOLS.mupdf_display_errors(False)
@@ -86,9 +81,6 @@ from app.extractors.multi_case_reasoning_engine import \
 from app.extractors.operative_order_engine import extract_operative_order
 from app.extractors.party_extractor import extract_parties
 from app.extractors.point_of_law_extractor import extract_points_of_law
-from app.extractors.legal_concept_engine import discover_legal_concepts
-from app.extractors.legal_ontology_engine import classify_concepts
-
 from app.extractors.precedent_extractor import extract_precedents
 from app.extractors.procedural_history_detector import \
     detect_procedural_history
@@ -745,11 +737,6 @@ def process_judgment(ingestion_id):
 
 
                 raw_full_text = reconstructed_value
-
-                semantic_text = {
-                    "text": reconstructed_value
-                }
-
 
                 print("✅ LEGAL TEXT RECONSTRUCTED")
                 print("SEMANTIC_TEXT_LENGTH")
@@ -1429,18 +1416,6 @@ def process_judgment(ingestion_id):
 
         points_of_law = extract_points_of_law(body_text)
 
-        legal_concepts = discover_legal_concepts(
-            body_text
-        )
-
-        legal_concepts = classify_concepts(
-            legal_concepts
-        )
-
-        print("🔥 LEGAL CONCEPTS:")
-        print(legal_concepts)
-
-
         print("🔥 POINTS OF LAW FINAL:")
         print(points_of_law)
 
@@ -1465,28 +1440,8 @@ def process_judgment(ingestion_id):
 
         print(semantic_issues)
 
-        
         issue_data = semantic_issues
-        
-        # =====================================================
-        # 🔥 DYNAMIC LEGAL ENTITY DISCOVERY
-        # =====================================================
-        
-        dynamic_legal_entities = discover_legal_entities(
-            full_text
-        )
-        
-        print("🔥 DYNAMIC LEGAL ENTITIES")
-        print(dynamic_legal_entities)
-        
-        print("🔥 DOMINANT LEGAL ENTITY")
-        print(
-            dynamic_legal_entities.get(
-                "dominant_entity"
-            )
-        )
-        
-        
+
         print("🔥 ISSUE DATA FINAL:")
         print(issue_data)
 
@@ -4938,16 +4893,7 @@ def process_judgment(ingestion_id):
         # 🔥 DOMINANT ISSUE
         # -----------------------------------------------------
 
-        print("🔥 ISSUE_DATA_BEFORE_CATEGORY_BOOST")
-        print(issue_data)
-
-        print("🔥 ISSUE_DOMINANT_CATEGORY")
-        print(issue_data.get("dominant_category"))
-
-        print("🔥 ISSUE_DOMINANT_ISSUE")
-        print(issue_data.get("dominant_issue"))
-
-        boost(issue_data.get("dominant_category"), 20)
+        boost(issue_data.get("dominant_category"), 60)
 
         # -----------------------------------------------------
         # 🔥 POINTS OF LAW
@@ -5087,38 +5033,9 @@ def process_judgment(ingestion_id):
 
         secondary_category = None
 
-        category_source = "CATEGORY_ENGINE"
-
-        if category_signals:
-
-            winning_signals = [
-                signal
-                for signal in category_signals
-                if signal.get("category") == final_category
-            ]
-
-            if winning_signals:
-
-                winning_signals.sort(
-                    key=lambda x: x.get("score", 0),
-                    reverse=True
-                )
-
-                category_source = winning_signals[0].get(
-                    "signal",
-                    "CATEGORY_ENGINE"
-                )
+        category_source = "CATEGORY_ARBITRATION"
 
         category_confidence = final_category_confidence
-
-        print("🔥 CATEGORY SOURCE RESOLVED")
-        print(category_source)
-
-        print("🔥 WINNING CATEGORY")
-        print(final_category)
-
-        print("🔥 CATEGORY SIGNALS")
-        print(category_signals)
 
         if primary_category in [
             None,
@@ -5856,8 +5773,6 @@ def process_judgment(ingestion_id):
               ),
             "sections": sections.get("sections", []),
             "pointsOfLaw": authoritative_points_of_law,
-              "legalConcepts": legal_concepts,
-
             "issueClusters": issue_data.get("issues", []),
             "dominantIssue": issue_data.get("dominant_issue"),
             "operativeOrder": operative_data.get("operative_order", []),

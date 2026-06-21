@@ -1,0 +1,53 @@
+import re
+from collections import Counter
+
+
+STOP_WORDS = {
+    "court",
+    "appeal",
+    "judgment",
+    "respondent",
+    "petitioner",
+    "appellant",
+    "learned",
+    "therefore",
+    "however",
+}
+
+
+def discover_legal_concepts(text=""):
+
+    if not text:
+        return []
+
+    text = text.lower()
+
+    phrases = re.findall(
+        r'\b[a-z]{4,}(?:\s+[a-z]{4,}){1,5}\b',
+        text
+    )
+
+    freq = Counter()
+
+    for phrase in phrases:
+
+        words = phrase.split()
+
+        if any(w in STOP_WORDS for w in words):
+            continue
+
+        freq[phrase] += 1
+
+    concepts = []
+
+    for phrase, count in freq.most_common(200):
+
+        if count < 3:
+            continue
+
+        concepts.append({
+            "concept": phrase.title(),
+            "frequency": count
+        })
+
+    return concepts
